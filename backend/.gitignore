@@ -1,0 +1,38 @@
+# Virtual Environment (The biggest thing to ignore!)
+venv/
+ENV/
+env/
+
+# Python cache (Temporary files Python creates to run faster)
+__pycache__/
+*.pyc
+
+# Database (You usually want to start with your own local data)
+db.sqlite3
+
+# Environment variables (Sensitive passwords/keys)
+.env
+
+# Django static and media files
+staticfiles/
+media/
+
+# Log files
+*.log
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Package metadata
+*.egg-info/
+dist/
+build/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# VS Code settings
+.vscode/
