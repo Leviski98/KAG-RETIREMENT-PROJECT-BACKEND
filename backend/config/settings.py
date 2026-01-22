@@ -39,9 +39,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'drf_spectacular',
-    'pastors',
+    'corsheaders',
+    'accounts',
     'districts',
+    'churches',
+    'pastors',
     'sections',
+    'reports',
+    
 ]
 
 MIDDLEWARE = [
