@@ -1,10 +1,11 @@
 from django.db import models
+from districts.models import District
 
 
 class Section(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    code = models.CharField(max_length=20, unique=True)
-    description = models.TextField(blank=True)
+    id = models.AutoField(primary_key=True)
+    district = models.ForeignKey(District, on_delete=models.CASCADE, related_name='sections')
+    name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -15,3 +16,8 @@ class Section(models.Model):
     
     def __str__(self):
         return self.name
+    
+    @property
+    def section_id(self):
+        """Return formatted ID as VARCHAR(20) like 'SEC001'"""
+        return f"SEC{self.id:03d}"
