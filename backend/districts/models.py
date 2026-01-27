@@ -2,9 +2,8 @@ from django.db import models
 
 
 class District(models.Model):
+    id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True)
-    code = models.CharField(max_length=20, unique=True)
-    description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -15,3 +14,8 @@ class District(models.Model):
     
     def __str__(self):
         return self.name
+    
+    @property
+    def district_id(self):
+        """Return formatted ID as VARCHAR(20) like 'DIS001'"""
+        return f"DIS{self.id:03d}"
