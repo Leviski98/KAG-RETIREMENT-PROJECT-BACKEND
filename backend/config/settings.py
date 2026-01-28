@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'sections',
     'reports',
     
->>>>>>> origin/master
+
 ]
 
 MIDDLEWARE = [
