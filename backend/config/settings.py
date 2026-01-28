@@ -48,7 +48,6 @@ INSTALLED_APPS = [
     'churches',
     'reports',
 ]
-]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
