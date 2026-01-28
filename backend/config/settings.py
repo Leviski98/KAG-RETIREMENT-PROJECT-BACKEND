@@ -40,9 +40,14 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_spectacular',
     'django_filters',
-    'pastors',
+    'corsheaders',
+    'accounts',
     'districts',
+    'churches',
+    'pastors',
     'sections',
+    'reports',
+    
 ]
 
 MIDDLEWARE = [
