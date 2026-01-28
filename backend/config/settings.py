@@ -39,6 +39,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'drf_spectacular',
+<<<<<<< HEAD
+    'django_filters',
+    'pastors',
+    'districts',
+    'sections',
+=======
     'django_filters',
     'corsheaders',
     'accounts',
@@ -48,6 +54,7 @@ INSTALLED_APPS = [
     'sections',
     'reports',
     
+>>>>>>> origin/master
 ]
 
 MIDDLEWARE = [
@@ -135,6 +142,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Django REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
 
 # API Documentation (Swagger)
