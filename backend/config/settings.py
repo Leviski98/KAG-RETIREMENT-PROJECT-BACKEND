@@ -39,12 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'drf_spectacular',
-<<<<<<< HEAD
     'django_filters',
-    'pastors',
-    'districts',
-    'sections',
-=======
     'corsheaders',
     'accounts',
     'districts',
@@ -53,7 +48,6 @@ INSTALLED_APPS = [
     'sections',
     'reports',
     
->>>>>>> origin/master
 ]
 
 MIDDLEWARE = [
