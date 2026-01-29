@@ -43,9 +43,9 @@ INSTALLED_APPS = [
     'corsheaders',
     'accounts',
     'districts',
-    'churches',
-    'pastors',
     'sections',
+    'pastors',
+    'churches',
     'reports',
 ]
 
