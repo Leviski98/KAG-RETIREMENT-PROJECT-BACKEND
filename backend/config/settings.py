@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     'sections',
     'pastors',
     'churches',
-    'reports',
 ]
 
 MIDDLEWARE = [
