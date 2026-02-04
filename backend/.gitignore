@@ -2,6 +2,10 @@
 venv/
 ENV/
 env/
+/Lib/
+/Include/
+/Scripts/
+pyvenv.cfg
 
 # Python cache (Temporary files Python creates to run faster)
 __pycache__/
