@@ -7,4 +7,8 @@ router.register(r'pastors', PastorViewSet, basename='pastor')
 
 urlpatterns = [
     path('', include(router.urls)),
+from django.urls import path
+
+urlpatterns = [
+    # Add your pastor URLs here
 ]
