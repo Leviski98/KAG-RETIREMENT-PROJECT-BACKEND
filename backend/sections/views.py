@@ -5,6 +5,9 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Count
 from .models import Section
 from .serializers import SectionSerializer
+from django.utils import timezone
+from datetime import timedelta
+from districts.models import District
 
 
 class SectionViewSet(viewsets.ModelViewSet):
@@ -97,9 +100,7 @@ class SectionViewSet(viewsets.ModelViewSet):
             - sections_by_district: Count of sections per district
             - recent_sections: Sections created in the last 30 days
         """
-        from django.utils import timezone
-        from datetime import timedelta
-        from districts.models import District
+       
         
         total_sections = Section.objects.count()
         thirty_days_ago = timezone.now() - timedelta(days=30)
