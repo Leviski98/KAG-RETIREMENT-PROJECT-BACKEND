@@ -1,5 +1,11 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import PastorViewSet
+
+router = DefaultRouter()
+router.register(r'pastors', PastorViewSet, basename='pastor')
 
 urlpatterns = [
-    # Add your pastor URLs here
+    path('', include(router.urls)),
 ]
+
