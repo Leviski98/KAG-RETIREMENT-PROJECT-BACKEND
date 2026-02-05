@@ -99,7 +99,8 @@ class SectionViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=sections_data, many=True)
         
         if serializer.is_valid():
-            # Use transaction to ensure all-or-nothing behavior
+            # Use atomic transaction to ensure all sections are created or none are created.
+            # This prevents partial saves if any section fails validation or database constraints.
             with transaction.atomic():
                 serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
