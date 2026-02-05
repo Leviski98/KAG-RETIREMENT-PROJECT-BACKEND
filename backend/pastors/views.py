@@ -11,6 +11,25 @@ from .models import Pastor
 from .serializers import PastorSerializer
 
 
+def calculate_years_from_date(from_date):
+    """
+    Calculate the number of years between a given date and today.
+    
+    Args:
+        from_date: The starting date (date object or None)
+    
+    Returns:
+        Number of complete years or None if from_date is None
+    """
+    if not from_date:
+        return None
+    
+    today = date.today()
+    return today.year - from_date.year - (
+        (today.month, today.day) < (from_date.month, from_date.day)
+    )
+
+
 class PastorViewSet(viewsets.ModelViewSet):
     """
     API endpoint for managing pastors.
@@ -101,28 +120,14 @@ class PastorViewSet(viewsets.ModelViewSet):
         pastor = self.get_object()
         serializer = self.get_serializer(pastor)
         
-        # Calculate age with null check
-        age = None
-        date_of_birth = pastor.date_of_birth
-        if date_of_birth:
-            today = date.today()
-            age = today.year - date_of_birth.year - (
-                (today.month, today.day) < (date_of_birth.month, date_of_birth.day)
-            )
-        
-        # Calculate years of service
-        years_of_service = None
-        if pastor.start_of_service:
-            today = date.today()
-            years_of_service = today.year - pastor.start_of_service.year - (
-                (today.month, today.day) < (pastor.start_of_service.month, pastor.start_of_service.day)
-            )
+        # Calculate age and years of service using helper function
+        age = calculate_years_from_date(pastor.date_of_birth)
+        years_of_service = calculate_years_from_date(pastor.start_of_service)
         
         return Response({
             'pastor': serializer.data,
             'age': age,
             'years_of_service': years_of_service,
-            # 'current_church': pastor.current_church if hasattr(pastor, 'current_church') else None,
         })
     
     @action(detail=False, methods=['post'])

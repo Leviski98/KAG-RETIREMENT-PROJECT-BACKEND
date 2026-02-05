@@ -55,7 +55,8 @@ class PastorViewSetTestCase(TestCase):
     
     def test_authentication_required(self):
         """Test that authentication is required for all endpoints"""
-        # Unauthenticated requests should fail with 401 or 403
+        # DRF with IsAuthenticated returns 403 Forbidden for unauthenticated requests
+        # when the user is recognized as unauthenticated (AnonymousUser)
         response = self.client.get('/api/pastors/')
         self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
         
