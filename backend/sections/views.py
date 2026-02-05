@@ -41,52 +41,45 @@ class SectionViewSet(viewsets.ModelViewSet):
         Optionally restricts the returned sections based on query parameters.
         Optimizes queries with select_related for district.
         """
-        queryset = Section.objects.select_related('district').all()
-        
-        # Filter by district if provided
-        district_id = self.request.query_params.get('district_id', None)
-        if district_id is not None:
-            queryset = queryset.filter(district_id=district_id)
-        
-        return queryset
+        return super().get_queryset()
     
-    def list(self, request, *args, **kwargs):
-        """
-        List all sections.
-        Returns a paginated list of all sections in the system.
-        """
-        return super().list(request, *args, **kwargs)
     
-    def create(self, request, *args, **kwargs):
-        """
-        Create a new section.
-        Requires 'name' and 'district' fields in the request body.
-        """
-        return super().create(request, *args, **kwargs)
     
-    def retrieve(self, request, *args, **kwargs):
-        """
-        Retrieve a specific section by ID.
-        """
-        return super().retrieve(request, *args, **kwargs)
     
-    def update(self, request, *args, **kwargs):
-        """
-        Update a section completely (PUT).
-        """
-        return super().update(request, *args, **kwargs)
     
-    def partial_update(self, request, *args, **kwargs):
-        """
-        Partially update a section (PATCH).
-        """
-        return super().partial_update(request, *args, **kwargs)
     
-    def destroy(self, request, *args, **kwargs):
-        """
-        Delete a section.
-        """
-        return super().destroy(request, *args, **kwargs)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     @action(detail=False, methods=['get'])
     def statistics(self, request):
@@ -111,13 +104,16 @@ class SectionViewSet(viewsets.ModelViewSet):
             count=Count('id')
         ).order_by('-count')
         
+        oldest_section = Section.objects.order_by('created_at').first()
+        newest_section = Section.objects.order_by('-created_at').first()
+        
         return Response({
             'total_sections': total_sections,
             'recent_sections': recent_sections,
             'sections_by_district': list(sections_by_district),
             'districts_with_sections': District.objects.filter(sections__isnull=False).distinct().count(),
-            'oldest_section': Section.objects.order_by('created_at').first().name if Section.objects.exists() else None,
-            'newest_section': Section.objects.order_by('-created_at').first().name if Section.objects.exists() else None,
+            'oldest_section': oldest_section.name if oldest_section else None,
+            'newest_section': newest_section.name if newest_section else None,
         })
     
     @action(detail=False, methods=['get'])
@@ -203,3 +199,6 @@ class SectionViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    ordering_fields = ['name', 'created_at', 'updated_at']
+    filterset_fields = ['name', 'district']
+
