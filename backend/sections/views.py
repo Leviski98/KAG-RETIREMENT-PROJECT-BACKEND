@@ -103,13 +103,16 @@ class SectionViewSet(viewsets.ModelViewSet):
             count=Count('id')
         ).order_by('-count')
         
+        oldest_section = Section.objects.order_by('created_at').first()
+        newest_section = Section.objects.order_by('-created_at').first()
+        
         return Response({
             'total_sections': total_sections,
             'recent_sections': recent_sections,
             'sections_by_district': list(sections_by_district),
             'districts_with_sections': District.objects.filter(sections__isnull=False).distinct().count(),
-            'oldest_section': Section.objects.order_by('created_at').first().name if Section.objects.exists() else None,
-            'newest_section': Section.objects.order_by('-created_at').first().name if Section.objects.exists() else None,
+            'oldest_section': oldest_section.name if oldest_section else None,
+            'newest_section': newest_section.name if newest_section else None,
         })
     
     @action(detail=False, methods=['get'])
