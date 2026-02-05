@@ -40,43 +40,43 @@ class SectionViewSet(viewsets.ModelViewSet):
         """
         return super().get_queryset()
     
-    def list(self, request, *args, **kwargs):
-        """
-        List all sections.
-        Returns a paginated list of all sections in the system.
-        """
-        return super().list(request, *args, **kwargs)
     
-    def create(self, request, *args, **kwargs):
-        """
-        Create a new section.
-        Requires 'name' and 'district' fields in the request body.
-        """
-        return super().create(request, *args, **kwargs)
     
-    def retrieve(self, request, *args, **kwargs):
-        """
-        Retrieve a specific section by ID.
-        """
-        return super().retrieve(request, *args, **kwargs)
     
-    def update(self, request, *args, **kwargs):
-        """
-        Update a section completely (PUT).
-        """
-        return super().update(request, *args, **kwargs)
     
-    def partial_update(self, request, *args, **kwargs):
-        """
-        Partially update a section (PATCH).
-        """
-        return super().partial_update(request, *args, **kwargs)
     
-    def destroy(self, request, *args, **kwargs):
-        """
-        Delete a section.
-        """
-        return super().destroy(request, *args, **kwargs)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     @action(detail=False, methods=['get'])
     def statistics(self, request):
