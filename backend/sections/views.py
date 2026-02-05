@@ -38,14 +38,7 @@ class SectionViewSet(viewsets.ModelViewSet):
         Optionally restricts the returned sections based on query parameters.
         Optimizes queries with select_related for district.
         """
-        queryset = Section.objects.select_related('district').all()
-        
-        # Filter by district if provided
-        district_id = self.request.query_params.get('district_id', None)
-        if district_id is not None:
-            queryset = queryset.filter(district_id=district_id)
-        
-        return queryset
+        return super().get_queryset()
     
     def list(self, request, *args, **kwargs):
         """
