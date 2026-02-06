@@ -1,0 +1,114 @@
+{
+  "analysis_date": "2026-02-06T08:37:55.893Z",
+  "repository": "Leviski98/KAG-RETIREMENT-PROJECT-BACKEND",
+  "summary": {
+    "total_cloud_agent_prs": 2,
+    "merged_to_feature_branches": 0,
+    "merged_to_master": 0,
+    "status": "NOT_MERGED"
+  },
+  "cloud_agent_pull_requests": [
+    {
+      "pr_number": 22,
+      "title": "Fix security, redundancy, and robustness issues in Pastor API",
+      "author": "Copilot",
+      "state": "closed",
+      "merged": false,
+      "created_at": "2026-02-05T19:49:15Z",
+      "closed_at": "2026-02-06T07:34:36Z",
+      "target_branch": "master",
+      "source_branch": "copilot/fix-all-copilot-review-issues",
+      "base_commit": "2020ad6fd70b0a0f210f5203d3fbb136892ab758",
+      "head_commit": "d3cf4defc1936de46aa748d7a1e166d38c65b0fe",
+      "commits_ahead": 4,
+      "changes": {
+        "additions": 523,
+        "deletions": 5,
+        "files_changed": 4,
+        "files": [
+          "backend/pastors/serializers.py",
+          "backend/pastors/tests.py",
+          "backend/pastors/urls.py",
+          "backend/pastors/views.py"
+        ]
+      },
+      "priority": "HIGH",
+      "category": "security",
+      "merged_into_feature_branch": false,
+      "merged_into_master": false
+    },
+    {
+      "pr_number": 23,
+      "title": "Remove redundant Section API endpoints and add transaction safety",
+      "author": "Copilot",
+      "state": "open",
+      "merged": false,
+      "created_at": "2026-02-05T20:01:54Z",
+      "updated_at": "2026-02-05T20:15:16Z",
+      "target_branch": "feat/kag-section",
+      "source_branch": "copilot/fix-pr-issues",
+      "base_commit": "ef24a6a2a9e0431398db0bfb7905719e2f65fbbe",
+      "head_commit": "32c52d6730a439a7ce6b6be2e06e4373da691283",
+      "commits_ahead": 3,
+      "changes": {
+        "additions": 12,
+        "deletions": 108,
+        "files_changed": 1,
+        "files": [
+          "backend/sections/views.py"
+        ]
+      },
+      "priority": "MEDIUM",
+      "category": "code_quality",
+      "merged_into_feature_branch": false,
+      "merged_into_master": false
+    }
+  ],
+  "branches_checked": {
+    "master": {
+      "latest_commit": "2020ad6fd70b0a0f210f5203d3fbb136892ab758",
+      "has_pr22_changes": false,
+      "has_pr23_changes": false
+    },
+    "feat/kag-pastor": {
+      "latest_commit": "5889e74e25e2a3218631e703160d4ad6e1d3af86",
+      "has_pr22_changes": false,
+      "has_pr23_changes": false
+    },
+    "feat/kag-section": {
+      "latest_commit": "ef24a6a2a9e0431398db0bfb7905719e2f65fbbe",
+      "has_pr22_changes": false,
+      "has_pr23_changes": false
+    },
+    "feat/kag-district": {
+      "latest_commit": "fd61946e1a999245512ca291bb23afba41161b23",
+      "status": "merged_to_master",
+      "has_pr22_changes": false,
+      "has_pr23_changes": false
+    },
+    "feat/kag-churches": {
+      "latest_commit": "f431afc0b0317fc0bb17e54c4dfc73749757be3b",
+      "has_pr22_changes": false,
+      "has_pr23_changes": false
+    }
+  },
+  "recommendations": [
+    {
+      "priority": "HIGH",
+      "action": "Review and merge PR #22",
+      "reason": "Contains critical security fixes for Pastor API",
+      "target": "master or feat/kag-pastor branch"
+    },
+    {
+      "priority": "MEDIUM",
+      "action": "Review and merge PR #23",
+      "reason": "Contains code quality improvements and transaction safety",
+      "target": "feat/kag-section branch"
+    },
+    {
+      "priority": "MEDIUM",
+      "action": "Rebase feature branches after merging cloud agent changes",
+      "reason": "Ensure all feature branches include latest improvements"
+    }
+  ]
+}
