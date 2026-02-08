@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
+from django.db import transaction, IntegrityError
 from django.db.models import Count, Min, Max, Q
 from .models import District
 from .serializers import DistrictSerializer
@@ -133,9 +134,14 @@ class DistrictViewSet(viewsets.ModelViewSet):
             )
         
         serializer = self.get_serializer(data=districts_data, many=True)
+        serializer.is_valid(raise_exception=True)
         
-        if serializer.is_valid():
-            serializer.save()
+        try:
+            with transaction.atomic():
+                serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError as e:
+            return Response(
+                {'error': 'Duplicate district name or database constraint violation', 'detail': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
