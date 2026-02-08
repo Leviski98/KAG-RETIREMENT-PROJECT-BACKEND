@@ -56,20 +56,22 @@ class DistrictViewSet(viewsets.ModelViewSet):
             newest_created_at=Max('created_at')
         )
         
-        # Get district names in a single optimized query
+        # Fetch both oldest and newest district names in one additional query
+        # Total: 2 queries instead of the original 5-6
         oldest_district = None
         newest_district = None
         
         if stats['oldest_created_at']:
-            # Fetch both oldest and newest in one query using union-like approach
-            districts = District.objects.filter(
+            # Get districts matching either oldest or newest timestamp
+            # Evaluate queryset once to avoid multiple DB queries
+            districts = list(District.objects.filter(
                 Q(created_at=stats['oldest_created_at']) | 
                 Q(created_at=stats['newest_created_at'])
-            ).only('name', 'created_at').order_by('created_at')
+            ).only('name', 'created_at').order_by('created_at'))
             
-            if districts.exists():
-                oldest_district = districts.first().name
-                newest_district = districts.last().name
+            if districts:
+                oldest_district = districts[0].name
+                newest_district = districts[-1].name
         
         return Response({
             'total_districts': stats['total_districts'],
