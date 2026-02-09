@@ -146,8 +146,14 @@ SPECTACULAR_SETTINGS = {
 }
 
 # CORS Settings
-CORS_ALLOW_ALL_ORIGINS = True  # For development only - configure specific origins for production
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",
-#     "http://127.0.0.1:3000",
-# ]
+# Allow all origins only in development mode
+CORS_ALLOW_ALL_ORIGINS = DEBUG
+
+# In production (DEBUG=False), only allow specific origins
+if not DEBUG:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        # Add your production frontend URLs here
+        # "https://your-production-domain.com",
+    ]

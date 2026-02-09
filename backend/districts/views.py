@@ -6,6 +6,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.db import transaction, IntegrityError
 from django.db.models import Count, Min, Max, Q
+from django.conf import settings
 from .models import District
 from .serializers import DistrictSerializer
 
@@ -46,11 +47,14 @@ class DistrictViewSet(viewsets.ModelViewSet):
         Returns:
             - total_districts: Total number of districts
             - recent_districts: Districts created in the last 30 days
+            - oldest_district: Name of the oldest district
+            - newest_district: Name of the newest district
         """
         thirty_days_ago = timezone.now() - timedelta(days=30)
         
         # Single aggregated query for all statistics
-        stats = District.objects.aggregate(
+        # Use self.get_queryset() to respect any queryset scoping/filtering
+        stats = self.get_queryset().aggregate(
             total_districts=Count('id'),
             recent_districts=Count('id', filter=Q(created_at__gte=thirty_days_ago)),
             oldest_created_at=Min('created_at'),
@@ -65,7 +69,7 @@ class DistrictViewSet(viewsets.ModelViewSet):
         if stats['oldest_created_at']:
             # Get districts matching either oldest or newest timestamp
             # Evaluate queryset once to avoid multiple DB queries
-            districts = list(District.objects.filter(
+            districts = list(self.get_queryset().filter(
                 Q(created_at=stats['oldest_created_at']) | 
                 Q(created_at=stats['newest_created_at'])
             ).only('name', 'created_at').order_by('created_at'))
@@ -141,7 +145,8 @@ class DistrictViewSet(viewsets.ModelViewSet):
                 serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except IntegrityError as e:
-            return Response(
-                {'error': 'Duplicate district name or database constraint violation', 'detail': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            error_response = {'error': 'Duplicate district name or database constraint violation'}
+            # Only expose database details in development mode
+            if settings.DEBUG:
+                error_response['detail'] = str(e)
+            return Response(error_response, status=status.HTTP_400_BAD_REQUEST)
