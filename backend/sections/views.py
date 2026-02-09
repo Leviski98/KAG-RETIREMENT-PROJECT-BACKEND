@@ -43,44 +43,6 @@ class SectionViewSet(viewsets.ModelViewSet):
         """
         return super().get_queryset()
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     @action(detail=False, methods=['get'])
     def statistics(self, request):
         """
@@ -92,26 +54,34 @@ class SectionViewSet(viewsets.ModelViewSet):
             - total_sections: Total number of sections
             - sections_by_district: Count of sections per district
             - recent_sections: Sections created in the last 30 days
+            - districts_with_sections: Number of districts that have sections
+            - oldest_section: Name of the oldest section
+            - newest_section: Name of the newest section
         """
-       
-        
-        total_sections = Section.objects.count()
         thirty_days_ago = timezone.now() - timedelta(days=30)
-        recent_sections = Section.objects.filter(created_at__gte=thirty_days_ago).count()
+        
+        # Use self.get_queryset() to respect any queryset scoping/filtering
+        queryset = self.get_queryset()
+        
+        total_sections = queryset.count()
+        recent_sections = queryset.filter(created_at__gte=thirty_days_ago).count()
         
         # Sections count by district
-        sections_by_district = Section.objects.values('district__name').annotate(
+        sections_by_district = queryset.values('district__name').annotate(
             count=Count('id')
         ).order_by('-count')
         
-        oldest_section = Section.objects.order_by('created_at').first()
-        newest_section = Section.objects.order_by('-created_at').first()
+        oldest_section = queryset.order_by('created_at').first()
+        newest_section = queryset.order_by('-created_at').first()
+        
+        # Count districts with sections by getting distinct district IDs from sections
+        districts_with_sections = queryset.values('district').distinct().count()
         
         return Response({
             'total_sections': total_sections,
             'recent_sections': recent_sections,
             'sections_by_district': list(sections_by_district),
-            'districts_with_sections': District.objects.filter(sections__isnull=False).distinct().count(),
+            'districts_with_sections': districts_with_sections,
             'oldest_section': oldest_section.name if oldest_section else None,
             'newest_section': newest_section.name if newest_section else None,
         })
@@ -134,13 +104,30 @@ class SectionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        sections = Section.objects.filter(district_id=district_id).select_related('district')
+        # Validate district_id is a valid integer
+        try:
+            district_id = int(district_id)
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'district_id must be a valid integer'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if district exists
+        if not District.objects.filter(id=district_id).exists():
+            return Response(
+                {'error': f'District with id {district_id} does not exist'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        sections = self.get_queryset().filter(district_id=district_id)
         serializer = self.get_serializer(sections, many=True)
+        serialized_data = serializer.data
         
         return Response({
             'district_id': district_id,
-            'count': sections.count(),
-            'sections': serializer.data
+            'count': len(serialized_data),
+            'sections': serialized_data
         })
     
     @action(detail=True, methods=['get'])
@@ -199,6 +186,4 @@ class SectionViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    ordering_fields = ['name', 'created_at', 'updated_at']
-    filterset_fields = ['name', 'district']
 
