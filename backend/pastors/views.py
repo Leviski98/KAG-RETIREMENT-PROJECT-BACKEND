@@ -14,7 +14,7 @@ class PastorViewSet(viewsets.ModelViewSet):
     
     Provides CRUD operations for pastors with search, filter, and ordering capabilities.
     
-    List: GET /api/pastors/
+    List: GET /api/pastors/ (supports filtering: ?pastor_rank=<rank>, ?status=<status>, ?gender=<gender>)
     Create: POST /api/pastors/
     Retrieve: GET /api/pastors/{id}/
     Update: PUT /api/pastors/{id}/
@@ -23,9 +23,6 @@ class PastorViewSet(viewsets.ModelViewSet):
     
     Custom Actions:
     - GET /api/pastors/statistics/ - Get pastor statistics
-    - GET /api/pastors/by_rank/?rank=<rank> - Get pastors by rank
-    - GET /api/pastors/by_status/?status=<status> - Get pastors by status
-    - GET /api/pastors/by_gender/?gender=<gender> - Get pastors by gender
     - GET /api/pastors/active/ - Get all active pastors
     - GET /api/pastors/retired/ - Get all retired pastors
     - GET /api/pastors/{id}/summary/ - Get detailed pastor summary
@@ -61,44 +58,6 @@ class PastorViewSet(viewsets.ModelViewSet):
         
         return queryset
     
-    def list(self, request, *args, **kwargs):
-        """
-        List all pastors.
-        Returns a paginated list of all pastors in the system.
-        """
-        return super().list(request, *args, **kwargs)
-    
-    def create(self, request, *args, **kwargs):
-        """
-        Create a new pastor.
-        Requires full_name, gender, pastor_rank, date_of_birth, and phone_number.
-        """
-        return super().create(request, *args, **kwargs)
-    
-    def retrieve(self, request, *args, **kwargs):
-        """
-        Retrieve a specific pastor by ID.
-        """
-        return super().retrieve(request, *args, **kwargs)
-    
-    def update(self, request, *args, **kwargs):
-        """
-        Update a pastor completely (PUT).
-        """
-        return super().update(request, *args, **kwargs)
-    
-    def partial_update(self, request, *args, **kwargs):
-        """
-        Partially update a pastor (PATCH).
-        """
-        return super().partial_update(request, *args, **kwargs)
-    
-    def destroy(self, request, *args, **kwargs):
-        """
-        Delete a pastor.
-        """
-        return super().destroy(request, *args, **kwargs)
-    
     @action(detail=False, methods=['get'])
     def statistics(self, request):
         """
@@ -108,6 +67,9 @@ class PastorViewSet(viewsets.ModelViewSet):
         
         Returns:
             - total_pastors: Total number of pastors
+            - recent_pastors: Pastors created in the last 30 days
+            - active_pastors: Count of active pastors
+            - retired_pastors: Count of retired pastors
             - pastors_by_rank: Count of pastors per rank
             - pastors_by_status: Count of pastors per status
             - pastors_by_gender: Count of pastors per gender
@@ -115,114 +77,37 @@ class PastorViewSet(viewsets.ModelViewSet):
         from django.utils import timezone
         from datetime import timedelta
         
-        total_pastors = Pastor.objects.count()
+        # Use self.get_queryset() to respect any queryset scoping/filtering
+        queryset = self.get_queryset()
+        
         thirty_days_ago = timezone.now() - timedelta(days=30)
-        recent_pastors = Pastor.objects.filter(created_at__gte=thirty_days_ago).count()
+        
+        total_pastors = queryset.count()
+        recent_pastors = queryset.filter(created_at__gte=thirty_days_ago).count()
         
         # Pastors count by rank
-        pastors_by_rank = Pastor.objects.values('pastor_rank').annotate(
+        pastors_by_rank = queryset.values('pastor_rank').annotate(
             count=Count('id')
         ).order_by('-count')
         
         # Pastors count by status
-        pastors_by_status = Pastor.objects.values('status').annotate(
+        pastors_by_status = queryset.values('status').annotate(
             count=Count('id')
         ).order_by('-count')
         
         # Pastors count by gender
-        pastors_by_gender = Pastor.objects.values('gender').annotate(
+        pastors_by_gender = queryset.values('gender').annotate(
             count=Count('id')
         ).order_by('-count')
         
         return Response({
             'total_pastors': total_pastors,
             'recent_pastors': recent_pastors,
-            'active_pastors': Pastor.objects.filter(status='active').count(),
-            'retired_pastors': Pastor.objects.filter(status='retired').count(),
+            'active_pastors': queryset.filter(status='active').count(),
+            'retired_pastors': queryset.filter(status='retired').count(),
             'pastors_by_rank': list(pastors_by_rank),
             'pastors_by_status': list(pastors_by_status),
             'pastors_by_gender': list(pastors_by_gender),
-        })
-    
-    @action(detail=False, methods=['get'])
-    def by_rank(self, request):
-        """
-        Get all pastors for a specific rank.
-        
-        GET /api/pastors/by_rank/?rank=<rank>
-        
-        Query Parameters:
-            - rank: Rank to filter by (ArchBishop, Bishop, Presbyter, Reverend, Pastor)
-        """
-        rank = request.query_params.get('rank', None)
-        
-        if rank is None:
-            return Response(
-                {'error': 'rank query parameter is required'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        pastors = Pastor.objects.filter(pastor_rank=rank)
-        serializer = self.get_serializer(pastors, many=True)
-        
-        return Response({
-            'rank': rank,
-            'count': pastors.count(),
-            'pastors': serializer.data
-        })
-    
-    @action(detail=False, methods=['get'])
-    def by_status(self, request):
-        """
-        Get all pastors for a specific status.
-        
-        GET /api/pastors/by_status/?status=<status>
-        
-        Query Parameters:
-            - status: Status to filter by (active, suspended, retired, deceased)
-        """
-        status_param = request.query_params.get('status', None)
-        
-        if status_param is None:
-            return Response(
-                {'error': 'status query parameter is required'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        pastors = Pastor.objects.filter(status=status_param)
-        serializer = self.get_serializer(pastors, many=True)
-        
-        return Response({
-            'status': status_param,
-            'count': pastors.count(),
-            'pastors': serializer.data
-        })
-    
-    @action(detail=False, methods=['get'])
-    def by_gender(self, request):
-        """
-        Get all pastors for a specific gender.
-        
-        GET /api/pastors/by_gender/?gender=<gender>
-        
-        Query Parameters:
-            - gender: Gender to filter by (Male, Female)
-        """
-        gender = request.query_params.get('gender', None)
-        
-        if gender is None:
-            return Response(
-                {'error': 'gender query parameter is required'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        pastors = Pastor.objects.filter(gender=gender)
-        serializer = self.get_serializer(pastors, many=True)
-        
-        return Response({
-            'gender': gender,
-            'count': pastors.count(),
-            'pastors': serializer.data
         })
     
     @action(detail=False, methods=['get'])
@@ -232,12 +117,13 @@ class PastorViewSet(viewsets.ModelViewSet):
         
         GET /api/pastors/active/
         """
-        pastors = Pastor.objects.filter(status='active')
+        pastors = self.get_queryset().filter(status='active')
         serializer = self.get_serializer(pastors, many=True)
+        serialized_data = serializer.data
         
         return Response({
-            'count': pastors.count(),
-            'pastors': serializer.data
+            'count': len(serialized_data),
+            'pastors': serialized_data
         })
     
     @action(detail=False, methods=['get'])
@@ -247,12 +133,13 @@ class PastorViewSet(viewsets.ModelViewSet):
         
         GET /api/pastors/retired/
         """
-        pastors = Pastor.objects.filter(status='retired')
+        pastors = self.get_queryset().filter(status='retired')
         serializer = self.get_serializer(pastors, many=True)
+        serialized_data = serializer.data
         
         return Response({
-            'count': pastors.count(),
-            'pastors': serializer.data
+            'count': len(serialized_data),
+            'pastors': serialized_data
         })
     
     @action(detail=True, methods=['get'])
@@ -269,9 +156,11 @@ class PastorViewSet(viewsets.ModelViewSet):
         
         # Calculate age
         today = date.today()
-        age = today.year - pastor.date_of_birth.year - (
-            (today.month, today.day) < (pastor.date_of_birth.month, pastor.date_of_birth.day)
-        )
+        age = None
+        if pastor.date_of_birth:
+            age = today.year - pastor.date_of_birth.year - (
+                (today.month, today.day) < (pastor.date_of_birth.month, pastor.date_of_birth.day)
+            )
         
         # Calculate years of service
         years_of_service = None
