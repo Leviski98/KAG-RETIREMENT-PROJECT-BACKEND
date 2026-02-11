@@ -13,6 +13,6 @@ class DistrictViewSet(viewsets.ModelViewSet):
     queryset = District.objects.all()
     serializer_class = DistrictSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name', 'code', 'description']
-    ordering_fields = ['name', 'code', 'created_at']
-    filterset_fields = ['name', 'code']
+    search_fields = ['name']
+    ordering_fields = ['name', 'created_at', 'updated_at']
+    filterset_fields = ['name']

@@ -10,9 +10,9 @@ class SectionViewSet(viewsets.ModelViewSet):
     
     Provides CRUD operations for sections with search, filter, and ordering capabilities.
     """
-    queryset = Section.objects.all()
+    queryset = Section.objects.select_related('district').all()
     serializer_class = SectionSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name', 'code', 'description']
-    ordering_fields = ['name', 'code', 'created_at']
-    filterset_fields = ['name', 'code']
+    search_fields = ['name', 'district__name']
+    ordering_fields = ['name', 'created_at', 'updated_at']
+    filterset_fields = ['name', 'district']
