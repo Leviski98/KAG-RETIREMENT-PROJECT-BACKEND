@@ -1,5 +1,7 @@
-from django.urls import path
+from rest_framework.routers import DefaultRouter
+from .views import SectionViewSet
 
-urlpatterns = [
-    # Add your section URLs here
-]
+router = DefaultRouter()
+router.register(r'sections', SectionViewSet, basename='section')
+
+urlpatterns = router.urls
