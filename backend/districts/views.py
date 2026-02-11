@@ -1,8 +1,12 @@
+from datetime import timedelta
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Count
+from django.utils import timezone
+from django.db import transaction, IntegrityError
+from django.db.models import Count, Min, Max, Q
+from django.conf import settings
 from .models import District
 from .serializers import DistrictSerializer
 
@@ -13,7 +17,7 @@ class DistrictViewSet(viewsets.ModelViewSet):
     
     Provides CRUD operations for districts with search, filter, and ordering capabilities.
     
-    List: GET /api/districts/
+    List: GET /api/districts/ (supports ?search=<name> for name search)
     Create: POST /api/districts/
     Retrieve: GET /api/districts/{id}/
     Update: PUT /api/districts/{id}/
@@ -21,8 +25,9 @@ class DistrictViewSet(viewsets.ModelViewSet):
     Delete: DELETE /api/districts/{id}/
     
     Custom Actions:
-    - GET /api/districts/search/?name=<name> - Search districts by name
     - GET /api/districts/statistics/ - Get district statistics
+    - GET /api/districts/{id}/summary/ - Get a summary of a specific district
+    - POST /api/districts/bulk_create/ - Create multiple districts at once
     """
     queryset = District.objects.all()
     serializer_class = DistrictSerializer
@@ -31,51 +36,6 @@ class DistrictViewSet(viewsets.ModelViewSet):
     ordering_fields = ['name', 'created_at', 'updated_at']
     filterset_fields = ['name']
     ordering = ['name']  # Default ordering
-    
-    def get_queryset(self):
-        """
-        Optionally restricts the returned districts based on query parameters.
-        """
-        queryset = District.objects.all()
-        return queryset
-    
-    def list(self, request, *args, **kwargs):
-        """
-        List all districts.
-        Returns a paginated list of all districts in the system.
-        """
-        return super().list(request, *args, **kwargs)
-    
-    def create(self, request, *args, **kwargs):
-        """
-        Create a new district.
-        Requires 'name' field in the request body.
-        """
-        return super().create(request, *args, **kwargs)
-    
-    def retrieve(self, request, *args, **kwargs):
-        """
-        Retrieve a specific district by ID.
-        """
-        return super().retrieve(request, *args, **kwargs)
-    
-    def update(self, request, *args, **kwargs):
-        """
-        Update a district completely (PUT).
-        """
-        return super().update(request, *args, **kwargs)
-    
-    def partial_update(self, request, *args, **kwargs):
-        """
-        Partially update a district (PATCH).
-        """
-        return super().partial_update(request, *args, **kwargs)
-    
-    def destroy(self, request, *args, **kwargs):
-        """
-        Delete a district.
-        """
-        return super().destroy(request, *args, **kwargs)
     
     @action(detail=False, methods=['get'])
     def statistics(self, request):
@@ -87,19 +47,42 @@ class DistrictViewSet(viewsets.ModelViewSet):
         Returns:
             - total_districts: Total number of districts
             - recent_districts: Districts created in the last 30 days
+            - oldest_district: Name of the oldest district
+            - newest_district: Name of the newest district
         """
-        from django.utils import timezone
-        from datetime import timedelta
-        
-        total_districts = District.objects.count()
         thirty_days_ago = timezone.now() - timedelta(days=30)
-        recent_districts = District.objects.filter(created_at__gte=thirty_days_ago).count()
+        
+        # Single aggregated query for all statistics
+        # Use self.get_queryset() to respect any queryset scoping/filtering
+        stats = self.get_queryset().aggregate(
+            total_districts=Count('id'),
+            recent_districts=Count('id', filter=Q(created_at__gte=thirty_days_ago)),
+            oldest_created_at=Min('created_at'),
+            newest_created_at=Max('created_at')
+        )
+        
+        # Fetch both oldest and newest district names in one additional query
+        # Total: 2 queries instead of the original 5-6
+        oldest_district = None
+        newest_district = None
+        
+        if stats['oldest_created_at']:
+            # Get districts matching either oldest or newest timestamp
+            # Evaluate queryset once to avoid multiple DB queries
+            districts = list(self.get_queryset().filter(
+                Q(created_at=stats['oldest_created_at']) | 
+                Q(created_at=stats['newest_created_at'])
+            ).only('name', 'created_at').order_by('created_at'))
+            
+            if districts:
+                oldest_district = districts[0].name
+                newest_district = districts[-1].name
         
         return Response({
-            'total_districts': total_districts,
-            'recent_districts': recent_districts,
-            'oldest_district': District.objects.order_by('created_at').first().name if District.objects.exists() else None,
-            'newest_district': District.objects.order_by('-created_at').first().name if District.objects.exists() else None,
+            'total_districts': stats['total_districts'],
+            'recent_districts': stats['recent_districts'],
+            'oldest_district': oldest_district,
+            'newest_district': newest_district,
         })
     
     @action(detail=True, methods=['get'])
@@ -130,7 +113,7 @@ class DistrictViewSet(viewsets.ModelViewSet):
         
         POST /api/districts/bulk_create/
         
-        Request body should contain a list of district objects:
+        Request body should contain a list of district objects (max 10):
         {
             "districts": [
                 {"name": "District 1"},
@@ -138,6 +121,8 @@ class DistrictViewSet(viewsets.ModelViewSet):
             ]
         }
         """
+        MAX_BULK_CREATE = 10
+        
         districts_data = request.data.get('districts', [])
         
         if not districts_data or not isinstance(districts_data, list):
@@ -146,10 +131,22 @@ class DistrictViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        if len(districts_data) > MAX_BULK_CREATE:
+            return Response(
+                {'error': f'Cannot create more than {MAX_BULK_CREATE} districts at once. Provided: {len(districts_data)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         serializer = self.get_serializer(data=districts_data, many=True)
+        serializer.is_valid(raise_exception=True)
         
-        if serializer.is_valid():
-            serializer.save()
+        try:
+            with transaction.atomic():
+                serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError as e:
+            error_response = {'error': 'Duplicate district name or database constraint violation'}
+            # Only expose database details in development mode
+            if settings.DEBUG:
+                error_response['detail'] = str(e)
+            return Response(error_response, status=status.HTTP_400_BAD_REQUEST)
