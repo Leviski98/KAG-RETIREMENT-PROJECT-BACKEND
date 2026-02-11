@@ -50,6 +50,11 @@ class ChurchRole(models.Model):
     
     def __str__(self):
         return self.role_name
+    
+    @property
+    def role_id(self):
+        """Return formatted ID as VARCHAR(20) like 'ROL001'"""
+        return f"ROL{self.id:03d}"
 
 
 class ChurchPastor(models.Model):
