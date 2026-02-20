@@ -25,4 +25,5 @@ urlpatterns = [
     path('api/', include('districts.urls')),
     path('api/', include('sections.urls')),
     path('api/', include('pastors.urls')),
+    path('api/', include('churches.urls')),
 ]
