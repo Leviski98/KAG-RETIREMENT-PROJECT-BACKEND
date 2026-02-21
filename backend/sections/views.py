@@ -23,9 +23,12 @@ class SectionViewSet(viewsets.ModelViewSet):
     Partial Update: PATCH /api/sections/{id}/
     Delete: DELETE /api/sections/{id}/
     
+    Filtering:
+    - GET /api/sections/?district=<id> - Filter sections by district
+    - GET /api/sections/?name=<name> - Filter sections by name
+    
     Custom Actions:
     - GET /api/sections/statistics/ - Get section statistics
-    - GET /api/sections/by_district/?district_id=<id> - Get sections by district
     - GET /api/sections/{id}/summary/ - Get detailed section summary
     """
     queryset = Section.objects.select_related('district').all()
@@ -84,50 +87,6 @@ class SectionViewSet(viewsets.ModelViewSet):
             'districts_with_sections': districts_with_sections,
             'oldest_section': oldest_section.name if oldest_section else None,
             'newest_section': newest_section.name if newest_section else None,
-        })
-    
-    @action(detail=False, methods=['get'])
-    def by_district(self, request):
-        """
-        Get all sections for a specific district.
-        
-        GET /api/sections/by_district/?district_id=<id>
-        
-        Query Parameters:
-            - district_id: ID of the district to filter by (required)
-        """
-        district_id = request.query_params.get('district_id', None)
-        
-        if district_id is None:
-            return Response(
-                {'error': 'district_id query parameter is required'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Validate district_id is a valid integer
-        try:
-            district_id = int(district_id)
-        except (ValueError, TypeError):
-            return Response(
-                {'error': 'district_id must be a valid integer'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Check if district exists
-        if not District.objects.filter(id=district_id).exists():
-            return Response(
-                {'error': f'District with id {district_id} does not exist'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        sections = self.get_queryset().filter(district_id=district_id)
-        serializer = self.get_serializer(sections, many=True)
-        serialized_data = serializer.data
-        
-        return Response({
-            'district_id': district_id,
-            'count': len(serialized_data),
-            'sections': serialized_data
         })
     
     @action(detail=True, methods=['get'])
