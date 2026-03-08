@@ -31,15 +31,7 @@ class Church(models.Model):
 class ChurchRole(models.Model):
     """Church Role model for pastor positions within churches"""
     
-    ROLE_CHOICES = [
-        ('Senior Pastor', 'Senior Pastor'),
-        ('Assistant Pastor', 'Assistant Pastor'),
-        ('Youth Pastor', 'Youth Pastor'),
-        ('Missions Pastor', 'Missions Pastor'),
-        ('Associate Minister', 'Associate Minister'),
-    ]
-    
-    role_name = models.CharField(max_length=50, unique=True, choices=ROLE_CHOICES)
+    role_name = models.CharField(max_length=50, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
