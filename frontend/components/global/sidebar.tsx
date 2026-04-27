@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOutIcon } from "lucide-react";
+import { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { sidebarItems } from "@/configs/sidebar-config";
@@ -13,6 +14,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
+interface SidebarItem {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+}
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -42,7 +49,7 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">
-        {sidebarItems.map((item: any) => {
+        {sidebarItems.map((item: SidebarItem) => {
           const isActive =
             pathname === item.href || pathname.startsWith(item.href + "/");
 
