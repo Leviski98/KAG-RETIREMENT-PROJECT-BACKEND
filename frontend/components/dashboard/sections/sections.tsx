@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -70,11 +77,22 @@ const mockSectionsData: SectionWithDetails[] = [
   },
 ];
 
+// Mock districts for dropdown
+const mockDistricts = [
+  { id: "DIS001", name: "Kisumu Lakeside District" },
+  { id: "DIS002", name: "Machakos Eastern District" },
+  { id: "DIS003", name: "Migori South Nyanza District" },
+  { id: "DIS004", name: "Mombasa Coastal District" },
+];
+
 export function SectionsManager() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [sections] = useState<SectionWithDetails[]>(mockSectionsData);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newSectionName, setNewSectionName] = useState("");
+  const [selectedDistrictForNew, setSelectedDistrictForNew] = useState("");
 
   // Filter sections based on search query
   const filteredSections = sections.filter(
@@ -95,8 +113,30 @@ export function SectionsManager() {
   };
 
   const handleAddSection = () => {
-    console.log("Add new section");
-    // TODO: Implement add section functionality
+    setIsAddDialogOpen(true);
+  };
+
+  const handleSaveSection = () => {
+    if (!newSectionName.trim() || !selectedDistrictForNew) {
+      return;
+    }
+
+    console.log("Saving section:", {
+      name: newSectionName,
+      districtId: selectedDistrictForNew,
+    });
+    // TODO: Implement API call to save section
+
+    // Reset form and close dialog
+    setNewSectionName("");
+    setSelectedDistrictForNew("");
+    setIsAddDialogOpen(false);
+  };
+
+  const handleCancelAdd = () => {
+    setNewSectionName("");
+    setSelectedDistrictForNew("");
+    setIsAddDialogOpen(false);
   };
 
   return (
@@ -246,6 +286,72 @@ export function SectionsManager() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Add Section Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Section</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4 py-4">
+            {/* Section Name Field */}
+            <div className="flex flex-col gap-2">
+              <label htmlFor="sectionName" className="text-sm font-medium">
+                Section Name <span className="text-red-500">*</span>
+              </label>
+              <Input
+                id="sectionName"
+                type="text"
+                placeholder="Nahoru"
+                value={newSectionName}
+                onChange={(e) => setNewSectionName(e.target.value)}
+                autoFocus
+              />
+              <p className="text-xs text-muted-foreground">
+                Enter the official section name.
+              </p>
+            </div>
+
+            {/* District Field */}
+            <div className="flex flex-col gap-2">
+              <label htmlFor="district" className="text-sm font-medium">
+                District <span className="text-red-500">*</span>
+              </label>
+              <Select
+                value={selectedDistrictForNew}
+                onValueChange={(value) => setSelectedDistrictForNew(value || "")}
+              >
+                <SelectTrigger id="district">
+                  <SelectValue placeholder="Select district" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockDistricts.map((district) => (
+                    <SelectItem key={district.id} value={district.id}>
+                      {district.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Select the district this section belongs to.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelAdd}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveSection}
+              disabled={!newSectionName.trim() || !selectedDistrictForNew}
+            >
+              Save Section
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
