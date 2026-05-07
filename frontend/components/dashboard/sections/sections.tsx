@@ -323,7 +323,11 @@ export function SectionsManager() {
                 onValueChange={(value) => setSelectedDistrictForNew(value || "")}
               >
                 <SelectTrigger id="district">
-                  <SelectValue placeholder="Select district" />
+                  <SelectValue placeholder="Select district">
+                    {selectedDistrictForNew
+                      ? mockDistricts.find((d) => d.id === selectedDistrictForNew)?.name
+                      : "Select district"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {mockDistricts.map((district) => (
