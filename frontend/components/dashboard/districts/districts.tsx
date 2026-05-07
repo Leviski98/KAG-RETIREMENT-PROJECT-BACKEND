@@ -213,6 +213,23 @@ export function DistrictsManager() {
               ))
             ) : (
               <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <p className="text-sm text-muted-foreground">
+                      No districts found
+                    </p>
+                    {searchQuery && (
+                      <p className="text-xs text-muted-foreground">
+                        Try adjusting your search query
+                      </p>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       {/* Add District Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -256,23 +273,6 @@ export function DistrictsManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-                <TableCell colSpan={5} className="h-24 text-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <p className="text-sm text-muted-foreground">
-                      No districts found
-                    </p>
-                    {searchQuery && (
-                      <p className="text-xs text-muted-foreground">
-                        Try adjusting your search query
-                      </p>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
     </div>
   );
 }
