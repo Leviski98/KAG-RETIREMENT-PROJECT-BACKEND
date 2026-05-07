@@ -221,8 +221,12 @@ export function DistrictsManager() {
                       <Button
                         variant="ghost"
                         size="icon-sm"
-                        onClick={() => handleDelete(district.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(district.id);
+                        }}
                         className="hover:text-destructive"
+                        type="button"
                       >
                         <Trash2 className="size-4" />
                         <span className="sr-only">Delete district</span>
