@@ -327,9 +327,8 @@ export function DistrictsManager() {
               Cancel
             </Button>
             <Button
-              variant="destructive"
               onClick={handleConfirmDelete}
-              className="flex-1 bg-red-500 hover:bg-red-600"
+              className="flex-1 bg-red-500 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
             >
               Delete
             </Button>
