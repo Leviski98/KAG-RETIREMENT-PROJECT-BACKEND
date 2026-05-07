@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 
 // Extended district interface with sections count
@@ -72,6 +72,8 @@ export function DistrictsManager() {
   const [districts] = useState<DistrictWithSections[]>(mockDistrictsData);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newDistrictName, setNewDistrictName] = useState("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [districtToDelete, setDistrictToDelete] = useState<DistrictWithSections | null>(null);
 
   // Filter districts based on search query
   const filteredDistricts = districts.filter((district) =>
@@ -85,8 +87,26 @@ export function DistrictsManager() {
   };
 
   const handleDelete = (id: string) => {
-    console.log("Delete district:", id);
-    // TODO: Implement delete functionality
+    const district = districts.find((d) => d.id === id);
+    if (district) {
+      setDistrictToDelete(district);
+      setIsDeleteDialogOpen(true);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (districtToDelete) {
+      console.log("Deleting district:", districtToDelete.id);
+      // TODO: Implement API call to delete district
+      
+      setDistrictToDelete(null);
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDistrictToDelete(null);
+    setIsDeleteDialogOpen(false);
   };
 
   const handleAddDistrict = () => {
@@ -269,6 +289,45 @@ export function DistrictsManager() {
               disabled={!newDistrictName.trim()}
             >
               Save District
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <div className="flex flex-col items-center gap-4 py-4">
+            <div className="flex size-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
+              <AlertTriangle className="size-8 text-yellow-600 dark:text-yellow-500" />
+            </div>
+            
+            <div className="flex flex-col gap-2 text-center">
+              <h2 className="text-lg font-semibold">Delete District?</h2>
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to delete{" "}
+                <span className="font-medium text-foreground">
+                  {districtToDelete?.district_name}
+                </span>
+                ? This action cannot be undone and will affect all related sections.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleCancelDelete}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              className="flex-1 bg-red-500 hover:bg-red-600"
+            >
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>
