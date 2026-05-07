@@ -4,6 +4,7 @@ export interface Section {
   section_name: string;
   district: string;
   district_name?: string;
+  churches_count?: number;
   created_at: string;
   updated_at: string;
 }
