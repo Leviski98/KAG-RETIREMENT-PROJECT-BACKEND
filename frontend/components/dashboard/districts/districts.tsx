@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -63,6 +70,8 @@ export function DistrictsManager() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [districts] = useState<DistrictWithSections[]>(mockDistrictsData);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newDistrictName, setNewDistrictName] = useState("");
 
   // Filter districts based on search query
   const filteredDistricts = districts.filter((district) =>
@@ -81,8 +90,25 @@ export function DistrictsManager() {
   };
 
   const handleAddDistrict = () => {
-    console.log("Add new district");
-    // TODO: Implement add district functionality
+    setIsAddDialogOpen(true);
+  };
+
+  const handleSaveDistrict = () => {
+    if (!newDistrictName.trim()) {
+      return;
+    }
+    
+    console.log("Saving district:", newDistrictName);
+    // TODO: Implement API call to save district
+    
+    // Reset form and close dialog
+    setNewDistrictName("");
+    setIsAddDialogOpen(false);
+  };
+
+  const handleCancelAdd = () => {
+    setNewDistrictName("");
+    setIsAddDialogOpen(false);
   };
 
   return (
@@ -187,6 +213,49 @@ export function DistrictsManager() {
               ))
             ) : (
               <TableRow>
+
+      {/* Add District Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New District</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4 py-4">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="districtName" className="text-sm font-medium">
+                District Name <span className="text-red-500">*</span>
+              </label>
+              <Input
+                id="districtName"
+                type="text"
+                placeholder="e.g. Nairobi Central District"
+                value={newDistrictName}
+                onChange={(e) => setNewDistrictName(e.target.value)}
+                autoFocus
+              />
+              <p className="text-xs text-muted-foreground">
+                Enter the official district name as registered.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleCancelAdd}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveDistrict}
+              disabled={!newDistrictName.trim()}
+            >
+              Save District
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
                 <TableCell colSpan={5} className="h-24 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <p className="text-sm text-muted-foreground">
