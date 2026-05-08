@@ -227,7 +227,7 @@ export function PastorsManager() {
       return;
     }
 
-    // Calculate years of service
+    // Calculate years of service (current year - start of service year)
     const startYear = new Date(formData.startOfService).getFullYear();
     const currentYear = new Date().getFullYear();
     const yearsOfService = currentYear - startYear;
@@ -321,7 +321,7 @@ export function PastorsManager() {
       return;
     }
 
-    // Calculate years of service
+    // Calculate years of service (current year - start of service year)
     const startYear = new Date(editFormData.startOfService).getFullYear();
     const currentYear = new Date().getFullYear();
     const yearsOfService = currentYear - startYear;
