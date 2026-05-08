@@ -232,9 +232,10 @@ export function PastorsManager() {
     const currentYear = new Date().getFullYear();
     const yearsOfService = currentYear - startYear;
 
-    // Calculate age from date of birth
+    // Calculate age from date of birth (current year - birth year)
     const birthDate = new Date(formData.dateOfBirth);
-    const age = currentYear - birthDate.getFullYear();
+    const birthYear = birthDate.getFullYear();
+    const age = currentYear - birthYear;
 
     // Calculate projected retirement (assume retirement at age 72)
     const retirementAge = 72;
@@ -325,9 +326,10 @@ export function PastorsManager() {
     const currentYear = new Date().getFullYear();
     const yearsOfService = currentYear - startYear;
 
-    // Calculate age from date of birth
+    // Calculate age from date of birth (current year - birth year)
     const birthDate = new Date(editFormData.dateOfBirth);
-    const age = currentYear - birthDate.getFullYear();
+    const birthYear = birthDate.getFullYear();
+    const age = currentYear - birthYear;
 
     // Calculate projected retirement (assume retirement at age 72)
     const retirementAge = 72;
