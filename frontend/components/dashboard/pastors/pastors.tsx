@@ -638,40 +638,37 @@ export function PastorsManager() {
               <span className="text-sm text-muted-foreground">By Rank</span>
             </div>
             <div className="flex items-end gap-1">
-              <div className="flex flex-col items-center gap-1">
-                <div
-                  className="w-8 rounded-t bg-brand-primary"
-                  style={{ height: `${(rankStats.reverend / stats.total) * 60}px` }}
-                />
-                <span className="text-xs text-muted-foreground">Rev</span>
-              </div>
+              {/* Bishop */}
               <div className="flex flex-col items-center gap-1">
                 <div
                   className="w-8 rounded-t bg-blue-400"
-                  style={{ height: `${(rankStats.bishop / stats.total) * 60}px` }}
+                  style={{ height: `${rankStats.bishop > 0 ? (rankStats.bishop / stats.total) * 60 : 2}px` }}
                 />
                 <span className="text-xs text-muted-foreground">Bis</span>
               </div>
-              <div className="flex flex-col items-center gap-1">
-                <div
-                  className="w-8 rounded-t bg-blue-300"
-                  style={{ height: `${(rankStats.pastor / stats.total) * 60}px` }}
-                />
-                <span className="text-xs text-muted-foreground">Pas</span>
-              </div>
+              {/* Presbyter */}
               <div className="flex flex-col items-center gap-1">
                 <div
                   className="w-8 rounded-t bg-emerald-400"
-                  style={{ height: `${(rankStats.presbyter / stats.total) * 60}px` }}
+                  style={{ height: `${rankStats.presbyter > 0 ? (rankStats.presbyter / stats.total) * 60 : 2}px` }}
                 />
                 <span className="text-xs text-muted-foreground">Pre</span>
               </div>
+              {/* Reverend */}
               <div className="flex flex-col items-center gap-1">
                 <div
-                  className="w-8 rounded-t bg-slate-300"
-                  style={{ height: "30px" }}
+                  className="w-8 rounded-t bg-brand-primary"
+                  style={{ height: `${rankStats.reverend > 0 ? (rankStats.reverend / stats.total) * 60 : 2}px` }}
                 />
-                <span className="text-xs text-muted-foreground">Oth</span>
+                <span className="text-xs text-muted-foreground">Rev</span>
+              </div>
+              {/* Pastor */}
+              <div className="flex flex-col items-center gap-1">
+                <div
+                  className="w-8 rounded-t bg-blue-300"
+                  style={{ height: `${rankStats.pastor > 0 ? (rankStats.pastor / stats.total) * 60 : 2}px` }}
+                />
+                <span className="text-xs text-muted-foreground">Pas</span>
               </div>
             </div>
           </CardContent>
