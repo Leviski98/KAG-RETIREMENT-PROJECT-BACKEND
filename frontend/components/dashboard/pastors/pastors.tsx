@@ -1094,7 +1094,7 @@ export function PastorsManager() {
                     <SelectItem value="Senior Pastor">Senior Pastor</SelectItem>
                     <SelectItem value="Associate Pastor">Associate Pastor</SelectItem>
                     <SelectItem value="Youth Pastor">Youth Pastor</SelectItem>
-                    <SelectItem value="Children's Minister">Children&apos;s Minister</SelectItem>
+                    <SelectItem value="Children's Minister">Childrens Minister</SelectItem>
                     <SelectItem value="Worship Pastor">Worship Pastor</SelectItem>
                     <SelectItem value="Evangelism Pastor">Evangelism Pastor</SelectItem>
                     <SelectItem value="District Overseer">District Overseer</SelectItem>
