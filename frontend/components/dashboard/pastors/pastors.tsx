@@ -243,8 +243,8 @@ export function PastorsManager() {
     const retirementMonth = birthDate.toLocaleString('default', { month: 'short' });
     const projected_retirement = `${retirementMonth} ${retirementYear}`;
 
-    // Calculate remaining tenure
-    const remaining_tenure = Math.max(0, retirementYear - currentYear);
+    // Calculate remaining tenure (70 years - current age)
+    const remaining_tenure = Math.max(0, 70 - age);
 
     // Generate unique ID by finding the highest existing ID number
     const maxId = pastors.reduce((max, p) => {
@@ -337,8 +337,8 @@ export function PastorsManager() {
     const retirementMonth = birthDate.toLocaleString('default', { month: 'short' });
     const projected_retirement = `${retirementMonth} ${retirementYear}`;
 
-    // Calculate remaining tenure
-    const remaining_tenure = Math.max(0, retirementYear - currentYear);
+    // Calculate remaining tenure (70 years - current age)
+    const remaining_tenure = Math.max(0, 70 - age);
 
     // Update pastor in array
     setPastors(pastors.map(p => 
