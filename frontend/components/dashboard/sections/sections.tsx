@@ -88,7 +88,7 @@ const mockDistricts = [
 export function SectionsManager() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("all");
-  const [sections] = useState<SectionWithDetails[]>(mockSectionsData);
+  const [sections, setSections] = useState<SectionWithDetails[]>(mockSectionsData);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newSectionName, setNewSectionName] = useState("");
   const [selectedDistrictForNew, setSelectedDistrictForNew] = useState("");
@@ -149,6 +149,21 @@ export function SectionsManager() {
       return;
     }
 
+    // Find the district name
+    const district = mockDistricts.find(d => d.id === selectedDistrictForNew);
+    
+    // Create new section
+    const newSection: SectionWithDetails = {
+      id: `SEC${String(sections.length + 1).padStart(3, '0')}`,
+      section_name: newSectionName,
+      district_id: selectedDistrictForNew,
+      district_name: district?.name || '',
+      churches_count: 0,
+      created_at: new Date().toISOString(),
+    };
+
+    // Add to sections array
+    setSections([...sections, newSection]);
     console.log("Saving section:", {
       name: newSectionName,
       districtId: selectedDistrictForNew,
@@ -181,6 +196,21 @@ export function SectionsManager() {
       return;
     }
 
+    // Find the district name
+    const district = mockDistricts.find(d => d.id === editSelectedDistrict);
+    
+    // Update section in array
+    setSections(sections.map(s => 
+      s.id === editingSectionId
+        ? { 
+            ...s, 
+            section_name: editSectionName,
+            district_id: editSelectedDistrict,
+            district_name: district?.name || s.district_name
+          }
+        : s
+    ));
+
     console.log("Updating section:", {
       id: editingSectionId,
       name: editSectionName,
@@ -212,22 +242,27 @@ export function SectionsManager() {
   };
 
   const handleConfirmDelete = () => {
-    console.log("Deleting section:", deletingSectionId);
-    // TODO: Implement API call to delete section
+    if (deletingSectionId) {
+      // Remove section from array
+      setSections(sections.filter(s => s.id !== deletingSectionId));
+      
+      console.log("Deleting section:", deletingSectionId);
+      // TODO: Implement API call to delete section
 
-    // Reset state and close dialog
-    setDeletingSectionId(null);
-    setDeletingSectionName("");
-    setIsDeleteDialogOpen(false);
+      // Reset state and close dialog
+      setDeletingSectionId(null);
+      setDeletingSectionName("");
+      setIsDeleteDialogOpen(false);
     
-    // Show success message
-    setSuccessMessage("Section deleted successfully.");
-    setShowSuccessToast(true);
+      // Show success message
+      setSuccessMessage("Section deleted successfully.");
+      setShowSuccessToast(true);
     
-    // Auto-hide toast after 5 seconds
-    setTimeout(() => {
-      setShowSuccessToast(false);
-    }, 5000);
+      // Auto-hide toast after 5 seconds
+      setTimeout(() => {
+        setShowSuccessToast(false);
+      }, 5000);
+    }
   };
 
   const handleCancelDelete = () => {

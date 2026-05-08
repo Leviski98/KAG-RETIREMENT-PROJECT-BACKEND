@@ -61,7 +61,7 @@ const mockDistrictsData: DistrictWithSections[] = [
 
 export function DistrictsManager() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [districts] = useState<DistrictWithSections[]>(mockDistrictsData);
+  const [districts, setDistricts] = useState<DistrictWithSections[]>(mockDistrictsData);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newDistrictName, setNewDistrictName] = useState("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -97,6 +97,9 @@ export function DistrictsManager() {
 
   const handleConfirmDelete = () => {
     if (districtToDelete) {
+      // Remove district from array
+      setDistricts(districts.filter(d => d.id !== districtToDelete.id));
+      
       console.log("Deleting district:", districtToDelete.id);
       // TODO: Implement API call to delete district
       
@@ -128,6 +131,16 @@ export function DistrictsManager() {
       return;
     }
     
+    // Create new district
+    const newDistrict: DistrictWithSections = {
+      id: `DIS${String(districts.length + 1).padStart(3, '0')}`,
+      district_name: newDistrictName,
+      sections_count: 0,
+      created_at: new Date().toISOString(),
+    };
+    
+    // Add to districts array
+    setDistricts([...districts, newDistrict]);
     console.log("Saving district:", newDistrictName);
     // TODO: Implement API call to save district
     
@@ -151,9 +164,16 @@ export function DistrictsManager() {
   };
 
   const handleSaveEdit = () => {
-    if (!editDistrictName.trim()) {
+    if (!editDistrictName.trim() || !editingDistrict) {
       return;
     }
+    
+    // Update district in array
+    setDistricts(districts.map(d => 
+      d.id === editingDistrict.id 
+        ? { ...d, district_name: editDistrictName }
+        : d
+    ));
     
     console.log("Updating district:", editingDistrict?.id, editDistrictName);
     // TODO: Implement API call to update district
