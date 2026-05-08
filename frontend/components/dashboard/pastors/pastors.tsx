@@ -244,7 +244,8 @@ export function PastorsManager() {
     const projected_retirement = `${retirementMonth} ${retirementYear}`;
 
     // Calculate remaining tenure (70 years - current age)
-    const remaining_tenure = Math.max(0, 70 - age);
+    // Set to 0 for deceased pastors
+    const remaining_tenure = formData.status === 'deceased' ? 0 : Math.max(0, 70 - age);
 
     // Generate unique ID by finding the highest existing ID number
     const maxId = pastors.reduce((max, p) => {
@@ -338,7 +339,8 @@ export function PastorsManager() {
     const projected_retirement = `${retirementMonth} ${retirementYear}`;
 
     // Calculate remaining tenure (70 years - current age)
-    const remaining_tenure = Math.max(0, 70 - age);
+    // Set to 0 for deceased pastors
+    const remaining_tenure = editFormData.status === 'deceased' ? 0 : Math.max(0, 70 - age);
 
     // Update pastor in array
     setPastors(pastors.map(p => 
