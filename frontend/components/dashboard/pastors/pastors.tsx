@@ -37,6 +37,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
   Plus,
   Search,
   Eye,
@@ -51,6 +58,8 @@ import {
   ExternalLink,
   AlertTriangle,
   CheckCircle2,
+  Download,
+  ChevronDown,
 } from "lucide-react";
 import { mockPastors } from "@/lib/mock-data/mock-pastors";
 import { Pastor, PastorRank, PastorStatus } from "@/types/pastor";
@@ -102,6 +111,9 @@ export function PastorsManager() {
   // Success toast state
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  
+  // Export dropdown state
+  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
 
   // Calculate stats from current pastors state
   const stats = {
@@ -402,6 +414,121 @@ export function PastorsManager() {
     return name.substring(0, 2).toUpperCase();
   };
 
+  const handleExportPDF = (exportAll: boolean) => {
+    const dataToExport = exportAll ? pastors : filteredPastors;
+    const exportType = exportAll ? "All Pastors" : "Filtered Results";
+    
+    // Create print-friendly content
+    const printWindow = window.open('', '', 'height=800,width=1000');
+    if (!printWindow) return;
+    
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Pastors Export - ${exportType}</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              padding: 20px;
+              color: #000;
+            }
+            h1 { 
+              font-size: 24px; 
+              margin-bottom: 10px;
+              color: #1a1a1a;
+            }
+            .subtitle { 
+              color: #666; 
+              margin-bottom: 20px; 
+              font-size: 14px;
+            }
+            table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin-top: 20px;
+              font-size: 12px;
+            }
+            th, td { 
+              border: 1px solid #ddd; 
+              padding: 8px; 
+              text-align: left; 
+            }
+            th { 
+              background-color: #f8f9fa; 
+              font-weight: 600;
+              color: #1a1a1a;
+            }
+            tr:nth-child(even) { 
+              background-color: #f9f9f9; 
+            }
+            .status-active { color: #059669; font-weight: 500; }
+            .status-retired { color: #7c3aed; font-weight: 500; }
+            .status-suspended { color: #dc2626; font-weight: 500; }
+            .status-deceased { color: #6b7280; font-weight: 500; }
+            .text-center { text-align: center; }
+            @media print {
+              body { padding: 10px; }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Pastors Manager - ${exportType}</h1>
+          <div class="subtitle">
+            ${dataToExport.length} records | Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+            ${!exportAll && searchQuery ? `<br/>Search: "${searchQuery}"` : ''}
+            ${!exportAll && selectedRank !== 'all' ? `<br/>Rank: ${selectedRank}` : ''}
+            ${!exportAll && selectedStatus !== 'all' ? `<br/>Status: ${selectedStatus}` : ''}
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Rank</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th class="text-center">Age</th>
+                <th class="text-center">Years Served</th>
+                <th>Proj. Retirement</th>
+                <th class="text-center">Remaining Tenure</th>
+                <th>Phone</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${dataToExport.map(pastor => `
+                <tr>
+                  <td>${pastor.id}</td>
+                  <td>${pastor.full_name}</td>
+                  <td>${pastor.rank}</td>
+                  <td>${pastor.role || '-'}</td>
+                  <td class="status-${pastor.status}">${pastor.status.charAt(0).toUpperCase() + pastor.status.slice(1)}</td>
+                  <td class="text-center">${pastor.age || '-'}</td>
+                  <td class="text-center">${pastor.years_of_service ? pastor.years_of_service + ' yrs' : '-'}</td>
+                  <td>${pastor.projected_retirement || '-'}</td>
+                  <td class="text-center">${pastor.remaining_tenure ? pastor.remaining_tenure + ' yrs' : '-'}</td>
+                  <td>${pastor.phone_number || '-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+    
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    
+    // Wait for content to load, then print
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    };
+    
+    setIsExportDropdownOpen(false);
+  };
+
   return (
     <div className="flex flex-col gap-6 p-6">
       {/* Success Toast */}
@@ -570,6 +697,57 @@ export function PastorsManager() {
           <span className="text-sm text-muted-foreground">
             {filteredPastors.length} pastors
           </span>
+          
+          <DropdownMenu open={isExportDropdownOpen} onOpenChange={setIsExportDropdownOpen}>
+            <DropdownMenuTrigger>
+              <Button variant="outline" size="default" className="gap-2">
+                <Download className="size-4" />
+                Export PDF
+                <ChevronDown className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <div className="px-2 py-1.5">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Export as PDF
+                </p>
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => handleExportPDF(true)}
+                className="flex flex-col items-start py-3 cursor-pointer"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-medium">All Pastors</span>
+                  <Printer className="size-4 text-muted-foreground" />
+                </div>
+                <span className="text-xs text-muted-foreground mt-0.5">
+                  {pastors.length} records
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleExportPDF(false)}
+                className="flex flex-col items-start py-3 cursor-pointer"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-medium">Filtered Results</span>
+                  <Printer className="size-4 text-muted-foreground" />
+                </div>
+                <span className="text-xs text-muted-foreground mt-0.5">
+                  {searchQuery || selectedRank !== 'all' || selectedStatus !== 'all' 
+                    ? `${filteredPastors.length} records with active filters`
+                    : 'No filters applied'}
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <div className="px-2 py-1.5">
+                <p className="text-xs text-muted-foreground">
+                  Includes all auto-calculated fields
+                </p>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           <div className="flex items-center rounded-lg border">
             <Button
               variant="ghost"
