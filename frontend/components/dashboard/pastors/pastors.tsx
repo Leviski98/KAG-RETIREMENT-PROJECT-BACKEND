@@ -243,9 +243,15 @@ export function PastorsManager() {
     const retirementMonth = birthDate.toLocaleString('default', { month: 'short' });
     const projected_retirement = `${retirementMonth} ${retirementYear}`;
 
+    // Auto-change status to retired if age >= 70 and currently active
+    let finalStatus = formData.status as PastorStatus;
+    if (age >= 70 && formData.status === 'active') {
+      finalStatus = 'retired';
+    }
+
     // Calculate remaining tenure (70 years - current age)
-    // Set to 0 for deceased pastors
-    const remaining_tenure = formData.status === 'deceased' ? 0 : Math.max(0, 70 - age);
+    // Set to 0 for deceased and retired pastors
+    const remaining_tenure = (finalStatus === 'deceased' || finalStatus === 'retired') ? 0 : Math.max(0, 70 - age);
 
     // Generate unique ID by finding the highest existing ID number
     const maxId = pastors.reduce((max, p) => {
@@ -262,7 +268,7 @@ export function PastorsManager() {
       role: formData.role || undefined,
       date_of_birth: formData.dateOfBirth || new Date().toISOString(),
       age: age,
-      status: formData.status as PastorStatus,
+      status: finalStatus,
       phone_number: formData.phoneNumber,
       email: `${formData.fullName.toLowerCase().replace(/\s+/g, '.')}@kag.org`,
       national_id: formData.nationalId || undefined,
@@ -338,9 +344,15 @@ export function PastorsManager() {
     const retirementMonth = birthDate.toLocaleString('default', { month: 'short' });
     const projected_retirement = `${retirementMonth} ${retirementYear}`;
 
+    // Auto-change status to retired if age >= 70 and currently active
+    let finalStatus = editFormData.status as PastorStatus;
+    if (age >= 70 && editFormData.status === 'active') {
+      finalStatus = 'retired';
+    }
+
     // Calculate remaining tenure (70 years - current age)
-    // Set to 0 for deceased pastors
-    const remaining_tenure = editFormData.status === 'deceased' ? 0 : Math.max(0, 70 - age);
+    // Set to 0 for deceased and retired pastors
+    const remaining_tenure = (finalStatus === 'deceased' || finalStatus === 'retired') ? 0 : Math.max(0, 70 - age);
 
     // Update pastor in array
     setPastors(pastors.map(p => 
@@ -352,7 +364,7 @@ export function PastorsManager() {
             role: editFormData.role || undefined,
             date_of_birth: editFormData.dateOfBirth || p.date_of_birth,
             age: age,
-            status: editFormData.status as PastorStatus,
+            status: finalStatus,
             phone_number: editFormData.phoneNumber,
             national_id: editFormData.nationalId || undefined,
             years_of_service: yearsOfService,
