@@ -1,5 +1,24 @@
 import type { PastorTitle } from "@/types/church";
 
+// Pastor status options
+export const PASTOR_STATUS = {
+  ACTIVE: 'active',
+  RETIRED: 'retired',
+  DECEASED: 'deceased',
+} as const;
+
+export const PASTOR_STATUS_OPTIONS = [
+  { value: 'active', label: 'Active' },
+  { value: 'retired', label: 'Retired' },
+  { value: 'deceased', label: 'Deceased' },
+];
+
+export const PASTOR_STATUS_LABELS: Record<string, string> = {
+  active: 'Active',
+  retired: 'Retired',
+  deceased: 'Deceased',
+};
+
 export const PASTOR_TITLE_COLORS: Record<PastorTitle, string> = {
   Reverend: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300",
   Bishop: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
