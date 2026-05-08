@@ -88,7 +88,6 @@ const mockDistricts = [
 export function SectionsManager() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("all");
-  const [selectedStatus, setSelectedStatus] = useState("all");
   const [sections] = useState<SectionWithDetails[]>(mockSectionsData);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newSectionName, setNewSectionName] = useState("");
@@ -109,13 +108,18 @@ export function SectionsManager() {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Filter sections based on search query
-  const filteredSections = sections.filter(
-    (section) =>
+  // Filter sections based on search query and district
+  const filteredSections = sections.filter((section) => {
+    const matchesSearch =
       section.section_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       section.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      section.district_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      section.district_name.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesDistrict =
+      selectedDistrict === "all" || section.district_id === selectedDistrict;
+
+    return matchesSearch && matchesDistrict;
+  });
 
   const handleEdit = (id: string) => {
     const section = sections.find((s) => s.id === id);
@@ -282,24 +286,10 @@ export function SectionsManager() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Districts</SelectItem>
-            <SelectItem value="kisumu">Kisumu Lakeside</SelectItem>
-            <SelectItem value="machakos">Machakos Eastern</SelectItem>
-            <SelectItem value="migori">Migori South Nyanza</SelectItem>
-            <SelectItem value="mombasa">Mombasa Coastal</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={selectedStatus}
-          onValueChange={(value) => setSelectedStatus(value || "all")}
-        >
-          <SelectTrigger className="w-fit min-w-37.5">
-            <SelectValue placeholder="Filter" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Sections</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="DIS001">Kisumu Lakeside</SelectItem>
+            <SelectItem value="DIS002">Machakos Eastern</SelectItem>
+            <SelectItem value="DIS003">Migori South Nyanza</SelectItem>
+            <SelectItem value="DIS004">Mombasa Coastal</SelectItem>
           </SelectContent>
         </Select>
 

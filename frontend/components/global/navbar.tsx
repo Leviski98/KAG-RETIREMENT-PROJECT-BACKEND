@@ -1,10 +1,9 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { BellIcon, SearchIcon } from "lucide-react";
+import { BellIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const BREADCRUMB_MAP: Record<string, string> = {
@@ -59,15 +58,6 @@ export function Navbar() {
 
       {/* Right side */}
       <div className="flex items-center gap-2">
-        {/* Search */}
-        <div className="relative hidden md:block">
-          <SearchIcon className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search churches or pastors..."
-            className="h-8 w-60 pl-8 text-xs"
-          />
-        </div>
-
         {/* Notifications */}
         <Button variant="ghost" size="icon-sm" className="relative">
           <BellIcon className="size-4" />
