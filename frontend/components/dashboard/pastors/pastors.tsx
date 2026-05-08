@@ -237,8 +237,8 @@ export function PastorsManager() {
     const birthYear = birthDate.getFullYear();
     const age = currentYear - birthYear;
 
-    // Calculate projected retirement (assume retirement at age 72)
-    const retirementAge = 72;
+    // Calculate projected retirement (assume retirement at age 70)
+    const retirementAge = 70;
     const retirementYear = birthDate.getFullYear() + retirementAge;
     const retirementMonth = birthDate.toLocaleString('default', { month: 'short' });
     const projected_retirement = `${retirementMonth} ${retirementYear}`;
@@ -331,8 +331,8 @@ export function PastorsManager() {
     const birthYear = birthDate.getFullYear();
     const age = currentYear - birthYear;
 
-    // Calculate projected retirement (assume retirement at age 72)
-    const retirementAge = 72;
+    // Calculate projected retirement (assume retirement at age 70)
+    const retirementAge = 70;
     const retirementYear = birthDate.getFullYear() + retirementAge;
     const retirementMonth = birthDate.toLocaleString('default', { month: 'short' });
     const projected_retirement = `${retirementMonth} ${retirementYear}`;
