@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
 
@@ -93,6 +93,21 @@ export function SectionsManager() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newSectionName, setNewSectionName] = useState("");
   const [selectedDistrictForNew, setSelectedDistrictForNew] = useState("");
+  
+  // Edit dialog state
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
+  const [editSectionName, setEditSectionName] = useState("");
+  const [editSelectedDistrict, setEditSelectedDistrict] = useState("");
+  
+  // Delete dialog state
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingSectionId, setDeletingSectionId] = useState<string | null>(null);
+  const [deletingSectionName, setDeletingSectionName] = useState("");
+  
+  // Success toast state
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Filter sections based on search query
   const filteredSections = sections.filter(
@@ -103,13 +118,22 @@ export function SectionsManager() {
   );
 
   const handleEdit = (id: string) => {
-    console.log("Edit section:", id);
-    // TODO: Implement edit functionality
+    const section = sections.find((s) => s.id === id);
+    if (section) {
+      setEditingSectionId(section.id);
+      setEditSectionName(section.section_name);
+      setEditSelectedDistrict(section.district_id);
+      setIsEditDialogOpen(true);
+    }
   };
 
   const handleDelete = (id: string) => {
-    console.log("Delete section:", id);
-    // TODO: Implement delete functionality
+    const section = sections.find((s) => s.id === id);
+    if (section) {
+      setDeletingSectionId(section.id);
+      setDeletingSectionName(section.section_name);
+      setIsDeleteDialogOpen(true);
+    }
   };
 
   const handleAddSection = () => {
@@ -131,6 +155,15 @@ export function SectionsManager() {
     setNewSectionName("");
     setSelectedDistrictForNew("");
     setIsAddDialogOpen(false);
+    
+    // Show success message
+    setSuccessMessage("Section added successfully.");
+    setShowSuccessToast(true);
+    
+    // Auto-hide toast after 5 seconds
+    setTimeout(() => {
+      setShowSuccessToast(false);
+    }, 5000);
   };
 
   const handleCancelAdd = () => {
@@ -139,8 +172,82 @@ export function SectionsManager() {
     setIsAddDialogOpen(false);
   };
 
+  const handleSaveEdit = () => {
+    if (!editSectionName.trim() || !editSelectedDistrict) {
+      return;
+    }
+
+    console.log("Updating section:", {
+      id: editingSectionId,
+      name: editSectionName,
+      districtId: editSelectedDistrict,
+    });
+    // TODO: Implement API call to update section
+
+    // Reset form and close dialog
+    setEditingSectionId(null);
+    setEditSectionName("");
+    setEditSelectedDistrict("");
+    setIsEditDialogOpen(false);
+    
+    // Show success message
+    setSuccessMessage("Section updated successfully.");
+    setShowSuccessToast(true);
+    
+    // Auto-hide toast after 5 seconds
+    setTimeout(() => {
+      setShowSuccessToast(false);
+    }, 5000);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingSectionId(null);
+    setEditSectionName("");
+    setEditSelectedDistrict("");
+    setIsEditDialogOpen(false);
+  };
+
+  const handleConfirmDelete = () => {
+    console.log("Deleting section:", deletingSectionId);
+    // TODO: Implement API call to delete section
+
+    // Reset state and close dialog
+    setDeletingSectionId(null);
+    setDeletingSectionName("");
+    setIsDeleteDialogOpen(false);
+    
+    // Show success message
+    setSuccessMessage("Section deleted successfully.");
+    setShowSuccessToast(true);
+    
+    // Auto-hide toast after 5 seconds
+    setTimeout(() => {
+      setShowSuccessToast(false);
+    }, 5000);
+  };
+
+  const handleCancelDelete = () => {
+    setDeletingSectionId(null);
+    setDeletingSectionName("");
+    setIsDeleteDialogOpen(false);
+  };
+
   return (
     <div className="flex flex-col gap-6 p-6">
+      {/* Success Toast */}
+      {showSuccessToast && (
+        <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-2 duration-300">
+          <div className="flex items-center gap-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-3 shadow-lg">
+            <div className="flex size-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
+              <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              {successMessage}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <PageHeader
         title="Sections Manager"
@@ -352,6 +459,120 @@ export function SectionsManager() {
               disabled={!newSectionName.trim() || !selectedDistrictForNew}
             >
               Save Section
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Section Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Section</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4 py-4">
+            {/* Section Name Field */}
+            <div className="flex flex-col gap-2">
+              <label htmlFor="editSectionName" className="text-sm font-medium">
+                Section Name <span className="text-red-500">*</span>
+              </label>
+              <Input
+                id="editSectionName"
+                type="text"
+                placeholder="Ahero Section"
+                value={editSectionName}
+                onChange={(e) => setEditSectionName(e.target.value)}
+                autoFocus
+              />
+              <p className="text-xs text-muted-foreground">
+                Enter the official section name.
+              </p>
+            </div>
+
+            {/* District Field */}
+            <div className="flex flex-col gap-2">
+              <label htmlFor="editDistrict" className="text-sm font-medium">
+                District <span className="text-red-500">*</span>
+              </label>
+              <Select
+                value={editSelectedDistrict}
+                onValueChange={(value) => setEditSelectedDistrict(value || "")}
+              >
+                <SelectTrigger id="editDistrict">
+                  <SelectValue placeholder="Select district">
+                    {editSelectedDistrict
+                      ? mockDistricts.find((d) => d.id === editSelectedDistrict)?.name
+                      : "Select district"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {mockDistricts.map((district) => (
+                    <SelectItem key={district.id} value={district.id}>
+                      {district.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Select the district this section belongs to.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelEdit}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveEdit}
+              disabled={!editSectionName.trim() || !editSelectedDistrict}
+            >
+              Save Section
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <div className="flex flex-col items-center gap-4 py-4">
+            {/* Warning Icon */}
+            <div className="flex size-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+              <AlertTriangle className="size-8 text-amber-600 dark:text-amber-500" />
+            </div>
+
+            {/* Title */}
+            <DialogHeader className="text-center">
+              <DialogTitle className="text-2xl">Delete Section?</DialogTitle>
+            </DialogHeader>
+
+            {/* Description */}
+            <p className="text-center text-muted-foreground">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-foreground">
+                {deletingSectionName}
+              </span>
+              ? This action cannot be undone and will affect all related
+              churches.
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={handleCancelDelete}
+              className="flex-1 sm:flex-none"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              className="flex-1 sm:flex-none"
+            >
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>

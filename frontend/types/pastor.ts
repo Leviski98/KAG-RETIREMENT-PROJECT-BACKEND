@@ -1,5 +1,5 @@
 ﻿// Pastor type definitions
-export type PastorStatus = 'active' | 'retired' | 'deceased';
+export type PastorStatus = 'active' | 'retired' | 'suspended' | 'deceased';
 export type PastorRank = 'Reverend' | 'Bishop' | 'Pastor' | 'Presbyter';
 
 export interface Pastor {

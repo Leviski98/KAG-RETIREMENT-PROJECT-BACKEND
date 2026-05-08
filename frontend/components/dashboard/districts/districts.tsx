@@ -20,14 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Plus, Search, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 
 // Extended district interface with sections count
@@ -68,12 +61,16 @@ const mockDistrictsData: DistrictWithSections[] = [
 
 export function DistrictsManager() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState("all");
   const [districts] = useState<DistrictWithSections[]>(mockDistrictsData);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newDistrictName, setNewDistrictName] = useState("");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingDistrict, setEditingDistrict] = useState<DistrictWithSections | null>(null);
+  const [editDistrictName, setEditDistrictName] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [districtToDelete, setDistrictToDelete] = useState<DistrictWithSections | null>(null);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Filter districts based on search query
   const filteredDistricts = districts.filter((district) =>
@@ -82,8 +79,12 @@ export function DistrictsManager() {
   );
 
   const handleEdit = (id: string) => {
-    console.log("Edit district:", id);
-    // TODO: Implement edit functionality
+    const district = districts.find((d) => d.id === id);
+    if (district) {
+      setEditingDistrict(district);
+      setEditDistrictName(district.district_name);
+      setIsEditDialogOpen(true);
+    }
   };
 
   const handleDelete = (id: string) => {
@@ -101,6 +102,15 @@ export function DistrictsManager() {
       
       setDistrictToDelete(null);
       setIsDeleteDialogOpen(false);
+      
+      // Show success message
+      setSuccessMessage("District deleted successfully.");
+      setShowSuccessToast(true);
+      
+      // Auto-hide toast after 5 seconds
+      setTimeout(() => {
+        setShowSuccessToast(false);
+      }, 5000);
     }
   };
 
@@ -124,6 +134,15 @@ export function DistrictsManager() {
     // Reset form and close dialog
     setNewDistrictName("");
     setIsAddDialogOpen(false);
+    
+    // Show success message
+    setSuccessMessage("District added successfully.");
+    setShowSuccessToast(true);
+    
+    // Auto-hide toast after 5 seconds
+    setTimeout(() => {
+      setShowSuccessToast(false);
+    }, 5000);
   };
 
   const handleCancelAdd = () => {
@@ -131,8 +150,51 @@ export function DistrictsManager() {
     setIsAddDialogOpen(false);
   };
 
+  const handleSaveEdit = () => {
+    if (!editDistrictName.trim()) {
+      return;
+    }
+    
+    console.log("Updating district:", editingDistrict?.id, editDistrictName);
+    // TODO: Implement API call to update district
+    
+    // Reset form and close dialog
+    setEditDistrictName("");
+    setEditingDistrict(null);
+    setIsEditDialogOpen(false);
+    
+    // Show success message
+    setSuccessMessage("District updated successfully.");
+    setShowSuccessToast(true);
+    
+    // Auto-hide toast after 5 seconds
+    setTimeout(() => {
+      setShowSuccessToast(false);
+    }, 5000);
+  };
+
+  const handleCancelEdit = () => {
+    setEditDistrictName("");
+    setEditingDistrict(null);
+    setIsEditDialogOpen(false);
+  };
+
   return (
     <div className="flex flex-col gap-6 p-6">
+      {/* Success Toast */}
+      {showSuccessToast && (
+        <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-2 duration-300">
+          <div className="flex items-center gap-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-3 shadow-lg">
+            <div className="flex size-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
+              <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              {successMessage}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <PageHeader
         title="Districts Manager"
@@ -145,7 +207,7 @@ export function DistrictsManager() {
         }
       />
 
-      {/* Search and Filter Bar */}
+      {/* Search Bar */}
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -157,17 +219,6 @@ export function DistrictsManager() {
             className="pl-9"
           />
         </div>
-        
-        <Select value={selectedFilter} onValueChange={(value) => setSelectedFilter(value || "all")}>
-          <SelectTrigger className="w-fit">
-            <SelectValue placeholder="Filter" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Districts</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-          </SelectContent>
-        </Select>
 
         <div className="ml-auto text-sm text-muted-foreground">
           Showing {filteredDistricts.length} districts
@@ -291,6 +342,49 @@ export function DistrictsManager() {
             <Button
               onClick={handleSaveDistrict}
               disabled={!newDistrictName.trim()}
+            >
+              Save District
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit District Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit District</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4 py-4">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="editDistrictName" className="text-sm font-medium">
+                District Name <span className="text-red-500">*</span>
+              </label>
+              <Input
+                id="editDistrictName"
+                type="text"
+                placeholder="e.g. Nairobi Central District"
+                value={editDistrictName}
+                onChange={(e) => setEditDistrictName(e.target.value)}
+                autoFocus
+              />
+              <p className="text-xs text-muted-foreground">
+                Enter the official district name as registered.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleCancelEdit}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveEdit}
+              disabled={!editDistrictName.trim()}
             >
               Save District
             </Button>

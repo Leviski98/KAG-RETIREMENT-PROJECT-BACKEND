@@ -30,7 +30,7 @@ export const mockPastors: Pastor[] = [
     full_name: "Pastor Mary Wanjiku",
     rank: "Pastor",
     date_of_birth: "1965-11-10T00:00:00Z",
-    status: "active",
+    status: "suspended",
     phone_number: "+254712345003",
     email: "mary.wanjiku@kag.org",
     years_of_service: 28,
@@ -54,7 +54,7 @@ export const mockPastors: Pastor[] = [
     full_name: "Rev. Sarah Akinyi",
     rank: "Reverend",
     date_of_birth: "1960-09-05T00:00:00Z",
-    status: "active",
+    status: "suspended",
     phone_number: "+254712345005",
     email: "sarah.akinyi@kag.org",
     years_of_service: 30,
@@ -91,7 +91,7 @@ export const mockPastors: Pastor[] = [
     full_name: "Rev. Thomas Kipchoge",
     rank: "Reverend",
     date_of_birth: "1962-02-28T00:00:00Z",
-    status: "active",
+    status: "deceased",
     phone_number: "+254712345008",
     email: "thomas.kipchoge@kag.org",
     years_of_service: 31,
@@ -103,7 +103,7 @@ export const mockPastors: Pastor[] = [
     full_name: "Presbyter Ruth Wambui",
     rank: "Presbyter",
     date_of_birth: "1972-08-14T00:00:00Z",
-    status: "active",
+    status: "deceased",
     phone_number: "+254712345009",
     email: "ruth.wambui@kag.org",
     years_of_service: 20,
@@ -143,9 +143,10 @@ export const getPastorStats = () => {
   const total = mockPastors.length;
   const active = mockPastors.filter((p) => p.status === "active").length;
   const retired = mockPastors.filter((p) => p.status === "retired").length;
+  const suspended = mockPastors.filter((p) => p.status === "suspended").length;
   const deceased = mockPastors.filter((p) => p.status === "deceased").length;
 
-  return { total, active, retired, deceased };
+  return { total, active, retired, suspended, deceased };
 };
 
 export const getPastorRankStats = () => {
