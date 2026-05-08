@@ -60,6 +60,8 @@ import {
   CheckCircle2,
   Download,
   ChevronDown,
+  UserX,
+  X,
 } from "lucide-react";
 import { mockPastors } from "@/lib/mock-data/mock-pastors";
 import { Pastor, PastorRank, PastorStatus } from "@/types/pastor";
@@ -558,7 +560,7 @@ export function PastorsManager() {
       />
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
         {/* Total Pastors */}
         <Card>
           <CardContent className="flex items-center gap-4 p-4">
@@ -596,6 +598,32 @@ export function PastorsManager() {
             <div className="flex flex-col">
               <span className="text-sm text-muted-foreground">Retired</span>
               <span className="text-2xl font-bold">{stats.retired}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Suspended */}
+        <Card>
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex size-12 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/30">
+              <UserX className="size-6 text-orange-600 dark:text-orange-400" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-muted-foreground">Suspended</span>
+              <span className="text-2xl font-bold">{stats.suspended}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Deceased */}
+        <Card>
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex size-12 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
+              <X className="size-6 text-gray-600 dark:text-gray-400" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-muted-foreground">Deceased</span>
+              <span className="text-2xl font-bold">{stats.deceased}</span>
             </div>
           </CardContent>
         </Card>
