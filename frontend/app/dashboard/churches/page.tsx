@@ -16,6 +16,7 @@ export default function ChurchesPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
+      
         title="Church Manager"
         description="View and manage all churches, their roles, and pastor assignments."
         action={
