@@ -1093,11 +1093,11 @@ export function PastorsManager() {
                     <SelectItem value="Presbyter">Presbyter</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">Pastor</p>
               </div>
 
               {/* Start of Service */}
-              <div className="flex flex-col gap-2">\n                <Label htmlFor="startOfService">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="startOfService">
                   Start of Service <span className="text-red-500">*</span>
                 </Label>
                 <Input
