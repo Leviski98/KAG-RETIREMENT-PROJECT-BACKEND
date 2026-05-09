@@ -83,7 +83,6 @@ export function PastorsManager() {
     nationalId: "",
     phoneNumber: "",
     pastorRank: "Pastor",
-    role: "",
     startOfService: "",
     status: "active",
   });
@@ -101,7 +100,6 @@ export function PastorsManager() {
     nationalId: "",
     phoneNumber: "",
     pastorRank: "Pastor",
-    role: "",
     startOfService: "",
     status: "active",
   });
@@ -174,7 +172,6 @@ export function PastorsManager() {
         nationalId: pastor.national_id || "",
         phoneNumber: pastor.phone_number || "",
         pastorRank: pastor.rank,
-        role: pastor.role || "",
         startOfService: startOfServiceDate,
         status: pastor.status,
       });
@@ -265,7 +262,6 @@ export function PastorsManager() {
       id: newId,
       full_name: formData.fullName,
       rank: formData.pastorRank as PastorRank,
-      role: formData.role || undefined,
       date_of_birth: formData.dateOfBirth || new Date().toISOString(),
       age: age,
       status: finalStatus,
@@ -292,7 +288,6 @@ export function PastorsManager() {
       nationalId: "",
       phoneNumber: "",
       pastorRank: "Pastor",
-      role: "",
       startOfService: "",
       status: "active",
     });
@@ -316,7 +311,6 @@ export function PastorsManager() {
       nationalId: "",
       phoneNumber: "",
       pastorRank: "Pastor",
-      role: "",
       startOfService: "",
       status: "active",
     });
@@ -361,7 +355,6 @@ export function PastorsManager() {
             ...p,
             full_name: editFormData.fullName,
             rank: editFormData.pastorRank as PastorRank,
-            role: editFormData.role || undefined,
             date_of_birth: editFormData.dateOfBirth || p.date_of_birth,
             age: age,
             status: finalStatus,
@@ -389,7 +382,6 @@ export function PastorsManager() {
       nationalId: "",
       phoneNumber: "",
       pastorRank: "Pastor",
-      role: "",
       startOfService: "",
       status: "active",
     });
@@ -413,7 +405,6 @@ export function PastorsManager() {
       nationalId: "",
       phoneNumber: "",
       pastorRank: "Pastor",
-      role: "",
       startOfService: "",
       status: "active",
     });
@@ -437,8 +428,13 @@ export function PastorsManager() {
     const exportType = exportAll ? "All Pastors" : "Filtered Results";
     
     // Create print-friendly content
-    const printWindow = window.open('', '', 'height=800,width=1000');
-    if (!printWindow) return;
+    const printWindow = window.open('', '_blank', 'height=800,width=1000');
+    
+    if (!printWindow) {
+      // Popup was blocked
+      alert('Popup blocked! Please allow popups for this site to export PDF.');
+      return;
+    }
     
     const htmlContent = `
       <!DOCTYPE html>
@@ -460,6 +456,27 @@ export function PastorsManager() {
               color: #666; 
               margin-bottom: 20px; 
               font-size: 14px;
+            }
+            .print-button-container {
+              margin-bottom: 20px;
+              display: flex;
+              gap: 12px;
+            }
+            .print-button {
+              background-color: #2563eb;
+              color: white;
+              border: none;
+              padding: 10px 20px;
+              border-radius: 6px;
+              font-size: 14px;
+              font-weight: 500;
+              cursor: pointer;
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+            }
+            .print-button:hover {
+              background-color: #1d4ed8;
             }
             table { 
               width: 100%; 
@@ -487,6 +504,7 @@ export function PastorsManager() {
             .text-center { text-align: center; }
             @media print {
               body { padding: 10px; }
+              .print-button-container { display: none; }
             }
           </style>
         </head>
@@ -498,13 +516,17 @@ export function PastorsManager() {
             ${!exportAll && selectedRank !== 'all' ? `<br/>Rank: ${selectedRank}` : ''}
             ${!exportAll && selectedStatus !== 'all' ? `<br/>Status: ${selectedStatus}` : ''}
           </div>
+          <div class="print-button-container">
+            <button class="print-button" onclick="window.print()">
+              🖨️ Print / Save as PDF
+            </button>
+          </div>
           <table>
             <thead>
               <tr>
                 <th>ID</th>
                 <th>Name</th>
                 <th>Rank</th>
-                <th>Role</th>
                 <th>Status</th>
                 <th class="text-center">Age</th>
                 <th class="text-center">Years Served</th>
@@ -519,7 +541,6 @@ export function PastorsManager() {
                   <td>${pastor.id}</td>
                   <td>${pastor.full_name}</td>
                   <td>${pastor.rank}</td>
-                  <td>${pastor.role || '-'}</td>
                   <td class="status-${pastor.status}">${pastor.status.charAt(0).toUpperCase() + pastor.status.slice(1)}</td>
                   <td class="text-center">${pastor.age || '-'}</td>
                   <td class="text-center">${pastor.years_of_service ? pastor.years_of_service + ' yrs' : '-'}</td>
@@ -534,15 +555,17 @@ export function PastorsManager() {
       </html>
     `;
     
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    
-    // Wait for content to load, then print
-    printWindow.onload = () => {
+    try {
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      
+      // Focus the window and let user choose when to print
       printWindow.focus();
-      printWindow.print();
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('An error occurred while generating the PDF. Please try again.');
       printWindow.close();
-    };
+    }
     
     setIsExportDropdownOpen(false);
   };
@@ -820,7 +843,6 @@ export function PastorsManager() {
               <TableHead className="w-20">ID</TableHead>
               <TableHead className="min-w-40">Name</TableHead>
               <TableHead className="w-28">Rank</TableHead>
-              <TableHead className="w-40">Role</TableHead>
               <TableHead className="w-28">Status</TableHead>
               <TableHead className="w-16 text-center">Age</TableHead>
               <TableHead className="w-28 text-center">Years Served</TableHead>
@@ -852,9 +874,6 @@ export function PastorsManager() {
                     >
                       {pastor.rank}
                     </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {pastor.role || "—"}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -929,7 +948,7 @@ export function PastorsManager() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={11} className="h-24 text-center">
+                <TableCell colSpan={10} className="h-24 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <p className="text-sm text-muted-foreground">
                       No pastors found
@@ -1077,39 +1096,8 @@ export function PastorsManager() {
                 <p className="text-xs text-muted-foreground">Pastor</p>
               </div>
 
-              {/* Role */}
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="role">Role</Label>
-                <Select
-                  value={formData.role}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, role: value || "" })
-                  }
-                >
-                  <SelectTrigger id="role">
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Senior Pastor">Senior Pastor</SelectItem>
-                    <SelectItem value="Associate Pastor">Associate Pastor</SelectItem>
-                    <SelectItem value="Youth Pastor">Youth Pastor</SelectItem>
-                    <SelectItem value="Children's Minister">Children&apos;s Minister</SelectItem>
-                    <SelectItem value="Worship Pastor">Worship Pastor</SelectItem>
-                    <SelectItem value="Evangelism Pastor">Evangelism Pastor</SelectItem>
-                    <SelectItem value="District Overseer">District Overseer</SelectItem>
-                    <SelectItem value="Regional Bishop">Regional Bishop</SelectItem>
-                    <SelectItem value="General Overseer">General Overseer</SelectItem>
-                    <SelectItem value="Church Elder">Church Elder</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Optional ministry role or position
-                </p>
-              </div>
-
               {/* Start of Service */}
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="startOfService">
+              <div className="flex flex-col gap-2">\n                <Label htmlFor="startOfService">
                   Start of Service <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -1295,36 +1283,6 @@ export function PastorsManager() {
                     <SelectItem value="Presbyter">Presbyter</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-
-              {/* Role */}
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="editRole">Role</Label>
-                <Select
-                  value={editFormData.role}
-                  onValueChange={(value) =>
-                    setEditFormData({ ...editFormData, role: value || "" })
-                  }
-                >
-                  <SelectTrigger id="editRole">
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Senior Pastor">Senior Pastor</SelectItem>
-                    <SelectItem value="Associate Pastor">Associate Pastor</SelectItem>
-                    <SelectItem value="Youth Pastor">Youth Pastor</SelectItem>
-                    <SelectItem value="Children's Minister">Childrens Minister</SelectItem>
-                    <SelectItem value="Worship Pastor">Worship Pastor</SelectItem>
-                    <SelectItem value="Evangelism Pastor">Evangelism Pastor</SelectItem>
-                    <SelectItem value="District Overseer">District Overseer</SelectItem>
-                    <SelectItem value="Regional Bishop">Regional Bishop</SelectItem>
-                    <SelectItem value="General Overseer">General Overseer</SelectItem>
-                    <SelectItem value="Church Elder">Church Elder</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Optional ministry role or position
-                </p>
               </div>
 
               {/* Start of Service */}
