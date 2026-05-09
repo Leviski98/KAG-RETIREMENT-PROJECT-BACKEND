@@ -37,6 +37,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
   Plus,
   Search,
   Eye,
@@ -51,6 +58,10 @@ import {
   ExternalLink,
   AlertTriangle,
   CheckCircle2,
+  Download,
+  ChevronDown,
+  UserX,
+  X,
 } from "lucide-react";
 import { mockPastors } from "@/lib/mock-data/mock-pastors";
 import { Pastor, PastorRank, PastorStatus } from "@/types/pastor";
@@ -102,6 +113,9 @@ export function PastorsManager() {
   // Success toast state
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  
+  // Export dropdown state
+  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
 
   // Calculate stats from current pastors state
   const stats = {
@@ -213,23 +227,31 @@ export function PastorsManager() {
       return;
     }
 
-    // Calculate years of service
+    // Calculate years of service (current year - start of service year)
     const startYear = new Date(formData.startOfService).getFullYear();
     const currentYear = new Date().getFullYear();
     const yearsOfService = currentYear - startYear;
 
-    // Calculate age from date of birth
+    // Calculate age from date of birth (current year - birth year)
     const birthDate = new Date(formData.dateOfBirth);
-    const age = currentYear - birthDate.getFullYear();
+    const birthYear = birthDate.getFullYear();
+    const age = currentYear - birthYear;
 
-    // Calculate projected retirement (assume retirement at age 72)
-    const retirementAge = 72;
+    // Calculate projected retirement (assume retirement at age 70)
+    const retirementAge = 70;
     const retirementYear = birthDate.getFullYear() + retirementAge;
     const retirementMonth = birthDate.toLocaleString('default', { month: 'short' });
     const projected_retirement = `${retirementMonth} ${retirementYear}`;
 
-    // Calculate remaining tenure
-    const remaining_tenure = Math.max(0, retirementYear - currentYear);
+    // Auto-change status to retired if age >= 70 and currently active
+    let finalStatus = formData.status as PastorStatus;
+    if (age >= 70 && formData.status === 'active') {
+      finalStatus = 'retired';
+    }
+
+    // Calculate remaining tenure (70 years - current age)
+    // Set to 0 for deceased and retired pastors
+    const remaining_tenure = (finalStatus === 'deceased' || finalStatus === 'retired') ? 0 : Math.max(0, 70 - age);
 
     // Generate unique ID by finding the highest existing ID number
     const maxId = pastors.reduce((max, p) => {
@@ -246,7 +268,7 @@ export function PastorsManager() {
       role: formData.role || undefined,
       date_of_birth: formData.dateOfBirth || new Date().toISOString(),
       age: age,
-      status: formData.status as PastorStatus,
+      status: finalStatus,
       phone_number: formData.phoneNumber,
       email: `${formData.fullName.toLowerCase().replace(/\s+/g, '.')}@kag.org`,
       national_id: formData.nationalId || undefined,
@@ -306,23 +328,31 @@ export function PastorsManager() {
       return;
     }
 
-    // Calculate years of service
+    // Calculate years of service (current year - start of service year)
     const startYear = new Date(editFormData.startOfService).getFullYear();
     const currentYear = new Date().getFullYear();
     const yearsOfService = currentYear - startYear;
 
-    // Calculate age from date of birth
+    // Calculate age from date of birth (current year - birth year)
     const birthDate = new Date(editFormData.dateOfBirth);
-    const age = currentYear - birthDate.getFullYear();
+    const birthYear = birthDate.getFullYear();
+    const age = currentYear - birthYear;
 
-    // Calculate projected retirement (assume retirement at age 72)
-    const retirementAge = 72;
+    // Calculate projected retirement (assume retirement at age 70)
+    const retirementAge = 70;
     const retirementYear = birthDate.getFullYear() + retirementAge;
     const retirementMonth = birthDate.toLocaleString('default', { month: 'short' });
     const projected_retirement = `${retirementMonth} ${retirementYear}`;
 
-    // Calculate remaining tenure
-    const remaining_tenure = Math.max(0, retirementYear - currentYear);
+    // Auto-change status to retired if age >= 70 and currently active
+    let finalStatus = editFormData.status as PastorStatus;
+    if (age >= 70 && editFormData.status === 'active') {
+      finalStatus = 'retired';
+    }
+
+    // Calculate remaining tenure (70 years - current age)
+    // Set to 0 for deceased and retired pastors
+    const remaining_tenure = (finalStatus === 'deceased' || finalStatus === 'retired') ? 0 : Math.max(0, 70 - age);
 
     // Update pastor in array
     setPastors(pastors.map(p => 
@@ -334,7 +364,7 @@ export function PastorsManager() {
             role: editFormData.role || undefined,
             date_of_birth: editFormData.dateOfBirth || p.date_of_birth,
             age: age,
-            status: editFormData.status as PastorStatus,
+            status: finalStatus,
             phone_number: editFormData.phoneNumber,
             national_id: editFormData.nationalId || undefined,
             years_of_service: yearsOfService,
@@ -402,6 +432,121 @@ export function PastorsManager() {
     return name.substring(0, 2).toUpperCase();
   };
 
+  const handleExportPDF = (exportAll: boolean) => {
+    const dataToExport = exportAll ? pastors : filteredPastors;
+    const exportType = exportAll ? "All Pastors" : "Filtered Results";
+    
+    // Create print-friendly content
+    const printWindow = window.open('', '', 'height=800,width=1000');
+    if (!printWindow) return;
+    
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Pastors Export - ${exportType}</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              padding: 20px;
+              color: #000;
+            }
+            h1 { 
+              font-size: 24px; 
+              margin-bottom: 10px;
+              color: #1a1a1a;
+            }
+            .subtitle { 
+              color: #666; 
+              margin-bottom: 20px; 
+              font-size: 14px;
+            }
+            table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin-top: 20px;
+              font-size: 12px;
+            }
+            th, td { 
+              border: 1px solid #ddd; 
+              padding: 8px; 
+              text-align: left; 
+            }
+            th { 
+              background-color: #f8f9fa; 
+              font-weight: 600;
+              color: #1a1a1a;
+            }
+            tr:nth-child(even) { 
+              background-color: #f9f9f9; 
+            }
+            .status-active { color: #059669; font-weight: 500; }
+            .status-retired { color: #7c3aed; font-weight: 500; }
+            .status-suspended { color: #dc2626; font-weight: 500; }
+            .status-deceased { color: #6b7280; font-weight: 500; }
+            .text-center { text-align: center; }
+            @media print {
+              body { padding: 10px; }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Pastors Manager - ${exportType}</h1>
+          <div class="subtitle">
+            ${dataToExport.length} records | Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+            ${!exportAll && searchQuery ? `<br/>Search: "${searchQuery}"` : ''}
+            ${!exportAll && selectedRank !== 'all' ? `<br/>Rank: ${selectedRank}` : ''}
+            ${!exportAll && selectedStatus !== 'all' ? `<br/>Status: ${selectedStatus}` : ''}
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Rank</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th class="text-center">Age</th>
+                <th class="text-center">Years Served</th>
+                <th>Proj. Retirement</th>
+                <th class="text-center">Remaining Tenure</th>
+                <th>Phone</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${dataToExport.map(pastor => `
+                <tr>
+                  <td>${pastor.id}</td>
+                  <td>${pastor.full_name}</td>
+                  <td>${pastor.rank}</td>
+                  <td>${pastor.role || '-'}</td>
+                  <td class="status-${pastor.status}">${pastor.status.charAt(0).toUpperCase() + pastor.status.slice(1)}</td>
+                  <td class="text-center">${pastor.age || '-'}</td>
+                  <td class="text-center">${pastor.years_of_service ? pastor.years_of_service + ' yrs' : '-'}</td>
+                  <td>${pastor.projected_retirement || '-'}</td>
+                  <td class="text-center">${pastor.remaining_tenure ? pastor.remaining_tenure + ' yrs' : '-'}</td>
+                  <td>${pastor.phone_number || '-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+    
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    
+    // Wait for content to load, then print
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    };
+    
+    setIsExportDropdownOpen(false);
+  };
+
   return (
     <div className="flex flex-col gap-6 p-6">
       {/* Success Toast */}
@@ -431,7 +576,7 @@ export function PastorsManager() {
       />
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
         {/* Total Pastors */}
         <Card>
           <CardContent className="flex items-center gap-4 p-4">
@@ -473,6 +618,32 @@ export function PastorsManager() {
           </CardContent>
         </Card>
 
+        {/* Suspended */}
+        <Card>
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex size-12 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/30">
+              <UserX className="size-6 text-orange-600 dark:text-orange-400" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-muted-foreground">Suspended</span>
+              <span className="text-2xl font-bold">{stats.suspended}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Deceased */}
+        <Card>
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex size-12 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
+              <X className="size-6 text-gray-600 dark:text-gray-400" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-muted-foreground">Deceased</span>
+              <span className="text-2xl font-bold">{stats.deceased}</span>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* By Rank Chart */}
         <Card>
           <CardContent className="flex flex-col gap-2 p-4">
@@ -481,40 +652,37 @@ export function PastorsManager() {
               <span className="text-sm text-muted-foreground">By Rank</span>
             </div>
             <div className="flex items-end gap-1">
-              <div className="flex flex-col items-center gap-1">
-                <div
-                  className="w-8 rounded-t bg-brand-primary"
-                  style={{ height: `${(rankStats.reverend / stats.total) * 60}px` }}
-                />
-                <span className="text-xs text-muted-foreground">Rev</span>
-              </div>
+              {/* Bishop */}
               <div className="flex flex-col items-center gap-1">
                 <div
                   className="w-8 rounded-t bg-blue-400"
-                  style={{ height: `${(rankStats.bishop / stats.total) * 60}px` }}
+                  style={{ height: `${rankStats.bishop > 0 ? (rankStats.bishop / stats.total) * 60 : 2}px` }}
                 />
                 <span className="text-xs text-muted-foreground">Bis</span>
               </div>
-              <div className="flex flex-col items-center gap-1">
-                <div
-                  className="w-8 rounded-t bg-blue-300"
-                  style={{ height: `${(rankStats.pastor / stats.total) * 60}px` }}
-                />
-                <span className="text-xs text-muted-foreground">Pas</span>
-              </div>
+              {/* Presbyter */}
               <div className="flex flex-col items-center gap-1">
                 <div
                   className="w-8 rounded-t bg-emerald-400"
-                  style={{ height: `${(rankStats.presbyter / stats.total) * 60}px` }}
+                  style={{ height: `${rankStats.presbyter > 0 ? (rankStats.presbyter / stats.total) * 60 : 2}px` }}
                 />
                 <span className="text-xs text-muted-foreground">Pre</span>
               </div>
+              {/* Reverend */}
               <div className="flex flex-col items-center gap-1">
                 <div
-                  className="w-8 rounded-t bg-slate-300"
-                  style={{ height: "30px" }}
+                  className="w-8 rounded-t bg-brand-primary"
+                  style={{ height: `${rankStats.reverend > 0 ? (rankStats.reverend / stats.total) * 60 : 2}px` }}
                 />
-                <span className="text-xs text-muted-foreground">Oth</span>
+                <span className="text-xs text-muted-foreground">Rev</span>
+              </div>
+              {/* Pastor */}
+              <div className="flex flex-col items-center gap-1">
+                <div
+                  className="w-8 rounded-t bg-blue-300"
+                  style={{ height: `${rankStats.pastor > 0 ? (rankStats.pastor / stats.total) * 60 : 2}px` }}
+                />
+                <span className="text-xs text-muted-foreground">Pas</span>
               </div>
             </div>
           </CardContent>
@@ -570,6 +738,57 @@ export function PastorsManager() {
           <span className="text-sm text-muted-foreground">
             {filteredPastors.length} pastors
           </span>
+          
+          <DropdownMenu open={isExportDropdownOpen} onOpenChange={setIsExportDropdownOpen}>
+            <DropdownMenuTrigger>
+              <Button variant="outline" size="default" className="gap-2">
+                <Download className="size-4" />
+                Export PDF
+                <ChevronDown className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <div className="px-2 py-1.5">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Export as PDF
+                </p>
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => handleExportPDF(true)}
+                className="flex flex-col items-start py-3 cursor-pointer"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-medium">All Pastors</span>
+                  <Printer className="size-4 text-muted-foreground" />
+                </div>
+                <span className="text-xs text-muted-foreground mt-0.5">
+                  {pastors.length} records
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleExportPDF(false)}
+                className="flex flex-col items-start py-3 cursor-pointer"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-medium">Filtered Results</span>
+                  <Printer className="size-4 text-muted-foreground" />
+                </div>
+                <span className="text-xs text-muted-foreground mt-0.5">
+                  {searchQuery || selectedRank !== 'all' || selectedStatus !== 'all' 
+                    ? `${filteredPastors.length} records with active filters`
+                    : 'No filters applied'}
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <div className="px-2 py-1.5">
+                <p className="text-xs text-muted-foreground">
+                  Includes all auto-calculated fields
+                </p>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           <div className="flex items-center rounded-lg border">
             <Button
               variant="ghost"
