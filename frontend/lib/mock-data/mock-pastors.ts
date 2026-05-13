@@ -13,25 +13,25 @@ export const mockPastors: Pastor[] = [
     email: "james.kamau@kag.org",
     national_id: "12345678",
     years_of_service: 33,
-    projected_retirement: "Jun 2040",
-    remaining_tenure: 15,
+    projected_retirement: "Mar 2028",
+    remaining_tenure: 2,
     created_at: "2024-01-15T10:30:00Z",
     updated_at: "2024-01-15T10:30:00Z",
   },
   {
     id: "PAS002",
     full_name: "Peter Ochieng",
-    rank: "Bishop",
-    role: "District Overseer",
-    date_of_birth: "1950-07-20T00:00:00Z",
-    age: 76,
+    rank: "Archbishop",
+    role: "Presiding Archbishop",
+    date_of_birth: "1958-03-20T00:00:00Z",
+    age: 68,
     status: "active",
     phone_number: "+254712345002",
     email: "peter.ochieng@kag.org",
     national_id: "23456789",
-    years_of_service: 41,
-    projected_retirement: "Mar 2030",
-    remaining_tenure: 5,
+    years_of_service: 35,
+    projected_retirement: "Mar 2028",
+    remaining_tenure: 2,
     created_at: "2024-01-16T11:00:00Z",
     updated_at: "2024-01-16T11:00:00Z",
   },
@@ -47,8 +47,8 @@ export const mockPastors: Pastor[] = [
     email: "mary.wanjiku@kag.org",
     national_id: "34567890",
     years_of_service: 28,
-    projected_retirement: "Nov 2050",
-    remaining_tenure: 25,
+    projected_retirement: "Nov 2035",
+    remaining_tenure: 9,
     created_at: "2024-01-17T09:45:00Z",
     updated_at: "2024-01-17T09:45:00Z",
   },
@@ -64,8 +64,8 @@ export const mockPastors: Pastor[] = [
     email: "david.mutua@kag.org",
     national_id: "45678901",
     years_of_service: 22,
-    projected_retirement: "Sep 2044",
-    remaining_tenure: 19,
+    projected_retirement: "Apr 2040",
+    remaining_tenure: 14,
     created_at: "2024-01-18T14:20:00Z",
     updated_at: "2024-01-18T14:20:00Z",
   },
@@ -81,8 +81,8 @@ export const mockPastors: Pastor[] = [
     email: "sarah.akinyi@kag.org",
     national_id: "56789012",
     years_of_service: 30,
-    projected_retirement: "Jan 2029",
-    remaining_tenure: 8,
+    projected_retirement: "Sep 2030",
+    remaining_tenure: 4,
     created_at: "2024-01-19T08:15:00Z",
     updated_at: "2024-01-19T08:15:00Z",
   },
@@ -116,8 +116,8 @@ export const mockPastors: Pastor[] = [
     email: "grace.njeri@kag.org",
     national_id: "78901234",
     years_of_service: 25,
-    projected_retirement: "Jul 2057",
-    remaining_tenure: 32,
+    projected_retirement: "Jun 2038",
+    remaining_tenure: 12,
     created_at: "2024-01-21T11:30:00Z",
     updated_at: "2024-01-21T11:30:00Z",
   },
@@ -158,8 +158,8 @@ export const mockPastors: Pastor[] = [
   {
     id: "PAS010",
     full_name: "Michael Otieno",
-    rank: "Pastor",
-    role: "General Overseer",
+    rank: "Bishop",
+    role: "Regional Bishop",
     date_of_birth: "1966-10-30T00:00:00Z",
     age: 60,
     status: "retired",
@@ -200,10 +200,11 @@ export const getPastorStats = () => {
 };
 
 export const getPastorRankStats = () => {
-  const reverend = mockPastors.filter((p) => p.rank === "Reverend").length;
+  const archbishop = mockPastors.filter((p) => p.rank === "Archbishop").length;
   const bishop = mockPastors.filter((p) => p.rank === "Bishop").length;
-  const pastor = mockPastors.filter((p) => p.rank === "Pastor").length;
   const presbyter = mockPastors.filter((p) => p.rank === "Presbyter").length;
+  const reverend = mockPastors.filter((p) => p.rank === "Reverend").length;
+  const pastor = mockPastors.filter((p) => p.rank === "Pastor").length;
 
-  return { reverend, bishop, pastor, presbyter };
+  return { archbishop, bishop, presbyter, reverend, pastor };
 };

@@ -81,7 +81,7 @@ export function PastorsManager() {
     gender: "Male",
     dateOfBirth: "",
     nationalId: "",
-    phoneNumber: "",
+    phoneNumber: "+254",
     pastorRank: "Pastor",
     startOfService: "",
     status: "active",
@@ -98,7 +98,7 @@ export function PastorsManager() {
     gender: "Male",
     dateOfBirth: "",
     nationalId: "",
-    phoneNumber: "",
+    phoneNumber: "+254",
     pastorRank: "Pastor",
     startOfService: "",
     status: "active",
@@ -125,10 +125,11 @@ export function PastorsManager() {
   };
 
   const rankStats = {
-    reverend: pastors.filter((p) => p.rank === "Reverend").length,
+    archbishop: pastors.filter((p) => p.rank === "Archbishop").length,
     bishop: pastors.filter((p) => p.rank === "Bishop").length,
-    pastor: pastors.filter((p) => p.rank === "Pastor").length,
     presbyter: pastors.filter((p) => p.rank === "Presbyter").length,
+    reverend: pastors.filter((p) => p.rank === "Reverend").length,
+    pastor: pastors.filter((p) => p.rank === "Pastor").length,
   };
 
   // Filter pastors based on search and filters
@@ -170,7 +171,7 @@ export function PastorsManager() {
         gender: "Male", // Default value as gender is not stored in Pastor model
         dateOfBirth: pastor.date_of_birth ? pastor.date_of_birth.split("T")[0] : "",
         nationalId: pastor.national_id || "",
-        phoneNumber: pastor.phone_number || "",
+        phoneNumber: pastor.phone_number || "+254",
         pastorRank: pastor.rank,
         startOfService: startOfServiceDate,
         status: pastor.status,
@@ -220,19 +221,42 @@ export function PastorsManager() {
   };
 
   const handleSavePastor = () => {
-    if (!formData.fullName.trim() || !formData.phoneNumber.trim() || !formData.startOfService) {
+    if (
+      !formData.fullName.trim() || 
+      !formData.gender.trim() || 
+      !formData.dateOfBirth || 
+      !formData.nationalId.trim() || 
+      formData.nationalId.length !== 8 ||
+      !formData.phoneNumber.trim() || 
+      formData.phoneNumber.length !== 13 ||
+      !formData.pastorRank.trim() || 
+      !formData.startOfService || 
+      !formData.status.trim()
+    ) {
       return;
     }
 
     // Calculate years of service (current year - start of service year)
     const startYear = new Date(formData.startOfService).getFullYear();
-    const currentYear = new Date().getFullYear();
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
     const yearsOfService = currentYear - startYear;
 
-    // Calculate age from date of birth (current year - birth year)
+    // Calculate age from date of birth (accounting for month and day)
     const birthDate = new Date(formData.dateOfBirth);
     const birthYear = birthDate.getFullYear();
-    const age = currentYear - birthYear;
+    let age = currentYear - birthYear;
+    
+    // Check if birthday has occurred this year
+    const currentMonth = currentDate.getMonth();
+    const currentDay = currentDate.getDate();
+    const birthMonth = birthDate.getMonth();
+    const birthDay = birthDate.getDate();
+    
+    // If birthday hasn't occurred yet this year, subtract 1 from age
+    if (currentMonth < birthMonth || (currentMonth === birthMonth && currentDay < birthDay)) {
+      age--;
+    }
 
     // Calculate projected retirement (assume retirement at age 70)
     const retirementAge = 70;
@@ -286,7 +310,7 @@ export function PastorsManager() {
       gender: "Male",
       dateOfBirth: "",
       nationalId: "",
-      phoneNumber: "",
+      phoneNumber: "+254",
       pastorRank: "Pastor",
       startOfService: "",
       status: "active",
@@ -309,7 +333,7 @@ export function PastorsManager() {
       gender: "Male",
       dateOfBirth: "",
       nationalId: "",
-      phoneNumber: "",
+      phoneNumber: "+254",
       pastorRank: "Pastor",
       startOfService: "",
       status: "active",
@@ -324,13 +348,25 @@ export function PastorsManager() {
 
     // Calculate years of service (current year - start of service year)
     const startYear = new Date(editFormData.startOfService).getFullYear();
-    const currentYear = new Date().getFullYear();
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
     const yearsOfService = currentYear - startYear;
 
-    // Calculate age from date of birth (current year - birth year)
+    // Calculate age from date of birth (accounting for month and day)
     const birthDate = new Date(editFormData.dateOfBirth);
     const birthYear = birthDate.getFullYear();
-    const age = currentYear - birthYear;
+    let age = currentYear - birthYear;
+    
+    // Check if birthday has occurred this year
+    const currentMonth = currentDate.getMonth();
+    const currentDay = currentDate.getDate();
+    const birthMonth = birthDate.getMonth();
+    const birthDay = birthDate.getDate();
+    
+    // If birthday hasn't occurred yet this year, subtract 1 from age
+    if (currentMonth < birthMonth || (currentMonth === birthMonth && currentDay < birthDay)) {
+      age--;
+    }
 
     // Calculate projected retirement (assume retirement at age 70)
     const retirementAge = 70;
@@ -380,7 +416,7 @@ export function PastorsManager() {
       gender: "Male",
       dateOfBirth: "",
       nationalId: "",
-      phoneNumber: "",
+      phoneNumber: "+254",
       pastorRank: "Pastor",
       startOfService: "",
       status: "active",
@@ -403,7 +439,7 @@ export function PastorsManager() {
       gender: "Male",
       dateOfBirth: "",
       nationalId: "",
-      phoneNumber: "",
+      phoneNumber: "+254",
       pastorRank: "Pastor",
       startOfService: "",
       status: "active",
@@ -675,6 +711,14 @@ export function PastorsManager() {
               <span className="text-sm text-muted-foreground">By Rank</span>
             </div>
             <div className="flex items-end gap-1">
+              {/* Archbishop */}
+              <div className="flex flex-col items-center gap-1">
+                <div
+                  className="w-8 rounded-t bg-amber-400"
+                  style={{ height: `${rankStats.archbishop > 0 ? (rankStats.archbishop / stats.total) * 60 : 2}px` }}
+                />
+                <span className="text-xs text-muted-foreground">Arc</span>
+              </div>
               {/* Bishop */}
               <div className="flex flex-col items-center gap-1">
                 <div
@@ -686,7 +730,7 @@ export function PastorsManager() {
               {/* Presbyter */}
               <div className="flex flex-col items-center gap-1">
                 <div
-                  className="w-8 rounded-t bg-emerald-400"
+                  className="w-8 rounded-t bg-purple-400"
                   style={{ height: `${rankStats.presbyter > 0 ? (rankStats.presbyter / stats.total) * 60 : 2}px` }}
                 />
                 <span className="text-xs text-muted-foreground">Pre</span>
@@ -694,7 +738,7 @@ export function PastorsManager() {
               {/* Reverend */}
               <div className="flex flex-col items-center gap-1">
                 <div
-                  className="w-8 rounded-t bg-brand-primary"
+                  className="w-8 rounded-t bg-emerald-400"
                   style={{ height: `${rankStats.reverend > 0 ? (rankStats.reverend / stats.total) * 60 : 2}px` }}
                 />
                 <span className="text-xs text-muted-foreground">Rev</span>
@@ -702,7 +746,7 @@ export function PastorsManager() {
               {/* Pastor */}
               <div className="flex flex-col items-center gap-1">
                 <div
-                  className="w-8 rounded-t bg-blue-300"
+                  className="w-8 rounded-t bg-slate-400"
                   style={{ height: `${rankStats.pastor > 0 ? (rankStats.pastor / stats.total) * 60 : 2}px` }}
                 />
                 <span className="text-xs text-muted-foreground">Pas</span>
@@ -734,10 +778,11 @@ export function PastorsManager() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Ranks</SelectItem>
-            <SelectItem value="Reverend">Reverend</SelectItem>
+            <SelectItem value="Archbishop">Archbishop</SelectItem>
             <SelectItem value="Bishop">Bishop</SelectItem>
-            <SelectItem value="Pastor">Pastor</SelectItem>
             <SelectItem value="Presbyter">Presbyter</SelectItem>
+            <SelectItem value="Reverend">Reverend</SelectItem>
+            <SelectItem value="Pastor">Pastor</SelectItem>
           </SelectContent>
         </Select>
 
@@ -999,7 +1044,7 @@ export function PastorsManager() {
 
               {/* Gender */}
               <div className="flex flex-col gap-2">
-                <Label>Gender</Label>
+                <Label>Gender <span className="text-red-500">*</span></Label>
                 <RadioGroup
                   value={formData.gender}
                   onValueChange={(value: string) =>
@@ -1023,7 +1068,7 @@ export function PastorsManager() {
 
               {/* Date of Birth */}
               <div className="flex flex-col gap-2">
-                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Label htmlFor="dateOfBirth">Date of Birth <span className="text-red-500">*</span></Label>
                 <Input
                   id="dateOfBirth"
                   type="date"
@@ -1036,16 +1081,21 @@ export function PastorsManager() {
 
               {/* National ID */}
               <div className="flex flex-col gap-2">
-                <Label htmlFor="nationalId">National ID</Label>
+                <Label htmlFor="nationalId">National ID <span className="text-red-500">*</span></Label>
                 <Input
                   id="nationalId"
                   type="text"
                   placeholder="e.g. 12345678"
                   value={formData.nationalId}
-                  onChange={(e) =>
-                    setFormData({ ...formData, nationalId: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 8);
+                    setFormData({ ...formData, nationalId: value });
+                  }}
+                  maxLength={8}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Must be exactly 8 digits
+                </p>
               </div>
 
               {/* Phone Number */}
@@ -1058,12 +1108,29 @@ export function PastorsManager() {
                   type="tel"
                   placeholder="+254XXXXXXXXX"
                   value={formData.phoneNumber}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phoneNumber: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const input = e.target.value;
+                    // Always keep +254 prefix
+                    if (!input.startsWith('+254')) {
+                      setFormData({ ...formData, phoneNumber: '+254' });
+                      return;
+                    }
+                    // Extract digits after +254 and limit to 9
+                    const digits = input.slice(4).replace(/[^0-9]/g, '').slice(0, 9);
+                    setFormData({ ...formData, phoneNumber: '+254' + digits });
+                  }}
+                  onKeyDown={(e) => {
+                    // Prevent deleting the +254 prefix
+                    if ((e.key === 'Backspace' || e.key === 'Delete') && 
+                        e.currentTarget.selectionStart !== null &&
+                        e.currentTarget.selectionStart <= 4) {
+                      e.preventDefault();
+                    }
+                  }}
+                  maxLength={13}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Format: +254 followed by 9 digits
+                  Enter 9 digits after +254
                 </p>
               </div>
             </div>
@@ -1076,7 +1143,7 @@ export function PastorsManager() {
 
               {/* Pastor Rank */}
               <div className="flex flex-col gap-2">
-                <Label htmlFor="pastorRank">Pastor Rank</Label>
+                <Label htmlFor="pastorRank">Pastor Rank <span className="text-red-500">*</span></Label>
                 <Select
                   value={formData.pastorRank}
                   onValueChange={(value) =>
@@ -1087,10 +1154,11 @@ export function PastorsManager() {
                     <SelectValue placeholder="Select rank" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Reverend">Reverend</SelectItem>
+                    <SelectItem value="Archbishop">Archbishop</SelectItem>
                     <SelectItem value="Bishop">Bishop</SelectItem>
-                    <SelectItem value="Pastor">Pastor</SelectItem>
                     <SelectItem value="Presbyter">Presbyter</SelectItem>
+                    <SelectItem value="Reverend">Reverend</SelectItem>
+                    <SelectItem value="Pastor">Pastor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1112,7 +1180,7 @@ export function PastorsManager() {
 
               {/* Status */}
               <div className="flex flex-col gap-2">
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status">Status <span className="text-red-500">*</span></Label>
                 <Select
                   value={formData.status}
                   onValueChange={(value) =>
@@ -1145,8 +1213,15 @@ export function PastorsManager() {
               onClick={handleSavePastor}
               disabled={
                 !formData.fullName.trim() ||
+                !formData.gender.trim() ||
+                !formData.dateOfBirth ||
+                !formData.nationalId.trim() ||
+                formData.nationalId.length !== 8 ||
                 !formData.phoneNumber.trim() ||
-                !formData.startOfService
+                formData.phoneNumber.length !== 13 ||
+                !formData.pastorRank.trim() ||
+                !formData.startOfService ||
+                !formData.status.trim()
               }
               className="flex-1 sm:flex-none"
             >
@@ -1232,10 +1307,15 @@ export function PastorsManager() {
                   type="text"
                   placeholder="e.g. 12345678"
                   value={editFormData.nationalId}
-                  onChange={(e) =>
-                    setEditFormData({ ...editFormData, nationalId: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 8);
+                    setEditFormData({ ...editFormData, nationalId: value });
+                  }}
+                  maxLength={8}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Must be exactly 8 digits
+                </p>
               </div>
 
               {/* Phone Number */}
@@ -1248,12 +1328,29 @@ export function PastorsManager() {
                   type="tel"
                   placeholder="+254XXXXXXXXX"
                   value={editFormData.phoneNumber}
-                  onChange={(e) =>
-                    setEditFormData({ ...editFormData, phoneNumber: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const input = e.target.value;
+                    // Always keep +254 prefix
+                    if (!input.startsWith('+254')) {
+                      setEditFormData({ ...editFormData, phoneNumber: '+254' });
+                      return;
+                    }
+                    // Extract digits after +254 and limit to 9
+                    const digits = input.slice(4).replace(/[^0-9]/g, '').slice(0, 9);
+                    setEditFormData({ ...editFormData, phoneNumber: '+254' + digits });
+                  }}
+                  onKeyDown={(e) => {
+                    // Prevent deleting the +254 prefix
+                    if ((e.key === 'Backspace' || e.key === 'Delete') && 
+                        e.currentTarget.selectionStart !== null &&
+                        e.currentTarget.selectionStart <= 4) {
+                      e.preventDefault();
+                    }
+                  }}
+                  maxLength={13}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Format: +254 followed by 9 digits
+                  Enter 9 digits after +254
                 </p>
               </div>
             </div>
@@ -1277,10 +1374,11 @@ export function PastorsManager() {
                     <SelectValue placeholder="Select rank" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Reverend">Reverend</SelectItem>
+                    <SelectItem value="Archbishop">Archbishop</SelectItem>
                     <SelectItem value="Bishop">Bishop</SelectItem>
-                    <SelectItem value="Pastor">Pastor</SelectItem>
                     <SelectItem value="Presbyter">Presbyter</SelectItem>
+                    <SelectItem value="Reverend">Reverend</SelectItem>
+                    <SelectItem value="Pastor">Pastor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
