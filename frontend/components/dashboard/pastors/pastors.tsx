@@ -57,22 +57,42 @@ import {
   Printer,
   ExternalLink,
   AlertTriangle,
-  CheckCircle2,
   Download,
   ChevronDown,
   UserX,
   X,
+  Loader2,
 } from "lucide-react";
-import { mockPastors } from "@/lib/mock-data/mock-pastors";
+import { mockChurches } from "@/lib/mock-data/mock-churches";
+import { useDistricts } from "@/lib/hooks/use-districts";
+import { useSections } from "@/lib/hooks/use-sections";
+import { usePastors, useCreatePastor, useUpdatePastor, useDeletePastor } from "@/lib/hooks/use-pastors";
 import { Pastor, PastorRank, PastorStatus } from "@/types/pastor";
+import { toast } from "sonner";
 import { PASTOR_TITLE_COLORS } from "@/constants/pastor-status";
 
 export function PastorsManager() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRank, setSelectedRank] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedDistrict, setSelectedDistrict] = useState("all");
+  const [selectedSection, setSelectedSection] = useState("all");
+  const [selectedChurch, setSelectedChurch] = useState("all");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
-  const [pastors, setPastors] = useState<Pastor[]>(mockPastors);
+
+  // Fetch data from API
+  const { data: pastorsData, isLoading, error } = usePastors({ search: searchQuery });
+  const { data: districtsData } = useDistricts();
+  const { data: sectionsData } = useSections();
+  
+  const pastors = pastorsData?.results || [];
+  const districts = districtsData?.results || [];
+  const sections = sectionsData?.results || [];
+
+  // Mutations
+  const createMutation = useCreatePastor();
+  const updateMutation = useUpdatePastor();
+  const deleteMutation = useDeletePastor();
 
   // Add Pastor Dialog State
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -103,14 +123,20 @@ export function PastorsManager() {
     startOfService: "",
     status: "active",
   });
+  const [originalEditFormData, setOriginalEditFormData] = useState({
+    fullName: "",
+    gender: "Male",
+    dateOfBirth: "",
+    nationalId: "",
+    phoneNumber: "+254",
+    pastorRank: "Pastor",
+    startOfService: "",
+    status: "active",
+  });
 
   // Delete Pastor Dialog State
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [deletingPastorId, setDeletingPastorId] = useState<string | null>(null);
-  
-  // Success toast state
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
+  const [deletingPastorId, setDeletingPastorId] = useState<number | null>(null);
   
   // Export dropdown state
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
@@ -125,30 +151,61 @@ export function PastorsManager() {
   };
 
   const rankStats = {
-    archbishop: pastors.filter((p) => p.rank === "Archbishop").length,
-    bishop: pastors.filter((p) => p.rank === "Bishop").length,
-    presbyter: pastors.filter((p) => p.rank === "Presbyter").length,
-    reverend: pastors.filter((p) => p.rank === "Reverend").length,
-    pastor: pastors.filter((p) => p.rank === "Pastor").length,
+    archbishop: pastors.filter((p) => p.pastor_rank === "ArchBishop").length,
+    bishop: pastors.filter((p) => p.pastor_rank === "Bishop").length,
+    presbyter: pastors.filter((p) => p.pastor_rank === "Presbyter").length,
+    reverend: pastors.filter((p) => p.pastor_rank === "Reverend").length,
+    pastor: pastors.filter((p) => p.pastor_rank === "Pastor").length,
+  };
+
+  // Cascading filter logic: get available sections based on selected district
+  const availableSections = selectedDistrict === "all" 
+    ? sections 
+    : sections.filter(section => section.district === Number(selectedDistrict));
+
+  // Cascading filter logic: get available churches based on selected section
+  const availableChurches = selectedSection === "all"
+    ? mockChurches
+    : mockChurches.filter(church => {
+        // Find the selected section's name to match with church.section
+        const section = sections.find(s => s.id === Number(selectedSection));
+        return section ? church.section === section.name : false;
+      });
+
+  // Reset section when district changes
+  const handleDistrictChange = (value: string | null) => {
+    setSelectedDistrict(value || "all");
+    setSelectedSection("all");
+    setSelectedChurch("all");
+  };
+
+  // Reset church when section changes
+  const handleSectionChange = (value: string | null) => {
+    setSelectedSection(value || "all");
+    setSelectedChurch("all");
   };
 
   // Filter pastors based on search and filters
   const filteredPastors = pastors.filter((pastor) => {
     const matchesSearch =
       pastor.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pastor.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      pastor.pastor_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pastor.phone_number?.includes(searchQuery);
 
     const matchesRank =
-      selectedRank === "all" || pastor.rank === selectedRank;
+      selectedRank === "all" || pastor.pastor_rank === selectedRank;
 
     const matchesStatus =
       selectedStatus === "all" || pastor.status === selectedStatus;
 
+    // TODO: Add district/section/church filtering when assignment relationships are implemented
+    // const matchesDistrict =
+    //   selectedDistrict === "all" || pastor.district_id === selectedDistrict;
+
     return matchesSearch && matchesRank && matchesStatus;
   });
 
-  const handleView = (id: string) => {
+  const handleView = (id: number) => {
     const pastor = pastors.find((p) => p.id === id);
     if (pastor) {
       setSelectedPastor(pastor);
@@ -156,55 +213,46 @@ export function PastorsManager() {
     }
   };
 
-  const handleEdit = (id: string) => {
+  const handleEdit = (id: number) => {
     const pastor = pastors.find((p) => p.id === id);
     if (pastor) {
-      // Calculate start of service date from years_of_service
-      const currentYear = new Date().getFullYear();
-      const startYear = pastor.years_of_service 
-        ? currentYear - pastor.years_of_service 
-        : currentYear;
-      const startOfServiceDate = `${startYear}-01-01`;
-
-      setEditFormData({
+      const formData = {
         fullName: pastor.full_name,
-        gender: "Male", // Default value as gender is not stored in Pastor model
+        gender: pastor.gender,
         dateOfBirth: pastor.date_of_birth ? pastor.date_of_birth.split("T")[0] : "",
         nationalId: pastor.national_id || "",
         phoneNumber: pastor.phone_number || "+254",
-        pastorRank: pastor.rank,
-        startOfService: startOfServiceDate,
+        pastorRank: pastor.pastor_rank,
+        startOfService: pastor.start_of_service ? pastor.start_of_service.split("T")[0] : "",
         status: pastor.status,
-      });
+      };
+
+      setEditFormData(formData);
+      setOriginalEditFormData(formData);
       setSelectedPastor(pastor);
       setIsEditDialogOpen(true);
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: number) => {
     setDeletingPastorId(id);
     setIsDeleteDialogOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (deletingPastorId) {
-      // Remove pastor from array
-      setPastors(pastors.filter(p => p.id !== deletingPastorId));
-      
-      console.log("Deleting pastor:", deletingPastorId);
-      // TODO: Implement API call to delete pastor
-      
-      setIsDeleteDialogOpen(false);
-      setDeletingPastorId(null);
-      
-      // Show success message
-      setSuccessMessage("Pastor deleted successfully.");
-      setShowSuccessToast(true);
-      
-      // Auto-hide toast after 5 seconds
-      setTimeout(() => {
-        setShowSuccessToast(false);
-      }, 5000);
+      try {
+        await deleteMutation.mutateAsync(deletingPastorId);
+        
+        setIsDeleteDialogOpen(false);
+        setDeletingPastorId(null);
+        
+        // Show success message
+        toast.success("Pastor deleted successfully");
+      } catch (error) {
+        console.error("Error deleting pastor:", error);
+        toast.error("Failed to delete pastor");
+      }
     } else {
       setIsDeleteDialogOpen(false);
       setDeletingPastorId(null);
@@ -220,111 +268,51 @@ export function PastorsManager() {
     setIsAddDialogOpen(true);
   };
 
-  const handleSavePastor = () => {
+  const handleSavePastor = async () => {
+    // Validate required fields
     if (
       !formData.fullName.trim() || 
       !formData.gender.trim() || 
       !formData.dateOfBirth || 
       !formData.nationalId.trim() || 
-      formData.nationalId.length !== 8 ||
       !formData.phoneNumber.trim() || 
-      formData.phoneNumber.length !== 13 ||
       !formData.pastorRank.trim() || 
-      !formData.startOfService || 
       !formData.status.trim()
     ) {
+      toast.error("Please fill in all required fields");
       return;
     }
 
-    // Calculate years of service (current year - start of service year)
-    const startYear = new Date(formData.startOfService).getFullYear();
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const yearsOfService = currentYear - startYear;
+    try {
+      await createMutation.mutateAsync({
+        full_name: formData.fullName,
+        gender: formData.gender as "Male" | "Female",
+        pastor_rank: formData.pastorRank as PastorRank,
+        national_id: formData.nationalId,
+        date_of_birth: formData.dateOfBirth,
+        phone_number: formData.phoneNumber,
+        start_of_service: formData.startOfService || undefined,
+        status: formData.status as PastorStatus,
+      });
 
-    // Calculate age from date of birth (accounting for month and day)
-    const birthDate = new Date(formData.dateOfBirth);
-    const birthYear = birthDate.getFullYear();
-    let age = currentYear - birthYear;
-    
-    // Check if birthday has occurred this year
-    const currentMonth = currentDate.getMonth();
-    const currentDay = currentDate.getDate();
-    const birthMonth = birthDate.getMonth();
-    const birthDay = birthDate.getDate();
-    
-    // If birthday hasn't occurred yet this year, subtract 1 from age
-    if (currentMonth < birthMonth || (currentMonth === birthMonth && currentDay < birthDay)) {
-      age--;
+      // Reset form and close dialog
+      setFormData({
+        fullName: "",
+        gender: "Male",
+        dateOfBirth: "",
+        nationalId: "",
+        phoneNumber: "+254",
+        pastorRank: "Pastor",
+        startOfService: "",
+        status: "active",
+      });
+      setIsAddDialogOpen(false);
+      
+      toast.success("Pastor added successfully");
+    } catch (error) {
+      console.error("Error creating pastor:", error);
+      toast.error("Failed to create pastor");
     }
-
-    // Calculate projected retirement (assume retirement at age 70)
-    const retirementAge = 70;
-    const retirementYear = birthDate.getFullYear() + retirementAge;
-    const retirementMonth = birthDate.toLocaleString('default', { month: 'short' });
-    const projected_retirement = `${retirementMonth} ${retirementYear}`;
-
-    // Auto-change status to retired if age >= 70 and currently active
-    let finalStatus = formData.status as PastorStatus;
-    if (age >= 70 && formData.status === 'active') {
-      finalStatus = 'retired';
-    }
-
-    // Calculate remaining tenure (70 years - current age)
-    // Set to 0 for deceased and retired pastors
-    const remaining_tenure = (finalStatus === 'deceased' || finalStatus === 'retired') ? 0 : Math.max(0, 70 - age);
-
-    // Generate unique ID by finding the highest existing ID number
-    const maxId = pastors.reduce((max, p) => {
-      const idNum = parseInt(p.id.replace('PAS', ''));
-      return idNum > max ? idNum : max;
-    }, 0);
-    const newId = `PAS${String(maxId + 1).padStart(3, '0')}`;
-
-    // Create new pastor
-    const newPastor: Pastor = {
-      id: newId,
-      full_name: formData.fullName,
-      rank: formData.pastorRank as PastorRank,
-      date_of_birth: formData.dateOfBirth || new Date().toISOString(),
-      age: age,
-      status: finalStatus,
-      phone_number: formData.phoneNumber,
-      email: `${formData.fullName.toLowerCase().replace(/\s+/g, '.')}@kag.org`,
-      national_id: formData.nationalId || undefined,
-      years_of_service: yearsOfService,
-      projected_retirement: projected_retirement,
-      remaining_tenure: remaining_tenure,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    // Add to pastors array
-    setPastors([...pastors, newPastor]);
-    console.log("Saving pastor:", formData);
-    // TODO: Implement API call to save pastor
-
-    // Reset form and close dialog
-    setFormData({
-      fullName: "",
-      gender: "Male",
-      dateOfBirth: "",
-      nationalId: "",
-      phoneNumber: "+254",
-      pastorRank: "Pastor",
-      startOfService: "",
-      status: "active",
-    });
-    setIsAddDialogOpen(false);
-    
-    // Show success message
-    setSuccessMessage("Pastor added successfully.");
-    setShowSuccessToast(true);
-    
-    // Auto-hide toast after 5 seconds
-    setTimeout(() => {
-      setShowSuccessToast(false);
-    }, 5000);
   };
 
   const handleCancelAdd = () => {
@@ -341,96 +329,55 @@ export function PastorsManager() {
     setIsAddDialogOpen(false);
   };
 
-  const handleSaveEdit = () => {
-    if (!editFormData.fullName.trim() || !editFormData.phoneNumber.trim() || !editFormData.startOfService || !selectedPastor) {
+  const handleSaveEdit = async () => {
+    if (!editFormData.fullName.trim() || !editFormData.phoneNumber.trim() || !selectedPastor) {
+      toast.error("Please fill in required fields");
       return;
     }
 
-    // Calculate years of service (current year - start of service year)
-    const startYear = new Date(editFormData.startOfService).getFullYear();
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const yearsOfService = currentYear - startYear;
+    try {
+      await updateMutation.mutateAsync({
+        id: selectedPastor.id,
+        data: {
+          full_name: editFormData.fullName,
+          gender: editFormData.gender as "Male" | "Female",
+          pastor_rank: editFormData.pastorRank as PastorRank,
+          national_id: editFormData.nationalId || undefined,
+          date_of_birth: editFormData.dateOfBirth,
+          phone_number: editFormData.phoneNumber,
+          start_of_service: editFormData.startOfService || undefined,
+          status: editFormData.status as PastorStatus,
+        },
+      });
 
-    // Calculate age from date of birth (accounting for month and day)
-    const birthDate = new Date(editFormData.dateOfBirth);
-    const birthYear = birthDate.getFullYear();
-    let age = currentYear - birthYear;
-    
-    // Check if birthday has occurred this year
-    const currentMonth = currentDate.getMonth();
-    const currentDay = currentDate.getDate();
-    const birthMonth = birthDate.getMonth();
-    const birthDay = birthDate.getDate();
-    
-    // If birthday hasn't occurred yet this year, subtract 1 from age
-    if (currentMonth < birthMonth || (currentMonth === birthMonth && currentDay < birthDay)) {
-      age--;
+      // Reset form and close dialog
+      setEditFormData({
+        fullName: "",
+        gender: "Male",
+        dateOfBirth: "",
+        nationalId: "",
+        phoneNumber: "+254",
+        pastorRank: "Pastor",
+        startOfService: "",
+        status: "active",
+      });
+      setOriginalEditFormData({
+        fullName: "",
+        gender: "Male",
+        dateOfBirth: "",
+        nationalId: "",
+        phoneNumber: "+254",
+        pastorRank: "Pastor",
+        startOfService: "",
+        status: "active",
+      });
+      setIsEditDialogOpen(false);
+      
+      toast.success("Pastor updated successfully");
+    } catch (error) {
+      console.error("Error updating pastor:", error);
+      toast.error("Failed to update pastor");
     }
-
-    // Calculate projected retirement (assume retirement at age 70)
-    const retirementAge = 70;
-    const retirementYear = birthDate.getFullYear() + retirementAge;
-    const retirementMonth = birthDate.toLocaleString('default', { month: 'short' });
-    const projected_retirement = `${retirementMonth} ${retirementYear}`;
-
-    // Auto-change status to retired if age >= 70 and currently active
-    let finalStatus = editFormData.status as PastorStatus;
-    if (age >= 70 && editFormData.status === 'active') {
-      finalStatus = 'retired';
-    }
-
-    // Calculate remaining tenure (70 years - current age)
-    // Set to 0 for deceased and retired pastors
-    const remaining_tenure = (finalStatus === 'deceased' || finalStatus === 'retired') ? 0 : Math.max(0, 70 - age);
-
-    // Update pastor in array
-    setPastors(pastors.map(p => 
-      p.id === selectedPastor.id
-        ? {
-            ...p,
-            full_name: editFormData.fullName,
-            rank: editFormData.pastorRank as PastorRank,
-            date_of_birth: editFormData.dateOfBirth || p.date_of_birth,
-            age: age,
-            status: finalStatus,
-            phone_number: editFormData.phoneNumber,
-            national_id: editFormData.nationalId || undefined,
-            years_of_service: yearsOfService,
-            projected_retirement: projected_retirement,
-            remaining_tenure: remaining_tenure,
-            updated_at: new Date().toISOString(),
-          }
-        : p
-    ));
-
-    console.log("Updating pastor:", {
-      id: selectedPastor?.id,
-      ...editFormData,
-    });
-    // TODO: Implement API call to update pastor
-
-    // Reset form and close dialog
-    setEditFormData({
-      fullName: "",
-      gender: "Male",
-      dateOfBirth: "",
-      nationalId: "",
-      phoneNumber: "+254",
-      pastorRank: "Pastor",
-      startOfService: "",
-      status: "active",
-    });
-    setIsEditDialogOpen(false);
-    
-    // Show success message
-    setSuccessMessage("Pastor updated successfully.");
-    setShowSuccessToast(true);
-    
-    // Auto-hide toast after 5 seconds
-    setTimeout(() => {
-      setShowSuccessToast(false);
-    }, 5000);
   };
 
   const handleCancelEdit = () => {
@@ -444,11 +391,84 @@ export function PastorsManager() {
       startOfService: "",
       status: "active",
     });
+    setOriginalEditFormData({
+      fullName: "",
+      gender: "Male",
+      dateOfBirth: "",
+      nationalId: "",
+      phoneNumber: "+254",
+      pastorRank: "Pastor",
+      startOfService: "",
+      status: "active",
+    });
     setIsEditDialogOpen(false);
   };
 
+  // Helper function to calculate age from date of birth
+  const calculateAge = (dateOfBirth: string): number => {
+    const birthDate = new Date(dateOfBirth);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    return age;
+  };
+
+  // Helper function to calculate years of service
+  const calculateYearsOfService = (startOfService: string | null): number => {
+    if (!startOfService) return 0;
+    
+    const startDate = new Date(startOfService);
+    const today = new Date();
+    let years = today.getFullYear() - startDate.getFullYear();
+    const monthDiff = today.getMonth() - startDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < startDate.getDate())) {
+      years--;
+    }
+    
+    return Math.max(0, years);
+  };
+
+  // Helper function to calculate projected retirement (age 70)
+  const calculateProjectedRetirement = (dateOfBirth: string): string => {
+    const birthDate = new Date(dateOfBirth);
+    const retirementAge = 70;
+    const retirementYear = birthDate.getFullYear() + retirementAge;
+    const retirementMonth = birthDate.toLocaleString('default', { month: 'short' });
+    return `${retirementMonth} ${retirementYear}`;
+  };
+
+  // Helper function to calculate remaining tenure until retirement
+  const calculateRemainingTenure = (dateOfBirth: string, status: PastorStatus): number => {
+    if (status === 'deceased' || status === 'retired') return 0;
+    
+    const age = calculateAge(dateOfBirth);
+    return Math.max(0, 70 - age);
+  };
+
+  // Check if edit form has changes
+  const hasEditFormChanges = () => {
+    return (
+      editFormData.fullName !== originalEditFormData.fullName ||
+      editFormData.gender !== originalEditFormData.gender ||
+      editFormData.dateOfBirth !== originalEditFormData.dateOfBirth ||
+      editFormData.nationalId !== originalEditFormData.nationalId ||
+      editFormData.phoneNumber !== originalEditFormData.phoneNumber ||
+      editFormData.pastorRank !== originalEditFormData.pastorRank ||
+      editFormData.startOfService !== originalEditFormData.startOfService ||
+      editFormData.status !== originalEditFormData.status
+    );
+  };
+
   const getRankBadgeClass = (rank: PastorRank) => {
-    return PASTOR_TITLE_COLORS[rank];
+    // Map backend rank to display rank for colors
+    const displayRank = rank === 'ArchBishop' ? 'Archbishop' : rank;
+    return PASTOR_TITLE_COLORS[displayRank as keyof typeof PASTOR_TITLE_COLORS] || PASTOR_TITLE_COLORS.Pastor;
   };
 
   const getInitials = (name: string) => {
@@ -574,14 +594,14 @@ export function PastorsManager() {
             <tbody>
               ${dataToExport.map(pastor => `
                 <tr>
-                  <td>${pastor.id}</td>
+                  <td>${pastor.pastor_id}</td>
                   <td>${pastor.full_name}</td>
-                  <td>${pastor.rank}</td>
+                  <td>${pastor.pastor_rank}</td>
                   <td class="status-${pastor.status}">${pastor.status.charAt(0).toUpperCase() + pastor.status.slice(1)}</td>
-                  <td class="text-center">${pastor.age || '-'}</td>
-                  <td class="text-center">${pastor.years_of_service ? pastor.years_of_service + ' yrs' : '-'}</td>
-                  <td>${pastor.projected_retirement || '-'}</td>
-                  <td class="text-center">${pastor.remaining_tenure ? pastor.remaining_tenure + ' yrs' : '-'}</td>
+                  <td class="text-center">${calculateAge(pastor.date_of_birth) || '-'}</td>
+                  <td class="text-center">${calculateYearsOfService(pastor.start_of_service) || '0'} yrs</td>
+                  <td>${calculateProjectedRetirement(pastor.date_of_birth) || '-'}</td>
+                  <td class="text-center">${calculateRemainingTenure(pastor.date_of_birth, pastor.status)} yrs</td>
                   <td>${pastor.phone_number || '-'}</td>
                 </tr>
               `).join('')}
@@ -608,20 +628,27 @@ export function PastorsManager() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      {/* Success Toast */}
-      {showSuccessToast && (
-        <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-2 duration-300">
-          <div className="flex items-center gap-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-3 shadow-lg">
-            <div className="flex size-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-              <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-              {successMessage}
-            </p>
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="size-8 animate-spin text-brand-primary" />
+          <span className="ml-3 text-sm text-muted-foreground">Loading pastors...</span>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center gap-3">
+            <AlertTriangle className="size-12 text-destructive" />
+            <p className="text-sm font-medium">Failed to load pastors</p>
+            <p className="text-xs text-muted-foreground">Please try again later</p>
           </div>
         </div>
       )}
 
+      {!isLoading && !error && (
+        <>
       {/* Header */}
       <PageHeader
         title="Pastors Manager"
@@ -757,8 +784,8 @@ export function PastorsManager() {
       </div>
 
       {/* Search and Filter Bar */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="relative flex-1 max-w-xs min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
             type="text"
@@ -774,7 +801,9 @@ export function PastorsManager() {
           onValueChange={(value) => setSelectedRank(value || "all")}
         >
           <SelectTrigger className="w-fit min-w-37.5">
-            <SelectValue placeholder="All Ranks" />
+            <SelectValue placeholder="All Ranks">
+              {selectedRank === "all" ? "All Ranks" : selectedRank}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Ranks</SelectItem>
@@ -791,7 +820,11 @@ export function PastorsManager() {
           onValueChange={(value) => setSelectedStatus(value || "all")}
         >
           <SelectTrigger className="w-fit min-w-37.5">
-            <SelectValue placeholder="All Status" />
+            <SelectValue placeholder="All Status">
+              {selectedStatus === "all" 
+                ? "All Status" 
+                : selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1)}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
@@ -799,6 +832,71 @@ export function PastorsManager() {
             <SelectItem value="retired">Retired</SelectItem>
             <SelectItem value="suspended">Suspended</SelectItem>
             <SelectItem value="deceased">Deceased</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={selectedDistrict}
+          onValueChange={handleDistrictChange}
+        >
+          <SelectTrigger className="w-fit min-w-37.5">
+            <SelectValue placeholder="All Districts">
+              {selectedDistrict === "all" 
+                ? "All Districts" 
+                : districts.find(d => d.id === Number(selectedDistrict))?.name || "All Districts"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Districts</SelectItem>
+            {districts.map((district) => (
+              <SelectItem key={district.id} value={String(district.id)}>
+                {district.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={selectedSection}
+          onValueChange={handleSectionChange}
+          disabled={selectedDistrict === "all"}
+        >
+          <SelectTrigger className="w-fit min-w-37.5">
+            <SelectValue placeholder="All Sections">
+              {selectedSection === "all" 
+                ? "All Sections" 
+                : availableSections.find(s => s.id === Number(selectedSection))?.name || "All Sections"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Sections</SelectItem>
+            {availableSections.map((section) => (
+              <SelectItem key={section.id} value={String(section.id)}>
+                {section.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={selectedChurch}
+          onValueChange={(value) => setSelectedChurch(value || "all")}
+          disabled={selectedSection === "all"}
+        >
+          <SelectTrigger className="w-fit min-w-37.5">
+            <SelectValue placeholder="All Churches">
+              {selectedChurch === "all" 
+                ? "All Churches" 
+                : availableChurches.find(c => c.id === selectedChurch)?.name || "All Churches"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Churches</SelectItem>
+            {availableChurches.map((church) => (
+              <SelectItem key={church.id} value={church.id}>
+                {church.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
@@ -843,7 +941,7 @@ export function PastorsManager() {
                   <Printer className="size-4 text-muted-foreground" />
                 </div>
                 <span className="text-xs text-muted-foreground mt-0.5">
-                  {searchQuery || selectedRank !== 'all' || selectedStatus !== 'all' 
+                  {searchQuery || selectedRank !== 'all' || selectedStatus !== 'all' || selectedDistrict !== 'all' || selectedSection !== 'all' || selectedChurch !== 'all'
                     ? `${filteredPastors.length} records with active filters`
                     : 'No filters applied'}
                 </span>
@@ -902,7 +1000,7 @@ export function PastorsManager() {
               filteredPastors.map((pastor) => (
                 <TableRow key={pastor.id}>
                   <TableCell className="font-medium text-brand-primary">
-                    {pastor.id}
+                    {pastor.pastor_id}
                   </TableCell>
                   <TableCell className="font-medium">
                     <button
@@ -915,9 +1013,9 @@ export function PastorsManager() {
                   <TableCell>
                     <Badge
                       variant="secondary"
-                      className={getRankBadgeClass(pastor.rank)}
+                      className={getRankBadgeClass(pastor.pastor_rank)}
                     >
-                      {pastor.rank}
+                      {pastor.pastor_rank}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -949,20 +1047,16 @@ export function PastorsManager() {
                     </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground text-center">
-                    {pastor.age || "—"}
+                    {calculateAge(pastor.date_of_birth)}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-center">
-                    {pastor.years_of_service
-                      ? `${pastor.years_of_service} yrs`
-                      : "—"}
+                    {calculateYearsOfService(pastor.start_of_service)} yrs
                   </TableCell>
                   <TableCell className="text-muted-foreground text-center">
-                    {pastor.projected_retirement || "—"}
+                    {calculateProjectedRetirement(pastor.date_of_birth)}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-center">
-                    {pastor.remaining_tenure !== undefined
-                      ? `${pastor.remaining_tenure} yrs`
-                      : "—"}
+                    {calculateRemainingTenure(pastor.date_of_birth, pastor.status)} yrs
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {pastor.phone_number || "—"}
@@ -1248,7 +1342,7 @@ export function PastorsManager() {
               {/* Full Name */}
               <div className="flex flex-col gap-2">
                 <Label htmlFor="editFullName">
-                  Full Name <span className="text-red-500">*</span>
+                  Full Name
                 </Label>
                 <Input
                   id="editFullName"
@@ -1321,7 +1415,7 @@ export function PastorsManager() {
               {/* Phone Number */}
               <div className="flex flex-col gap-2">
                 <Label htmlFor="editPhoneNumber">
-                  Phone Number <span className="text-red-500">*</span>
+                  Phone Number
                 </Label>
                 <Input
                   id="editPhoneNumber"
@@ -1386,7 +1480,7 @@ export function PastorsManager() {
               {/* Start of Service */}
               <div className="flex flex-col gap-2">
                 <Label htmlFor="editStartOfService">
-                  Start of Service <span className="text-red-500">*</span>
+                  Start of Service
                 </Label>
                 <Input
                   id="editStartOfService"
@@ -1434,7 +1528,8 @@ export function PastorsManager() {
               disabled={
                 !editFormData.fullName.trim() ||
                 !editFormData.phoneNumber.trim() ||
-                !editFormData.startOfService
+                !editFormData.startOfService ||
+                !hasEditFormChanges()
               }
               className="flex-1 sm:flex-none"
             >
@@ -1447,35 +1542,36 @@ export function PastorsManager() {
       {/* Delete Pastor Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader className="flex flex-col items-center gap-4 pb-4">
+          <div className="flex flex-col items-center gap-4 py-4">
             <div className="flex size-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
-              <AlertTriangle className="size-8 text-yellow-600 dark:text-yellow-400" />
+              <AlertTriangle className="size-8 text-yellow-600 dark:text-yellow-500" />
             </div>
-            <DialogTitle className="text-xl">Delete Pastor?</DialogTitle>
-          </DialogHeader>
-
-          <div className="text-center text-muted-foreground pb-4">
-            Are you sure you want to delete{" "}
-            <span className="font-semibold text-foreground">
-              {deletingPastorId
-                ? pastors.find((p) => p.id === deletingPastorId)?.full_name
-                : ""}
-            </span>
-            ? This action cannot be undone and will remove all associated
-            assignments.
+            
+            <div className="flex flex-col gap-2 text-center">
+              <h2 className="text-lg font-semibold">Delete Pastor?</h2>
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to delete{" "}
+                <span className="font-medium text-foreground">
+                  {deletingPastorId
+                    ? pastors.find((p) => p.id === deletingPastorId)?.full_name
+                    : ""}
+                </span>
+                ? This action cannot be undone and will remove all associated assignments.
+              </p>
+            </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={handleCancelDelete}
-              className="flex-1 sm:flex-none"
+              className="flex-1"
             >
               Cancel
             </Button>
             <Button
               onClick={handleConfirmDelete}
-              className="flex-1 sm:flex-none bg-red-500 hover:bg-red-600 text-white"
+              className="flex-1 bg-red-500 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
             >
               Delete
             </Button>
@@ -1502,9 +1598,9 @@ export function PastorsManager() {
                   <div className="flex items-center gap-2">
                     <Badge
                       variant="secondary"
-                      className={getRankBadgeClass(selectedPastor.rank)}
+                      className={getRankBadgeClass(selectedPastor.pastor_rank)}
                     >
-                      {selectedPastor.rank}
+                      {selectedPastor.pastor_rank}
                     </Badge>
                     <Badge
                       variant="secondary"
@@ -1537,7 +1633,7 @@ export function PastorsManager() {
                         Pastor ID
                       </span>
                       <span className="text-sm font-medium">
-                        {selectedPastor.id}
+                        {selectedPastor.pastor_id}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -1596,19 +1692,23 @@ export function PastorsManager() {
                         Years Active
                       </span>
                       <span className="text-sm font-medium">
-                        {selectedPastor.years_of_service || 0} years
+                        {calculateYearsOfService(selectedPastor.start_of_service)} years
                       </span>
                     </div>
                     <div className="flex flex-col gap-2">
                       <span className="text-sm text-muted-foreground">
-                        Current Assignments
+                        {selectedPastor.status === "active" 
+                          ? "Current Assignments" 
+                          : "Last Assignment"}
                       </span>
                       <div className="flex flex-col gap-0.5 bg-muted/50 p-3 rounded-md">
                         <span className="text-sm font-medium">
-                          KAG Cathedral Nairobi
+                          {/* TODO: Add church assignment relationship */}
+                          —
                         </span>
                         <span className="text-xs text-brand-primary">
-                          Senior Pastor
+                          {/* TODO: Add role field to pastor */}
+                          —
                         </span>
                       </div>
                     </div>
@@ -1643,6 +1743,8 @@ export function PastorsManager() {
           )}
         </SheetContent>
       </Sheet>
+        </>
+      )}
     </div>
   );
 }
