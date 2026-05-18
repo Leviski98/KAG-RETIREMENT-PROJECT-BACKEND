@@ -1,5 +1,6 @@
 import { PASTOR_RANK_MAP } from "@/constants/pastor-status";
 import { apiClient } from "@/lib/api/client";
+import type { PaginatedResponse } from "@/lib/api/client";
 import type { Church, ChurchRole, PastorAssignment } from "@/types/church";
 
 interface ApiChurch {
@@ -57,6 +58,12 @@ export interface AssignmentWriteInput {
   roleId: string;
 }
 
+type ListResponse<T> = T[] | PaginatedResponse<T>;
+
+function listResults<T>(data: ListResponse<T>): T[] {
+  return Array.isArray(data) ? data : data.results;
+}
+
 function toChurch(api: ApiChurch): Church {
   return {
     id: String(api.id),
@@ -95,8 +102,8 @@ function toAssignment(api: ApiChurchPastor): PastorAssignment {
 
 export const churchApi = {
   getChurches: async (): Promise<Church[]> => {
-    const data = await apiClient.get<ApiChurch[]>("/churches/");
-    return data.map(toChurch);
+    const data = await apiClient.get<ListResponse<ApiChurch>>("/churches/");
+    return listResults(data).map(toChurch);
   },
 
   createChurch: async (input: ChurchWriteInput): Promise<Church> => {
@@ -123,8 +130,8 @@ export const churchApi = {
   deleteChurch: (id: string) => apiClient.delete(`/churches/${id}/`),
 
   getRoles: async (): Promise<ChurchRole[]> => {
-    const data = await apiClient.get<ApiChurchRole[]>("/church-roles/");
-    return data.map(toRole);
+    const data = await apiClient.get<ListResponse<ApiChurchRole>>("/church-roles/");
+    return listResults(data).map(toRole);
   },
 
   createRole: async (input: RoleWriteInput): Promise<ChurchRole> => {
@@ -147,8 +154,8 @@ export const churchApi = {
   deleteRole: (id: string) => apiClient.delete(`/church-roles/${id}/`),
 
   getAssignments: async (): Promise<PastorAssignment[]> => {
-    const data = await apiClient.get<ApiChurchPastor[]>("/church-pastors/");
-    return data.map(toAssignment);
+    const data = await apiClient.get<ListResponse<ApiChurchPastor>>("/church-pastors/");
+    return listResults(data).map(toAssignment);
   },
 
   createAssignment: async (
@@ -165,7 +172,13 @@ export const churchApi = {
   deleteAssignment: (id: string) =>
     apiClient.delete(`/church-pastors/${id}/`),
 
-  getSections: () => apiClient.get<ApiSection[]>("/sections/"),
+  getSections: async () => {
+    const data = await apiClient.get<ListResponse<ApiSection>>("/sections/");
+    return listResults(data);
+  },
 
-  getPastors: () => apiClient.get<ApiPastor[]>("/pastors/"),
+  getPastors: async () => {
+    const data = await apiClient.get<ListResponse<ApiPastor>>("/pastors/");
+    return listResults(data);
+  },
 };
