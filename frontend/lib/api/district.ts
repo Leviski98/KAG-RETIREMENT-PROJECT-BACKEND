@@ -1,6 +1,6 @@
 /**
  * District API Client
- * 
+ *
  * Provides methods to interact with the District API endpoints.
  * All endpoints return Promises that resolve to the expected data type.
  */
@@ -25,7 +25,7 @@ export const districtApi = {
   /**
    * Get paginated list of districts
    * GET /api/districts/
-   * 
+   *
    * @param params - Query parameters for filtering, searching, and ordering
    * @returns Paginated list of districts
    */
@@ -36,7 +36,7 @@ export const districtApi = {
   /**
    * Get a single district by ID
    * GET /api/districts/{id}/
-   * 
+   *
    * @param id - District ID
    * @returns District details
    */
@@ -47,7 +47,7 @@ export const districtApi = {
   /**
    * Create a new district
    * POST /api/districts/
-   * 
+   *
    * @param data - District data to create
    * @returns Created district
    */
@@ -58,7 +58,7 @@ export const districtApi = {
   /**
    * Update a district (full update)
    * PUT /api/districts/{id}/
-   * 
+   *
    * @param id - District ID
    * @param data - Complete district data
    * @returns Updated district
@@ -70,7 +70,7 @@ export const districtApi = {
   /**
    * Partially update a district
    * PATCH /api/districts/{id}/
-   * 
+   *
    * @param id - District ID
    * @param data - Partial district data to update
    * @returns Updated district
@@ -82,7 +82,7 @@ export const districtApi = {
   /**
    * Delete a district
    * DELETE /api/districts/{id}/
-   * 
+   *
    * @param id - District ID
    */
   delete: (id: number | string) => {
@@ -92,7 +92,7 @@ export const districtApi = {
   /**
    * Get district statistics
    * GET /api/districts/statistics/
-   * 
+   *
    * @returns Statistics about all districts
    */
   getStatistics: () => {
@@ -102,7 +102,7 @@ export const districtApi = {
   /**
    * Get detailed summary of a specific district
    * GET /api/districts/{id}/summary/
-   * 
+   *
    * @param id - District ID
    * @returns District summary with related information
    */
@@ -113,7 +113,7 @@ export const districtApi = {
   /**
    * Create multiple districts at once (max 10)
    * POST /api/districts/bulk_create/
-   * 
+   *
    * @param data - Array of districts to create
    * @returns Array of created districts
    */

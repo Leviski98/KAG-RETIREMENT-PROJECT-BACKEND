@@ -1,6 +1,6 @@
 /**
  * Section React Query Hooks
- * 
+ *
  * Custom hooks for managing section data using TanStack Query.
  * Provides automatic caching, refetching, and mutation handling.
  */
@@ -39,7 +39,7 @@ export const sectionKeys = {
 
 /**
  * Fetch paginated list of sections
- * 
+ *
  * @param params - Query parameters for filtering and pagination
  * @param options - React Query options
  */
@@ -56,7 +56,7 @@ export function useSections(
 
 /**
  * Fetch a single section by ID
- * 
+ *
  * @param id - Section ID
  * @param options - React Query options
  */
@@ -74,7 +74,7 @@ export function useSection(
 
 /**
  * Fetch section statistics
- * 
+ *
  * @param options - React Query options
  */
 export function useSectionStatistics(
@@ -89,7 +89,7 @@ export function useSectionStatistics(
 
 /**
  * Fetch section summary with additional details
- * 
+ *
  * @param id - Section ID
  * @param options - React Query options
  */
@@ -108,7 +108,7 @@ export function useSectionSummary(
 /**
  * Create a new section
  * Automatically invalidates the sections list on success
- * 
+ *
  * @param options - React Query mutation options
  */
 export function useCreateSection(
@@ -118,13 +118,13 @@ export function useCreateSection(
 
   return useMutation({
     mutationFn: (data: CreateSectionInput) => sectionApi.create(data),
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables, context, mutation) => {
       // Invalidate and refetch sections list
       queryClient.invalidateQueries({ queryKey: sectionKeys.lists() });
       queryClient.invalidateQueries({ queryKey: sectionKeys.statistics() });
-      
+
       // Call user-provided onSuccess if exists
-      options?.onSuccess?.(data, variables, context);
+      options?.onSuccess?.(data, variables, context, mutation);
     },
     ...options,
   });
@@ -133,7 +133,7 @@ export function useCreateSection(
 /**
  * Update a section (full update)
  * Automatically invalidates related queries on success
- * 
+ *
  * @param options - React Query mutation options
  */
 export function useUpdateSection(
@@ -144,14 +144,14 @@ export function useUpdateSection(
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: CreateSectionInput }) =>
       sectionApi.update(id, data),
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables, context, mutation) => {
       // Invalidate specific section and lists
       queryClient.invalidateQueries({ queryKey: sectionKeys.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: sectionKeys.lists() });
       queryClient.invalidateQueries({ queryKey: sectionKeys.summary(variables.id) });
-      
+
       // Call user-provided onSuccess if exists
-      options?.onSuccess?.(data, variables, context);
+      options?.onSuccess?.(data, variables, context, mutation);
     },
     ...options,
   });
@@ -160,7 +160,7 @@ export function useUpdateSection(
 /**
  * Partially update a section
  * Automatically invalidates related queries on success
- * 
+ *
  * @param options - React Query mutation options
  */
 export function usePartialUpdateSection(
@@ -171,14 +171,14 @@ export function usePartialUpdateSection(
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateSectionInput }) =>
       sectionApi.partialUpdate(id, data),
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables, context, mutation) => {
       // Invalidate specific section and lists
       queryClient.invalidateQueries({ queryKey: sectionKeys.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: sectionKeys.lists() });
       queryClient.invalidateQueries({ queryKey: sectionKeys.summary(variables.id) });
-      
+
       // Call user-provided onSuccess if exists
-      options?.onSuccess?.(data, variables, context);
+      options?.onSuccess?.(data, variables, context, mutation);
     },
     ...options,
   });
@@ -187,7 +187,7 @@ export function usePartialUpdateSection(
 /**
  * Delete a section
  * Automatically invalidates the sections list on success
- * 
+ *
  * @param options - React Query mutation options
  */
 export function useDeleteSection(
@@ -197,16 +197,16 @@ export function useDeleteSection(
 
   return useMutation({
     mutationFn: (id: number) => sectionApi.delete(id),
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables, context, mutation) => {
       // Invalidate sections list and statistics
       queryClient.invalidateQueries({ queryKey: sectionKeys.lists() });
       queryClient.invalidateQueries({ queryKey: sectionKeys.statistics() });
-      
+
       // Remove the specific section from cache
       queryClient.removeQueries({ queryKey: sectionKeys.detail(variables) });
-      
+
       // Call user-provided onSuccess if exists
-      options?.onSuccess?.(data, variables, context);
+      options?.onSuccess?.(data, variables, context, mutation);
     },
     ...options,
   });

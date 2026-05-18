@@ -21,11 +21,11 @@ import {
 } from "@/components/ui/table";
 import { Plus, Search, Pencil, Trash2, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
-import { 
-  useDistricts, 
-  useCreateDistrict, 
-  usePartialUpdateDistrict, 
-  useDeleteDistrict 
+import {
+  useDistricts,
+  useCreateDistrict,
+  usePartialUpdateDistrict,
+  useDeleteDistrict
 } from "@/lib/hooks/use-districts";
 import { useSections } from "@/lib/hooks/use-sections";
 import type { District } from "@/types/district";
@@ -44,10 +44,10 @@ export function DistrictsManager() {
 
   // Fetch districts using TanStack Query
   const { data: districtsResponse, isLoading, error } = useDistricts({ search: searchQuery });
-  
+
   // Fetch sections to count sections per district
   const { data: sectionsResponse } = useSections();
-  
+
   // Mutations
   const createMutation = useCreateDistrict();
   const updateMutation = usePartialUpdateDistrict();
@@ -126,7 +126,7 @@ export function DistrictsManager() {
     if (!newDistrictName.trim()) {
       return;
     }
-    
+
     createMutation.mutate(
       { name: newDistrictName },
       {
@@ -152,11 +152,11 @@ export function DistrictsManager() {
     if (!editDistrictName.trim() || !editingDistrict) {
       return;
     }
-    
+
     updateMutation.mutate(
-      { 
-        id: editingDistrict.id, 
-        data: { name: editDistrictName } 
+      {
+        id: editingDistrict.id,
+        data: { name: editDistrictName }
       },
       {
         onSuccess: () => {
@@ -420,7 +420,7 @@ export function DistrictsManager() {
             <div className="flex size-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
               <AlertTriangle className="size-8 text-yellow-600 dark:text-yellow-500" />
             </div>
-            
+
             <div className="flex flex-col gap-2 text-center">
               <h2 className="text-lg font-semibold">Delete District?</h2>
               <p className="text-sm text-muted-foreground">

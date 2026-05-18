@@ -171,7 +171,7 @@ try {
     console.error('Status:', error.status);
     console.error('Message:', error.message);
     console.error('Response:', error.response);
-    
+
     // Handle specific status codes
     if (error.status === 404) {
       // District not found

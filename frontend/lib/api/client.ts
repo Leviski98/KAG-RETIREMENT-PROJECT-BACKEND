@@ -1,6 +1,6 @@
 /**
  * Base API Client
- * 
+ *
  * Provides common utilities for making API requests to the Django backend.
  * Includes error handling, response parsing, and request configuration.
  */
@@ -24,7 +24,7 @@ export interface ApiError {
 
 // Request configuration
 interface RequestConfig extends RequestInit {
-  params?: Record<string, string | number | boolean | undefined>;
+  params?: object;
 }
 
 /**
@@ -44,9 +44,9 @@ export class ApiRequestError extends Error {
 /**
  * Build URL with query parameters
  */
-function buildUrl(endpoint: string, params?: Record<string, string | number | boolean | undefined>): string {
+function buildUrl(endpoint: string, params?: object): string {
   const url = new URL(`${API_BASE_URL}${endpoint}`);
-  
+
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
@@ -54,7 +54,7 @@ function buildUrl(endpoint: string, params?: Record<string, string | number | bo
       }
     });
   }
-  
+
   return url.toString();
 }
 
@@ -63,10 +63,10 @@ function buildUrl(endpoint: string, params?: Record<string, string | number | bo
  */
 async function parseResponse<T>(response: Response): Promise<T> {
   const contentType = response.headers.get('content-type');
-  
+
   if (contentType && contentType.includes('application/json')) {
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new ApiRequestError(
         data.error || data.detail || 'An error occurred',
@@ -74,17 +74,17 @@ async function parseResponse<T>(response: Response): Promise<T> {
         data
       );
     }
-    
+
     return data;
   }
-  
+
   if (!response.ok) {
     throw new ApiRequestError(
       `Request failed with status ${response.status}`,
       response.status
     );
   }
-  
+
   // For non-JSON responses, return text as T
   // This is intentional for flexibility with different response types
   const text = await response.text();
@@ -100,13 +100,13 @@ async function request<T>(
   config: RequestConfig = {}
 ): Promise<T> {
   const { params, ...fetchConfig } = config;
-  
+
   const url = buildUrl(endpoint, params);
-  
+
   const defaultHeaders: HeadersInit = {
     'Content-Type': 'application/json',
   };
-  
+
   const mergedConfig: RequestInit = {
     ...fetchConfig,
     headers: {
@@ -114,7 +114,7 @@ async function request<T>(
       ...fetchConfig.headers,
     },
   };
-  
+
   try {
     const response = await fetch(url, mergedConfig);
     return await parseResponse<T>(response);
@@ -122,7 +122,7 @@ async function request<T>(
     if (error instanceof ApiRequestError) {
       throw error;
     }
-    
+
     // Network or other errors
     throw new ApiRequestError(
       error instanceof Error ? error.message : 'Network error occurred',
@@ -135,34 +135,34 @@ async function request<T>(
  * HTTP Methods
  */
 export const apiClient = {
-  get: <T>(endpoint: string, params?: Record<string, string | number | boolean | undefined>) =>
+  get: <T>(endpoint: string, params?: object) =>
     request<T>(endpoint, { method: 'GET', params }),
-  
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  post: <T>(endpoint: string, data?: any, params?: Record<string, string | number | boolean | undefined>) =>
+  post: <T>(endpoint: string, data?: any, params?: object) =>
     request<T>(endpoint, {
       method: 'POST',
       body: JSON.stringify(data),
       params,
     }),
-  
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  put: <T>(endpoint: string, data?: any, params?: Record<string, string | number | boolean | undefined>) =>
+  put: <T>(endpoint: string, data?: any, params?: object) =>
     request<T>(endpoint, {
       method: 'PUT',
       body: JSON.stringify(data),
       params,
     }),
-  
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  patch: <T>(endpoint: string, data?: any, params?: Record<string, string | number | boolean | undefined>) =>
+  patch: <T>(endpoint: string, data?: any, params?: object) =>
     request<T>(endpoint, {
       method: 'PATCH',
       body: JSON.stringify(data),
       params,
     }),
-  
-  delete: <T>(endpoint: string, params?: Record<string, string | number | boolean | undefined>) =>
+
+  delete: <T>(endpoint: string, params?: object) =>
     request<T>(endpoint, { method: 'DELETE', params }),
 };
 

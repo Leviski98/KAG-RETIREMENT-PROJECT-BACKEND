@@ -44,17 +44,17 @@ export function SectionsManager() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newSectionName, setNewSectionName] = useState("");
   const [selectedDistrictForNew, setSelectedDistrictForNew] = useState<number | undefined>();
-  
+
   // Edit dialog state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [editSectionName, setEditSectionName] = useState("");
   const [editSelectedDistrict, setEditSelectedDistrict] = useState<number | undefined>();
-  
+
   // Delete dialog state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [sectionToDelete, setSectionToDelete] = useState<Section | null>(null);
-  
+
   // Success toast state
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -515,7 +515,7 @@ export function SectionsManager() {
             <div className="flex size-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
               <AlertTriangle className="size-8 text-yellow-600 dark:text-yellow-500" />
             </div>
-            
+
             <div className="flex flex-col gap-2 text-center">
               <h2 className="text-lg font-semibold">Delete Section?</h2>
               <p className="text-sm text-muted-foreground">

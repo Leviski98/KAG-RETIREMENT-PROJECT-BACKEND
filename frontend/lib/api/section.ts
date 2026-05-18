@@ -1,6 +1,6 @@
 /**
  * Section API Client
- * 
+ *
  * Provides methods to interact with the Section API endpoints.
  * All endpoints return Promises that resolve to the expected data type.
  */
@@ -24,7 +24,7 @@ export const sectionApi = {
   /**
    * Get paginated list of sections
    * GET /api/sections/
-   * 
+   *
    * @param params - Query parameters for filtering, searching, and ordering
    * @returns Paginated list of sections
    */
@@ -35,7 +35,7 @@ export const sectionApi = {
   /**
    * Get a single section by ID
    * GET /api/sections/{id}/
-   * 
+   *
    * @param id - Section ID
    * @returns Section details
    */
@@ -46,7 +46,7 @@ export const sectionApi = {
   /**
    * Create a new section
    * POST /api/sections/
-   * 
+   *
    * @param data - Section data to create
    * @returns Created section
    */
@@ -57,7 +57,7 @@ export const sectionApi = {
   /**
    * Update a section (full update)
    * PUT /api/sections/{id}/
-   * 
+   *
    * @param id - Section ID
    * @param data - Complete section data
    * @returns Updated section
@@ -69,7 +69,7 @@ export const sectionApi = {
   /**
    * Partially update a section
    * PATCH /api/sections/{id}/
-   * 
+   *
    * @param id - Section ID
    * @param data - Partial section data to update
    * @returns Updated section
@@ -81,7 +81,7 @@ export const sectionApi = {
   /**
    * Delete a section
    * DELETE /api/sections/{id}/
-   * 
+   *
    * @param id - Section ID
    * @returns Empty response on success
    */
@@ -92,7 +92,7 @@ export const sectionApi = {
   /**
    * Get section statistics
    * GET /api/sections/statistics/
-   * 
+   *
    * @returns Aggregate statistics about sections
    */
   getStatistics: () => {
@@ -102,7 +102,7 @@ export const sectionApi = {
   /**
    * Get section summary with additional details
    * GET /api/sections/{id}/summary/
-   * 
+   *
    * @param id - Section ID
    * @returns Detailed summary of the section
    */

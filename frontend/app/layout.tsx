@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { TooltipProvider } from "@/components/ui/tooltip"
 import { Providers } from "@/components/providers";
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { Geist, Geist_Mono } from "next/font/google";
 import { Mulish } from "next/font/google";
 import "./globals.css";

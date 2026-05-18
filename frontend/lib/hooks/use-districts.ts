@@ -1,6 +1,6 @@
 /**
  * District Hooks
- * 
+ *
  * Custom React hooks for managing district data using TanStack Query.
  * Provides easy-to-use hooks for fetching, creating, updating, and deleting districts.
  */
@@ -32,11 +32,11 @@ export const districtKeys = {
 
 /**
  * Hook to fetch paginated list of districts
- * 
+ *
  * @param params - Query parameters for filtering, searching, and ordering
  * @param options - Additional react-query options
  * @returns Query result with district list
- * 
+ *
  * @example
  * ```tsx
  * const { data, isLoading, error } = useDistricts({ search: 'Nairobi', page: 1 });
@@ -55,11 +55,11 @@ export function useDistricts(
 
 /**
  * Hook to fetch a single district by ID
- * 
+ *
  * @param id - District ID
  * @param options - Additional react-query options
  * @returns Query result with district details
- * 
+ *
  * @example
  * ```tsx
  * const { data: district, isLoading } = useDistrict(1);
@@ -79,10 +79,10 @@ export function useDistrict(
 
 /**
  * Hook to fetch district statistics
- * 
+ *
  * @param options - Additional react-query options
  * @returns Query result with district statistics
- * 
+ *
  * @example
  * ```tsx
  * const { data: stats } = useDistrictStatistics();
@@ -101,11 +101,11 @@ export function useDistrictStatistics(
 
 /**
  * Hook to fetch a district summary
- * 
+ *
  * @param id - District ID
  * @param options - Additional react-query options
  * @returns Query result with district summary
- * 
+ *
  * @example
  * ```tsx
  * const { data: summary } = useDistrictSummary(1);
@@ -125,14 +125,14 @@ export function useDistrictSummary(
 
 /**
  * Hook to create a new district
- * 
+ *
  * @param options - Additional react-query mutation options
  * @returns Mutation object with mutate function
- * 
+ *
  * @example
  * ```tsx
  * const createMutation = useCreateDistrict();
- * 
+ *
  * const handleSubmit = (data: CreateDistrictInput) => {
  *   createMutation.mutate(data, {
  *     onSuccess: () => console.log('District created!'),
@@ -158,14 +158,14 @@ export function useCreateDistrict(
 
 /**
  * Hook to update a district (full update)
- * 
+ *
  * @param options - Additional react-query mutation options
  * @returns Mutation object with mutate function
- * 
+ *
  * @example
  * ```tsx
  * const updateMutation = useUpdateDistrict();
- * 
+ *
  * const handleUpdate = (id: number, data: CreateDistrictInput) => {
  *   updateMutation.mutate({ id, data });
  * };
@@ -185,7 +185,7 @@ export function useUpdateDistrict(
     onSuccess: (data, variables) => {
       // Update the cached district
       queryClient.setQueryData(districtKeys.detail(variables.id), data);
-      
+
       // Invalidate lists to ensure consistency
       queryClient.invalidateQueries({ queryKey: districtKeys.lists() });
     },
@@ -195,14 +195,14 @@ export function useUpdateDistrict(
 
 /**
  * Hook to partially update a district
- * 
+ *
  * @param options - Additional react-query mutation options
  * @returns Mutation object with mutate function
- * 
+ *
  * @example
  * ```tsx
  * const patchMutation = usePartialUpdateDistrict();
- * 
+ *
  * const handlePatch = (id: number, data: UpdateDistrictInput) => {
  *   patchMutation.mutate({ id, data });
  * };
@@ -222,7 +222,7 @@ export function usePartialUpdateDistrict(
     onSuccess: (data, variables) => {
       // Update the cached district
       queryClient.setQueryData(districtKeys.detail(variables.id), data);
-      
+
       // Invalidate lists to ensure consistency
       queryClient.invalidateQueries({ queryKey: districtKeys.lists() });
     },
@@ -232,14 +232,14 @@ export function usePartialUpdateDistrict(
 
 /**
  * Hook to delete a district
- * 
+ *
  * @param options - Additional react-query mutation options
  * @returns Mutation object with mutate function
- * 
+ *
  * @example
  * ```tsx
  * const deleteMutation = useDeleteDistrict();
- * 
+ *
  * const handleDelete = (id: number) => {
  *   deleteMutation.mutate(id, {
  *     onSuccess: () => console.log('District deleted!'),
@@ -257,7 +257,7 @@ export function useDeleteDistrict(
     onSuccess: (_data, variables) => {
       // Remove the district from cache
       queryClient.removeQueries({ queryKey: districtKeys.detail(variables) });
-      
+
       // Invalidate lists
       queryClient.invalidateQueries({ queryKey: districtKeys.lists() });
       queryClient.invalidateQueries({ queryKey: districtKeys.statistics() });
@@ -268,14 +268,14 @@ export function useDeleteDistrict(
 
 /**
  * Hook to bulk create multiple districts
- * 
+ *
  * @param options - Additional react-query mutation options
  * @returns Mutation object with mutate function
- * 
+ *
  * @example
  * ```tsx
  * const bulkCreateMutation = useBulkCreateDistricts();
- * 
+ *
  * const handleBulkCreate = () => {
  *   bulkCreateMutation.mutate({
  *     districts: [

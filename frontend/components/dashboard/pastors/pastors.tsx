@@ -84,7 +84,7 @@ export function PastorsManager() {
   const { data: pastorsData, isLoading, error } = usePastors({ search: searchQuery });
   const { data: districtsData } = useDistricts();
   const { data: sectionsData } = useSections();
-  
+
   const pastors = pastorsData?.results || [];
   const districts = districtsData?.results || [];
   const sections = sectionsData?.results || [];
@@ -137,7 +137,7 @@ export function PastorsManager() {
   // Delete Pastor Dialog State
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingPastorId, setDeletingPastorId] = useState<number | null>(null);
-  
+
   // Export dropdown state
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
 
@@ -159,8 +159,8 @@ export function PastorsManager() {
   };
 
   // Cascading filter logic: get available sections based on selected district
-  const availableSections = selectedDistrict === "all" 
-    ? sections 
+  const availableSections = selectedDistrict === "all"
+    ? sections
     : sections.filter(section => section.district === Number(selectedDistrict));
 
   // Cascading filter logic: get available churches based on selected section
@@ -243,10 +243,10 @@ export function PastorsManager() {
     if (deletingPastorId) {
       try {
         await deleteMutation.mutateAsync(deletingPastorId);
-        
+
         setIsDeleteDialogOpen(false);
         setDeletingPastorId(null);
-        
+
         // Show success message
         toast.success("Pastor deleted successfully");
       } catch (error) {
@@ -271,12 +271,12 @@ export function PastorsManager() {
   const handleSavePastor = async () => {
     // Validate required fields
     if (
-      !formData.fullName.trim() || 
-      !formData.gender.trim() || 
-      !formData.dateOfBirth || 
-      !formData.nationalId.trim() || 
-      !formData.phoneNumber.trim() || 
-      !formData.pastorRank.trim() || 
+      !formData.fullName.trim() ||
+      !formData.gender.trim() ||
+      !formData.dateOfBirth ||
+      !formData.nationalId.trim() ||
+      !formData.phoneNumber.trim() ||
+      !formData.pastorRank.trim() ||
       !formData.status.trim()
     ) {
       toast.error("Please fill in all required fields");
@@ -307,7 +307,7 @@ export function PastorsManager() {
         status: "active",
       });
       setIsAddDialogOpen(false);
-      
+
       toast.success("Pastor added successfully");
     } catch (error) {
       console.error("Error creating pastor:", error);
@@ -372,7 +372,7 @@ export function PastorsManager() {
         status: "active",
       });
       setIsEditDialogOpen(false);
-      
+
       toast.success("Pastor updated successfully");
     } catch (error) {
       console.error("Error updating pastor:", error);
@@ -410,27 +410,27 @@ export function PastorsManager() {
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    
+
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
-    
+
     return age;
   };
 
   // Helper function to calculate years of service
   const calculateYearsOfService = (startOfService: string | null): number => {
     if (!startOfService) return 0;
-    
+
     const startDate = new Date(startOfService);
     const today = new Date();
     let years = today.getFullYear() - startDate.getFullYear();
     const monthDiff = today.getMonth() - startDate.getMonth();
-    
+
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < startDate.getDate())) {
       years--;
     }
-    
+
     return Math.max(0, years);
   };
 
@@ -446,7 +446,7 @@ export function PastorsManager() {
   // Helper function to calculate remaining tenure until retirement
   const calculateRemainingTenure = (dateOfBirth: string, status: PastorStatus): number => {
     if (status === 'deceased' || status === 'retired') return 0;
-    
+
     const age = calculateAge(dateOfBirth);
     return Math.max(0, 70 - age);
   };
@@ -482,35 +482,35 @@ export function PastorsManager() {
   const handleExportPDF = (exportAll: boolean) => {
     const dataToExport = exportAll ? pastors : filteredPastors;
     const exportType = exportAll ? "All Pastors" : "Filtered Results";
-    
+
     // Create print-friendly content
     const printWindow = window.open('', '_blank', 'height=800,width=1000');
-    
+
     if (!printWindow) {
       // Popup was blocked
       alert('Popup blocked! Please allow popups for this site to export PDF.');
       return;
     }
-    
+
     const htmlContent = `
       <!DOCTYPE html>
       <html>
         <head>
           <title>Pastors Export - ${exportType}</title>
           <style>
-            body { 
-              font-family: Arial, sans-serif; 
+            body {
+              font-family: Arial, sans-serif;
               padding: 20px;
               color: #000;
             }
-            h1 { 
-              font-size: 24px; 
+            h1 {
+              font-size: 24px;
               margin-bottom: 10px;
               color: #1a1a1a;
             }
-            .subtitle { 
-              color: #666; 
-              margin-bottom: 20px; 
+            .subtitle {
+              color: #666;
+              margin-bottom: 20px;
               font-size: 14px;
             }
             .print-button-container {
@@ -534,24 +534,24 @@ export function PastorsManager() {
             .print-button:hover {
               background-color: #1d4ed8;
             }
-            table { 
-              width: 100%; 
-              border-collapse: collapse; 
+            table {
+              width: 100%;
+              border-collapse: collapse;
               margin-top: 20px;
               font-size: 12px;
             }
-            th, td { 
-              border: 1px solid #ddd; 
-              padding: 8px; 
-              text-align: left; 
+            th, td {
+              border: 1px solid #ddd;
+              padding: 8px;
+              text-align: left;
             }
-            th { 
-              background-color: #f8f9fa; 
+            th {
+              background-color: #f8f9fa;
               font-weight: 600;
               color: #1a1a1a;
             }
-            tr:nth-child(even) { 
-              background-color: #f9f9f9; 
+            tr:nth-child(even) {
+              background-color: #f9f9f9;
             }
             .status-active { color: #059669; font-weight: 500; }
             .status-retired { color: #7c3aed; font-weight: 500; }
@@ -610,11 +610,11 @@ export function PastorsManager() {
         </body>
       </html>
     `;
-    
+
     try {
       printWindow.document.write(htmlContent);
       printWindow.document.close();
-      
+
       // Focus the window and let user choose when to print
       printWindow.focus();
     } catch (error) {
@@ -622,7 +622,7 @@ export function PastorsManager() {
       alert('An error occurred while generating the PDF. Please try again.');
       printWindow.close();
     }
-    
+
     setIsExportDropdownOpen(false);
   };
 
@@ -821,8 +821,8 @@ export function PastorsManager() {
         >
           <SelectTrigger className="w-fit min-w-37.5">
             <SelectValue placeholder="All Status">
-              {selectedStatus === "all" 
-                ? "All Status" 
+              {selectedStatus === "all"
+                ? "All Status"
                 : selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1)}
             </SelectValue>
           </SelectTrigger>
@@ -841,8 +841,8 @@ export function PastorsManager() {
         >
           <SelectTrigger className="w-fit min-w-37.5">
             <SelectValue placeholder="All Districts">
-              {selectedDistrict === "all" 
-                ? "All Districts" 
+              {selectedDistrict === "all"
+                ? "All Districts"
                 : districts.find(d => d.id === Number(selectedDistrict))?.name || "All Districts"}
             </SelectValue>
           </SelectTrigger>
@@ -863,8 +863,8 @@ export function PastorsManager() {
         >
           <SelectTrigger className="w-fit min-w-37.5">
             <SelectValue placeholder="All Sections">
-              {selectedSection === "all" 
-                ? "All Sections" 
+              {selectedSection === "all"
+                ? "All Sections"
                 : availableSections.find(s => s.id === Number(selectedSection))?.name || "All Sections"}
             </SelectValue>
           </SelectTrigger>
@@ -885,8 +885,8 @@ export function PastorsManager() {
         >
           <SelectTrigger className="w-fit min-w-37.5">
             <SelectValue placeholder="All Churches">
-              {selectedChurch === "all" 
-                ? "All Churches" 
+              {selectedChurch === "all"
+                ? "All Churches"
                 : availableChurches.find(c => c.id === selectedChurch)?.name || "All Churches"}
             </SelectValue>
           </SelectTrigger>
@@ -904,7 +904,7 @@ export function PastorsManager() {
           <span className="text-sm text-muted-foreground">
             {filteredPastors.length} pastors
           </span>
-          
+
           <DropdownMenu open={isExportDropdownOpen} onOpenChange={setIsExportDropdownOpen}>
             <DropdownMenuTrigger>
               <Button variant="outline" size="default" className="gap-2">
@@ -954,7 +954,7 @@ export function PastorsManager() {
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
-          
+
           <div className="flex items-center rounded-lg border">
             <Button
               variant="ghost"
@@ -1215,7 +1215,7 @@ export function PastorsManager() {
                   }}
                   onKeyDown={(e) => {
                     // Prevent deleting the +254 prefix
-                    if ((e.key === 'Backspace' || e.key === 'Delete') && 
+                    if ((e.key === 'Backspace' || e.key === 'Delete') &&
                         e.currentTarget.selectionStart !== null &&
                         e.currentTarget.selectionStart <= 4) {
                       e.preventDefault();
@@ -1435,7 +1435,7 @@ export function PastorsManager() {
                   }}
                   onKeyDown={(e) => {
                     // Prevent deleting the +254 prefix
-                    if ((e.key === 'Backspace' || e.key === 'Delete') && 
+                    if ((e.key === 'Backspace' || e.key === 'Delete') &&
                         e.currentTarget.selectionStart !== null &&
                         e.currentTarget.selectionStart <= 4) {
                       e.preventDefault();
@@ -1546,7 +1546,7 @@ export function PastorsManager() {
             <div className="flex size-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
               <AlertTriangle className="size-8 text-yellow-600 dark:text-yellow-500" />
             </div>
-            
+
             <div className="flex flex-col gap-2 text-center">
               <h2 className="text-lg font-semibold">Delete Pastor?</h2>
               <p className="text-sm text-muted-foreground">
@@ -1697,8 +1697,8 @@ export function PastorsManager() {
                     </div>
                     <div className="flex flex-col gap-2">
                       <span className="text-sm text-muted-foreground">
-                        {selectedPastor.status === "active" 
-                          ? "Current Assignments" 
+                        {selectedPastor.status === "active"
+                          ? "Current Assignments"
                           : "Last Assignment"}
                       </span>
                       <div className="flex flex-col gap-0.5 bg-muted/50 p-3 rounded-md">

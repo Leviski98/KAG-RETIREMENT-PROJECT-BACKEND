@@ -26,7 +26,12 @@ import { ConfirmDialog } from "@/components/patterns/confirm-dialog";
 import { FormField } from "@/components/patterns/form-field";
 import { EmptyState } from "@/components/patterns/empty-state";
 
-import { mockChurchRoles } from "@/lib/mock-data/mock-church-roles";
+import {
+  useChurchRoles,
+  useCreateChurchRole,
+  useDeleteChurchRole,
+  useUpdateChurchRole,
+} from "@/lib/hooks/use-church-module";
 import { MESSAGES } from "@/constants/message";
 import type { ChurchRole, ChurchRoleFormData } from "@/types/church";
 
@@ -109,20 +114,19 @@ function RoleFormDialog({
 // ─── Church Roles (main export) ───────────────────────────────────────────────
 
 export function ChurchRoles() {
-  const [roles, setRoles] = useState<ChurchRole[]>(mockChurchRoles);
+  const rolesQuery = useChurchRoles();
+  const createRole = useCreateChurchRole();
+  const updateRole = useUpdateChurchRole();
+  const deleteRole = useDeleteChurchRole();
+  const roles = rolesQuery.data ?? [];
+  const loading = rolesQuery.isLoading;
+  const error = rolesQuery.error;
 
   // Dialog state
-  const [addOpen, setAddOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<ChurchRole | null>(null);
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-
-  const nextId = () => {
-    const num = roles.length + 1;
-    return `ROL${String(num).padStart(3, "0")}`;
-  };
+  const [addOpen, setAddOpen] = React.useState(false);
+  const [editOpen, setEditOpen] = React.useState(false);
+  const [deleteOpen, setDeleteOpen] = React.useState(false);
+  const [selectedRole, setSelectedRole] = React.useState<ChurchRole | null>(null);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -136,36 +140,59 @@ export function ChurchRoles() {
     setDeleteOpen(true);
   };
 
-  const handleAddSubmit = (data: ChurchRoleFormData) => {
-    const newRole: ChurchRole = {
-      id: nextId(),
-      name: data.name,
-      assignments: 0,
-    };
-    setRoles((prev) => [...prev, newRole]);
-    toast.success(MESSAGES.ROLE.ADD_SUCCESS);
+  const handleAddSubmit = async (data: ChurchRoleFormData) => {
+    try {
+      await createRole.mutateAsync({ name: data.name });
+      toast.success(MESSAGES.ROLE.ADD_SUCCESS);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add role.");
+    }
   };
 
-  const handleEditSubmit = (data: ChurchRoleFormData) => {
+  const handleEditSubmit = async (data: ChurchRoleFormData) => {
     if (!selectedRole) return;
-    setRoles((prev) =>
-      prev.map((r) =>
-        r.id === selectedRole.id ? { ...r, name: data.name } : r
-      )
-    );
-    toast.success(MESSAGES.ROLE.EDIT_SUCCESS);
-    setSelectedRole(null);
+    try {
+      await updateRole.mutateAsync({
+        id: selectedRole.id,
+        input: { name: data.name },
+      });
+      toast.success(MESSAGES.ROLE.EDIT_SUCCESS);
+      setSelectedRole(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update role.");
+    }
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!selectedRole) return;
-    setRoles((prev) => prev.filter((r) => r.id !== selectedRole.id));
-    toast.success(MESSAGES.ROLE.DELETE_SUCCESS);
-    setDeleteOpen(false);
-    setSelectedRole(null);
+    try {
+      await deleteRole.mutateAsync(selectedRole.id);
+      toast.success(MESSAGES.ROLE.DELETE_SUCCESS);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete role.");
+    } finally {
+      setDeleteOpen(false);
+      setSelectedRole(null);
+    }
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-sm text-muted-foreground">
+        Loading roles...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-20 text-sm text-brand-error">
+        {error instanceof Error ? error.message : "Failed to load roles"}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
