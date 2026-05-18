@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { Providers } from "@/components/providers";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Mulish } from "next/font/google";
 import "./globals.css";
@@ -38,9 +39,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable} antialiased`}
         
       >
-        <TooltipProvider>
-          {children}
-        </TooltipProvider>
+        <Providers>
+          <TooltipProvider>
+            {children}
+          </TooltipProvider>
+        </Providers>
       </body>
     </html>
   );

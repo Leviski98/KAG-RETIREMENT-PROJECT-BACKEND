@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/global/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -27,115 +26,82 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Pencil, Trash2, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
-
-// Extended section interface with churches count
-interface SectionWithDetails {
-  id: string;
-  section_name: string;
-  district_id: string;
-  district_name: string;
-  churches_count: number;
-  created_at: string;
-}
-
-// Mock data matching the design
-const mockSectionsData: SectionWithDetails[] = [
-  {
-    id: "SEC018",
-    section_name: "Ahero Section",
-    district_id: "DIS001",
-    district_name: "Kisumu Lakeside District",
-    churches_count: 7,
-    created_at: "2024-02-15T10:00:00Z",
-  },
-  {
-    id: "SEC037",
-    section_name: "Athi River Section",
-    district_id: "DIS002",
-    district_name: "Machakos Eastern District",
-    churches_count: 6,
-    created_at: "2024-03-10T10:00:00Z",
-  },
-  {
-    id: "SEC075",
-    section_name: "Awendo Section",
-    district_id: "DIS003",
-    district_name: "Migori South Nyanza District",
-    churches_count: 6,
-    created_at: "2024-06-01T10:00:00Z",
-  },
-  {
-    id: "SEC014",
-    section_name: "Bamburi Section",
-    district_id: "DIS004",
-    district_name: "Mombasa Coastal District",
-    churches_count: 6,
-    created_at: "2024-02-15T10:00:00Z",
-  },
-];
-
-// Mock districts for dropdown
-const mockDistricts = [
-  { id: "DIS001", name: "Kisumu Lakeside District" },
-  { id: "DIS002", name: "Machakos Eastern District" },
-  { id: "DIS003", name: "Migori South Nyanza District" },
-  { id: "DIS004", name: "Mombasa Coastal District" },
-];
+import {
+  useSections,
+  useCreateSection,
+  usePartialUpdateSection,
+  useDeleteSection,
+} from "@/lib/hooks/use-sections";
+import { useDistricts } from "@/lib/hooks/use-districts";
+import type { Section } from "@/types/section";
 
 export function SectionsManager() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDistrict, setSelectedDistrict] = useState("all");
-  const [sections, setSections] = useState<SectionWithDetails[]>(mockSectionsData);
+  const [selectedDistrict, setSelectedDistrict] = useState<number | "all">("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newSectionName, setNewSectionName] = useState("");
-  const [selectedDistrictForNew, setSelectedDistrictForNew] = useState("");
+  const [selectedDistrictForNew, setSelectedDistrictForNew] = useState<number | undefined>();
   
   // Edit dialog state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
+  const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [editSectionName, setEditSectionName] = useState("");
-  const [editSelectedDistrict, setEditSelectedDistrict] = useState("");
+  const [editSelectedDistrict, setEditSelectedDistrict] = useState<number | undefined>();
   
   // Delete dialog state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [deletingSectionId, setDeletingSectionId] = useState<string | null>(null);
-  const [deletingSectionName, setDeletingSectionName] = useState("");
+  const [sectionToDelete, setSectionToDelete] = useState<Section | null>(null);
   
   // Success toast state
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Filter sections based on search query and district
-  const filteredSections = sections.filter((section) => {
-    const matchesSearch =
-      section.section_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      section.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      section.district_name.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesDistrict =
-      selectedDistrict === "all" || section.district_id === selectedDistrict;
-
-    return matchesSearch && matchesDistrict;
+  // Fetch sections using TanStack Query
+  const {
+    data: sectionsResponse,
+    isLoading,
+    error,
+  } = useSections({
+    search: searchQuery,
+    district: selectedDistrict === "all" ? undefined : selectedDistrict,
   });
 
-  const handleEdit = (id: string) => {
-    const section = sections.find((s) => s.id === id);
+  // Fetch districts for dropdown
+  const { data: districtsResponse } = useDistricts();
+
+  // Mutations
+  const createMutation = useCreateSection();
+  const updateMutation = usePartialUpdateSection();
+  const deleteMutation = useDeleteSection();
+
+  // Extract data from paginated responses
+  const sections = useMemo(() => sectionsResponse?.results || [], [sectionsResponse]);
+  const districts = useMemo(() => districtsResponse?.results || [], [districtsResponse]);
+
+  // Show success toast helper
+  const showSuccess = (message: string) => {
+    setSuccessMessage(message);
+    setShowSuccessToast(true);
+    setTimeout(() => setShowSuccessToast(false), 5000);
+  };
+
+  const handleEdit = (id: number) => {
+    const section = sections.find((s: Section) => s.id === id);
     if (section) {
-      setEditingSectionId(section.id);
-      setEditSectionName(section.section_name);
-      setEditSelectedDistrict(section.district_id);
+      setEditingSection(section);
+      setEditSectionName(section.name);
+      setEditSelectedDistrict(section.district);
       setIsEditDialogOpen(true);
     }
   };
 
-  const handleDelete = (id: string) => {
-    const section = sections.find((s) => s.id === id);
+  const handleDelete = (id: number) => {
+    const section = sections.find((s: Section) => s.id === id);
     if (section) {
-      setDeletingSectionId(section.id);
-      setDeletingSectionName(section.section_name);
+      setSectionToDelete(section);
       setIsDeleteDialogOpen(true);
     }
   };
@@ -149,125 +115,83 @@ export function SectionsManager() {
       return;
     }
 
-    // Find the district name
-    const district = mockDistricts.find(d => d.id === selectedDistrictForNew);
-    
-    // Create new section
-    const newSection: SectionWithDetails = {
-      id: `SEC${String(sections.length + 1).padStart(3, '0')}`,
-      section_name: newSectionName,
-      district_id: selectedDistrictForNew,
-      district_name: district?.name || '',
-      churches_count: 0,
-      created_at: new Date().toISOString(),
-    };
-
-    // Add to sections array
-    setSections([...sections, newSection]);
-    console.log("Saving section:", {
-      name: newSectionName,
-      districtId: selectedDistrictForNew,
-    });
-    // TODO: Implement API call to save section
-
-    // Reset form and close dialog
-    setNewSectionName("");
-    setSelectedDistrictForNew("");
-    setIsAddDialogOpen(false);
-    
-    // Show success message
-    setSuccessMessage("Section added successfully.");
-    setShowSuccessToast(true);
-    
-    // Auto-hide toast after 5 seconds
-    setTimeout(() => {
-      setShowSuccessToast(false);
-    }, 5000);
+    createMutation.mutate(
+      {
+        name: newSectionName,
+        district: selectedDistrictForNew,
+      },
+      {
+        onSuccess: () => {
+          showSuccess("Section added successfully.");
+          setNewSectionName("");
+          setSelectedDistrictForNew(undefined);
+          setIsAddDialogOpen(false);
+        },
+        onError: (error) => {
+          console.error("Error creating section:", error);
+        },
+      }
+    );
   };
 
   const handleCancelAdd = () => {
     setNewSectionName("");
-    setSelectedDistrictForNew("");
+    setSelectedDistrictForNew(undefined);
     setIsAddDialogOpen(false);
   };
 
   const handleSaveEdit = () => {
-    if (!editSectionName.trim() || !editSelectedDistrict) {
+    if (!editSectionName.trim() || !editSelectedDistrict || !editingSection) {
       return;
     }
 
-    // Find the district name
-    const district = mockDistricts.find(d => d.id === editSelectedDistrict);
-    
-    // Update section in array
-    setSections(sections.map(s => 
-      s.id === editingSectionId
-        ? { 
-            ...s, 
-            section_name: editSectionName,
-            district_id: editSelectedDistrict,
-            district_name: district?.name || s.district_name
-          }
-        : s
-    ));
-
-    console.log("Updating section:", {
-      id: editingSectionId,
-      name: editSectionName,
-      districtId: editSelectedDistrict,
-    });
-    // TODO: Implement API call to update section
-
-    // Reset form and close dialog
-    setEditingSectionId(null);
-    setEditSectionName("");
-    setEditSelectedDistrict("");
-    setIsEditDialogOpen(false);
-    
-    // Show success message
-    setSuccessMessage("Section updated successfully.");
-    setShowSuccessToast(true);
-    
-    // Auto-hide toast after 5 seconds
-    setTimeout(() => {
-      setShowSuccessToast(false);
-    }, 5000);
+    updateMutation.mutate(
+      {
+        id: editingSection.id,
+        data: {
+          name: editSectionName,
+          district: editSelectedDistrict,
+        },
+      },
+      {
+        onSuccess: () => {
+          showSuccess("Section updated successfully.");
+          setEditSectionName("");
+          setEditSelectedDistrict(undefined);
+          setEditingSection(null);
+          setIsEditDialogOpen(false);
+        },
+        onError: (error) => {
+          console.error("Error updating section:", error);
+        },
+      }
+    );
   };
 
   const handleCancelEdit = () => {
-    setEditingSectionId(null);
     setEditSectionName("");
-    setEditSelectedDistrict("");
+    setEditSelectedDistrict(undefined);
+    setEditingSection(null);
     setIsEditDialogOpen(false);
   };
 
   const handleConfirmDelete = () => {
-    if (deletingSectionId) {
-      // Remove section from array
-      setSections(sections.filter(s => s.id !== deletingSectionId));
-      
-      console.log("Deleting section:", deletingSectionId);
-      // TODO: Implement API call to delete section
-
-      // Reset state and close dialog
-      setDeletingSectionId(null);
-      setDeletingSectionName("");
-      setIsDeleteDialogOpen(false);
-    
-      // Show success message
-      setSuccessMessage("Section deleted successfully.");
-      setShowSuccessToast(true);
-    
-      // Auto-hide toast after 5 seconds
-      setTimeout(() => {
-        setShowSuccessToast(false);
-      }, 5000);
+    if (sectionToDelete) {
+      deleteMutation.mutate(sectionToDelete.id, {
+        onSuccess: () => {
+          showSuccess("Section deleted successfully.");
+          setSectionToDelete(null);
+          setIsDeleteDialogOpen(false);
+        },
+        onError: (error) => {
+          console.error("Error deleting section:", error);
+        },
+      });
     }
   };
 
   const handleCancelDelete = () => {
-    setDeletingSectionId(null);
-    setDeletingSectionName("");
+    setSectionToDelete(null);
     setIsDeleteDialogOpen(false);
   };
 
@@ -313,23 +237,28 @@ export function SectionsManager() {
         </div>
 
         <Select
-          value={selectedDistrict}
-          onValueChange={(value) => setSelectedDistrict(value || "all")}
+          value={selectedDistrict === "all" ? "all" : String(selectedDistrict)}
+          onValueChange={(value) => setSelectedDistrict(value === "all" ? "all" : Number(value))}
         >
           <SelectTrigger className="w-fit min-w-45">
-            <SelectValue placeholder="All Districts" />
+            <SelectValue placeholder="All Districts">
+              {selectedDistrict === "all"
+                ? "All Districts"
+                : districts.find((d) => d.id === selectedDistrict)?.name || "All Districts"}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Districts</SelectItem>
-            <SelectItem value="DIS001">Kisumu Lakeside</SelectItem>
-            <SelectItem value="DIS002">Machakos Eastern</SelectItem>
-            <SelectItem value="DIS003">Migori South Nyanza</SelectItem>
-            <SelectItem value="DIS004">Mombasa Coastal</SelectItem>
+            {districts.map((district) => (
+              <SelectItem key={district.id} value={String(district.id)}>
+                {district.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
         <div className="ml-auto text-sm text-muted-foreground">
-          Showing {filteredSections.length} sections
+          Showing {sections.length} sections
         </div>
       </div>
 
@@ -341,36 +270,44 @@ export function SectionsManager() {
               <TableHead className="w-30">ID</TableHead>
               <TableHead>Section Name</TableHead>
               <TableHead>District</TableHead>
-              <TableHead className="w-30">Churches</TableHead>
               <TableHead className="w-35">Created</TableHead>
               <TableHead className="w-25 text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredSections.length > 0 ? (
-              filteredSections.map((section) => (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24">
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">Loading sections...</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : error ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24">
+                  <div className="flex items-center justify-center gap-2 text-destructive">
+                    <AlertTriangle className="size-4" />
+                    <p className="text-sm">Error loading sections</p>
+                    <p className="text-xs text-muted-foreground">{error.message}</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : sections.length > 0 ? (
+              sections.map((section: Section) => (
                 <TableRow key={section.id}>
                   <TableCell className="font-medium text-brand-primary">
-                    {section.id}
+                    {section.section_id}
                   </TableCell>
-                  <TableCell className="font-medium">
-                    {section.section_name}
-                  </TableCell>
+                  <TableCell className="font-medium">{section.name}</TableCell>
                   <TableCell>
                     <Link
-                      href={`/dashboard/districts/${section.district_id}`}
+                      href={`/dashboard/districts/${section.district}`}
                       className="text-brand-primary hover:underline"
                     >
                       {section.district_name}
                     </Link>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="secondary"
-                      className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400"
-                    >
-                      {section.churches_count}
-                    </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {format(new Date(section.created_at), "d MMM yyyy")}
@@ -401,11 +338,9 @@ export function SectionsManager() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={5} className="h-24 text-center">
                   <div className="flex flex-col items-center gap-2">
-                    <p className="text-sm text-muted-foreground">
-                      No sections found
-                    </p>
+                    <p className="text-sm text-muted-foreground">No sections found</p>
                     {searchQuery && (
                       <p className="text-xs text-muted-foreground">
                         Try adjusting your search query
@@ -451,19 +386,19 @@ export function SectionsManager() {
                 District <span className="text-red-500">*</span>
               </label>
               <Select
-                value={selectedDistrictForNew}
-                onValueChange={(value) => setSelectedDistrictForNew(value || "")}
+                value={selectedDistrictForNew ? String(selectedDistrictForNew) : ""}
+                onValueChange={(value) => setSelectedDistrictForNew(value ? Number(value) : undefined)}
               >
                 <SelectTrigger id="district">
                   <SelectValue placeholder="Select district">
                     {selectedDistrictForNew
-                      ? mockDistricts.find((d) => d.id === selectedDistrictForNew)?.name
+                      ? districts.find((d) => d.id === selectedDistrictForNew)?.name
                       : "Select district"}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {mockDistricts.map((district) => (
-                    <SelectItem key={district.id} value={district.id}>
+                  {districts.map((district) => (
+                    <SelectItem key={district.id} value={String(district.id)}>
                       {district.name}
                     </SelectItem>
                   ))}
@@ -481,9 +416,16 @@ export function SectionsManager() {
             </Button>
             <Button
               onClick={handleSaveSection}
-              disabled={!newSectionName.trim() || !selectedDistrictForNew}
+              disabled={!newSectionName.trim() || !selectedDistrictForNew || createMutation.isPending}
             >
-              Save Section
+              {createMutation.isPending ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Section"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -521,19 +463,19 @@ export function SectionsManager() {
                 District <span className="text-red-500">*</span>
               </label>
               <Select
-                value={editSelectedDistrict}
-                onValueChange={(value) => setEditSelectedDistrict(value || "")}
+                value={editSelectedDistrict ? String(editSelectedDistrict) : ""}
+                onValueChange={(value) => setEditSelectedDistrict(value ? Number(value) : undefined)}
               >
                 <SelectTrigger id="editDistrict">
                   <SelectValue placeholder="Select district">
                     {editSelectedDistrict
-                      ? mockDistricts.find((d) => d.id === editSelectedDistrict)?.name
+                      ? districts.find((d) => d.id === editSelectedDistrict)?.name
                       : "Select district"}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {mockDistricts.map((district) => (
-                    <SelectItem key={district.id} value={district.id}>
+                  {districts.map((district) => (
+                    <SelectItem key={district.id} value={String(district.id)}>
                       {district.name}
                     </SelectItem>
                   ))}
@@ -551,9 +493,16 @@ export function SectionsManager() {
             </Button>
             <Button
               onClick={handleSaveEdit}
-              disabled={!editSectionName.trim() || !editSelectedDistrict}
+              disabled={!editSectionName.trim() || !editSelectedDistrict || updateMutation.isPending}
             >
-              Save Section
+              {updateMutation.isPending ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update Section"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -563,39 +512,33 @@ export function SectionsManager() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <div className="flex flex-col items-center gap-4 py-4">
-            {/* Warning Icon */}
-            <div className="flex size-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-              <AlertTriangle className="size-8 text-amber-600 dark:text-amber-500" />
+            <div className="flex size-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
+              <AlertTriangle className="size-8 text-yellow-600 dark:text-yellow-500" />
             </div>
-
-            {/* Title */}
-            <DialogHeader className="text-center">
-              <DialogTitle className="text-2xl">Delete Section?</DialogTitle>
-            </DialogHeader>
-
-            {/* Description */}
-            <p className="text-center text-muted-foreground">
-              Are you sure you want to delete{" "}
-              <span className="font-semibold text-foreground">
-                {deletingSectionName}
-              </span>
-              ? This action cannot be undone and will affect all related
-              churches.
-            </p>
+            
+            <div className="flex flex-col gap-2 text-center">
+              <h2 className="text-lg font-semibold">Delete Section?</h2>
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to delete{" "}
+                <span className="font-medium text-foreground">
+                  {sectionToDelete?.name}
+                </span>
+                ? This action cannot be undone and will affect all related churches.
+              </p>
+            </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={handleCancelDelete}
-              className="flex-1 sm:flex-none"
+              className="flex-1"
             >
               Cancel
             </Button>
             <Button
-              variant="destructive"
               onClick={handleConfirmDelete}
-              className="flex-1 sm:flex-none"
+              className="flex-1 bg-red-500 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
             >
               Delete
             </Button>

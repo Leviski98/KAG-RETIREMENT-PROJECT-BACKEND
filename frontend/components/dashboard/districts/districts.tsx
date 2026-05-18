@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/global/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -20,75 +19,78 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Pencil, Trash2, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
-
-// Extended district interface with sections count
-interface DistrictWithSections {
-  id: string;
-  district_name: string;
-  sections_count: number;
-  created_at: string;
-}
-
-// Mock data matching the design
-const mockDistrictsData: DistrictWithSections[] = [
-  {
-    id: "DIS015",
-    district_name: "Bungoma Western District",
-    sections_count: 5,
-    created_at: "2024-05-01T10:00:00Z",
-  },
-  {
-    id: "DIS005",
-    district_name: "Eldoret North Rift District",
-    sections_count: 5,
-    created_at: "2024-02-01T10:00:00Z",
-  },
-  {
-    id: "DIS012",
-    district_name: "Embu Eastern District",
-    sections_count: 3,
-    created_at: "2024-04-01T10:00:00Z",
-  },
-  {
-    id: "DIS009",
-    district_name: "Garissa North Eastern District",
-    sections_count: 2,
-    created_at: "2024-03-15T10:00:00Z",
-  },
-];
+import { 
+  useDistricts, 
+  useCreateDistrict, 
+  usePartialUpdateDistrict, 
+  useDeleteDistrict 
+} from "@/lib/hooks/use-districts";
+import { useSections } from "@/lib/hooks/use-sections";
+import type { District } from "@/types/district";
 
 export function DistrictsManager() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [districts, setDistricts] = useState<DistrictWithSections[]>(mockDistrictsData);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newDistrictName, setNewDistrictName] = useState("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingDistrict, setEditingDistrict] = useState<DistrictWithSections | null>(null);
+  const [editingDistrict, setEditingDistrict] = useState<District | null>(null);
   const [editDistrictName, setEditDistrictName] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [districtToDelete, setDistrictToDelete] = useState<DistrictWithSections | null>(null);
+  const [districtToDelete, setDistrictToDelete] = useState<District | null>(null);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Filter districts based on search query
-  const filteredDistricts = districts.filter((district) =>
-    district.district_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    district.id.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Fetch districts using TanStack Query
+  const { data: districtsResponse, isLoading, error } = useDistricts({ search: searchQuery });
+  
+  // Fetch sections to count sections per district
+  const { data: sectionsResponse } = useSections();
+  
+  // Mutations
+  const createMutation = useCreateDistrict();
+  const updateMutation = usePartialUpdateDistrict();
+  const deleteMutation = useDeleteDistrict();
 
-  const handleEdit = (id: string) => {
-    const district = districts.find((d) => d.id === id);
+  // Extract districts from paginated response
+  const districts = useMemo(() => districtsResponse?.results || [], [districtsResponse]);
+
+  // Extract sections from paginated response
+  const sections = useMemo(() => sectionsResponse?.results || [], [sectionsResponse]);
+
+  // Count sections per district
+  const getSectionCount = (districtId: number): number => {
+    return sections.filter(section => section.district === districtId).length;
+  };
+
+  // Filter districts based on search query (client-side additional filtering if needed)
+  const filteredDistricts = useMemo(() => {
+    if (!searchQuery) return districts;
+    return districts.filter((district: District) =>
+      district.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      district.district_id.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [districts, searchQuery]);
+
+  // Show success toast helper
+  const showSuccess = (message: string) => {
+    setSuccessMessage(message);
+    setShowSuccessToast(true);
+    setTimeout(() => setShowSuccessToast(false), 5000);
+  };
+
+  const handleEdit = (id: number) => {
+    const district = districts.find((d: District) => d.id === id);
     if (district) {
       setEditingDistrict(district);
-      setEditDistrictName(district.district_name);
+      setEditDistrictName(district.name);
       setIsEditDialogOpen(true);
     }
   };
 
-  const handleDelete = (id: string) => {
-    const district = districts.find((d) => d.id === id);
+  const handleDelete = (id: number) => {
+    const district = districts.find((d: District) => d.id === id);
     if (district) {
       setDistrictToDelete(district);
       setIsDeleteDialogOpen(true);
@@ -97,23 +99,17 @@ export function DistrictsManager() {
 
   const handleConfirmDelete = () => {
     if (districtToDelete) {
-      // Remove district from array
-      setDistricts(districts.filter(d => d.id !== districtToDelete.id));
-      
-      console.log("Deleting district:", districtToDelete.id);
-      // TODO: Implement API call to delete district
-      
-      setDistrictToDelete(null);
-      setIsDeleteDialogOpen(false);
-      
-      // Show success message
-      setSuccessMessage("District deleted successfully.");
-      setShowSuccessToast(true);
-      
-      // Auto-hide toast after 5 seconds
-      setTimeout(() => {
-        setShowSuccessToast(false);
-      }, 5000);
+      deleteMutation.mutate(districtToDelete.id, {
+        onSuccess: () => {
+          showSuccess("District deleted successfully.");
+          setDistrictToDelete(null);
+          setIsDeleteDialogOpen(false);
+        },
+        onError: (error) => {
+          console.error("Error deleting district:", error);
+          // You can add error toast here
+        },
+      });
     }
   };
 
@@ -131,31 +127,20 @@ export function DistrictsManager() {
       return;
     }
     
-    // Create new district
-    const newDistrict: DistrictWithSections = {
-      id: `DIS${String(districts.length + 1).padStart(3, '0')}`,
-      district_name: newDistrictName,
-      sections_count: 0,
-      created_at: new Date().toISOString(),
-    };
-    
-    // Add to districts array
-    setDistricts([...districts, newDistrict]);
-    console.log("Saving district:", newDistrictName);
-    // TODO: Implement API call to save district
-    
-    // Reset form and close dialog
-    setNewDistrictName("");
-    setIsAddDialogOpen(false);
-    
-    // Show success message
-    setSuccessMessage("District added successfully.");
-    setShowSuccessToast(true);
-    
-    // Auto-hide toast after 5 seconds
-    setTimeout(() => {
-      setShowSuccessToast(false);
-    }, 5000);
+    createMutation.mutate(
+      { name: newDistrictName },
+      {
+        onSuccess: () => {
+          showSuccess("District added successfully.");
+          setNewDistrictName("");
+          setIsAddDialogOpen(false);
+        },
+        onError: (error) => {
+          console.error("Error creating district:", error);
+          // You can add error toast here
+        },
+      }
+    );
   };
 
   const handleCancelAdd = () => {
@@ -168,29 +153,24 @@ export function DistrictsManager() {
       return;
     }
     
-    // Update district in array
-    setDistricts(districts.map(d => 
-      d.id === editingDistrict.id 
-        ? { ...d, district_name: editDistrictName }
-        : d
-    ));
-    
-    console.log("Updating district:", editingDistrict?.id, editDistrictName);
-    // TODO: Implement API call to update district
-    
-    // Reset form and close dialog
-    setEditDistrictName("");
-    setEditingDistrict(null);
-    setIsEditDialogOpen(false);
-    
-    // Show success message
-    setSuccessMessage("District updated successfully.");
-    setShowSuccessToast(true);
-    
-    // Auto-hide toast after 5 seconds
-    setTimeout(() => {
-      setShowSuccessToast(false);
-    }, 5000);
+    updateMutation.mutate(
+      { 
+        id: editingDistrict.id, 
+        data: { name: editDistrictName } 
+      },
+      {
+        onSuccess: () => {
+          showSuccess("District updated successfully.");
+          setEditDistrictName("");
+          setEditingDistrict(null);
+          setIsEditDialogOpen(false);
+        },
+        onError: (error) => {
+          console.error("Error updating district:", error);
+          // You can add error toast here
+        },
+      }
+    );
   };
 
   const handleCancelEdit = () => {
@@ -252,28 +232,43 @@ export function DistrictsManager() {
             <TableRow>
               <TableHead className="w-30">ID</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead className="w-30">Sections</TableHead>
+              <TableHead className="w-28 text-center">Sections</TableHead>
               <TableHead className="w-35">Created</TableHead>
               <TableHead className="w-25 text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredDistricts.length > 0 ? (
-              filteredDistricts.map((district) => (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="size-4 animate-spin" />
+                    <p className="text-sm text-muted-foreground">Loading districts...</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : error ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <p className="text-sm text-destructive">Error loading districts</p>
+                    <p className="text-xs text-muted-foreground">{error.message}</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : filteredDistricts.length > 0 ? (
+              filteredDistricts.map((district: District) => (
                 <TableRow key={district.id}>
                   <TableCell className="font-medium text-brand-primary">
-                    {district.id}
+                    {district.district_id}
                   </TableCell>
                   <TableCell className="font-medium">
-                    {district.district_name}
+                    {district.name}
                   </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="secondary"
-                      className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400"
-                    >
-                      {district.sections_count}
-                    </Badge>
+                  <TableCell className="text-center">
+                    <span className="inline-flex items-center justify-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-sm font-semibold text-emerald-600">
+                      {getSectionCount(district.id)}
+                    </span>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {format(new Date(district.created_at), "d MMM yyyy")}
@@ -285,6 +280,7 @@ export function DistrictsManager() {
                         size="icon-sm"
                         onClick={() => handleEdit(district.id)}
                         className="hover:text-brand-primary"
+                        disabled={updateMutation.isPending}
                       >
                         <Pencil className="size-4" />
                         <span className="sr-only">Edit district</span>
@@ -298,6 +294,7 @@ export function DistrictsManager() {
                         }}
                         className="hover:text-destructive"
                         type="button"
+                        disabled={deleteMutation.isPending}
                       >
                         <Trash2 className="size-4" />
                         <span className="sr-only">Delete district</span>
@@ -356,14 +353,16 @@ export function DistrictsManager() {
             <Button
               variant="outline"
               onClick={handleCancelAdd}
+              disabled={createMutation.isPending}
             >
               Cancel
             </Button>
             <Button
               onClick={handleSaveDistrict}
-              disabled={!newDistrictName.trim()}
+              disabled={!newDistrictName.trim() || createMutation.isPending}
             >
-              Save District
+              {createMutation.isPending && <Loader2 className="size-4 animate-spin" />}
+              {createMutation.isPending ? "Saving..." : "Save District"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -399,14 +398,16 @@ export function DistrictsManager() {
             <Button
               variant="outline"
               onClick={handleCancelEdit}
+              disabled={updateMutation.isPending}
             >
               Cancel
             </Button>
             <Button
               onClick={handleSaveEdit}
-              disabled={!editDistrictName.trim()}
+              disabled={!editDistrictName.trim() || updateMutation.isPending}
             >
-              Save District
+              {updateMutation.isPending && <Loader2 className="size-4 animate-spin" />}
+              {updateMutation.isPending ? "Saving..." : "Save District"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -425,7 +426,7 @@ export function DistrictsManager() {
               <p className="text-sm text-muted-foreground">
                 Are you sure you want to delete{" "}
                 <span className="font-medium text-foreground">
-                  {districtToDelete?.district_name}
+                  {districtToDelete?.name}
                 </span>
                 ? This action cannot be undone and will affect all related sections.
               </p>
@@ -437,14 +438,17 @@ export function DistrictsManager() {
               variant="outline"
               onClick={handleCancelDelete}
               className="flex-1"
+              disabled={deleteMutation.isPending}
             >
               Cancel
             </Button>
             <Button
               onClick={handleConfirmDelete}
               className="flex-1 bg-red-500 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
+              disabled={deleteMutation.isPending}
             >
-              Delete
+              {deleteMutation.isPending && <Loader2 className="size-4 animate-spin" />}
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
