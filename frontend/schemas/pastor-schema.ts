@@ -7,7 +7,7 @@ export const pastorSchema = z.object({
     .max(200, 'Full name must not exceed 200 characters'),
   date_of_birth: z.string().min(1, 'Date of birth is required'),
   status: z.enum(['active', 'retired', 'deceased'], {
-    required_error: 'Status is required',
+    error: 'Status is required',
   }),
   retirement_date: z.string().optional(),
   phone_number: z.string().optional(),

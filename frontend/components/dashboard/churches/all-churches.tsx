@@ -39,19 +39,25 @@ import {
   DialogHeader,
   DialogFooter,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/patterns/confirm-dialog";
 import { FormField } from "@/components/patterns/form-field";
 import { EmptyState } from "@/components/patterns/empty-state";
 
-import { mockChurches } from "@/lib/mock-data/mock-churches";
-import { SECTIONS } from "@/constants/sections";
+import type { ApiSection } from "@/lib/api/churches";
+import {
+  useChurches,
+  useCreateChurch,
+  useDeleteChurch,
+  useSections,
+  useUpdateChurch,
+} from "@/lib/hooks/use-church-module";
 import { MESSAGES } from "@/constants/message";
 import type { Church, ChurchFormData, SortField } from "@/types/church";
 
 const ITEMS_PER_PAGE = 9;
+const EMPTY_CHURCHES: Church[] = [];
+const EMPTY_SECTIONS: ApiSection[] = [];
 
 const SORT_OPTIONS: { value: SortField; label: string }[] = [
   { value: "name", label: "Sort by: Name" },
@@ -142,6 +148,7 @@ interface ChurchFormDialogProps {
   mode: "add" | "edit";
   initialData?: ChurchFormData;
   onSubmit: (data: ChurchFormData) => void;
+  sections: ApiSection[];
 }
 
 function ChurchFormDialog({
@@ -150,6 +157,7 @@ function ChurchFormDialog({
   mode,
   initialData,
   onSubmit,
+  sections,
 }: ChurchFormDialogProps) {
   const [name, setName] = useState(initialData?.name ?? "");
   const [section, setSection] = useState(initialData?.section ?? "");
@@ -211,14 +219,14 @@ function ChurchFormDialog({
             description="Select the section this church belongs to."
             error={errors.section}
           >
-            <Select value={section} onValueChange={(v: string) => setSection(v ?? "")}>
+            <Select value={section} onValueChange={(v: string | null) => setSection(v ?? "")}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a section" />
               </SelectTrigger>
               <SelectContent>
-                {SECTIONS.map((s: string) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
+                {sections.map((s) => (
+                  <SelectItem key={s.id} value={s.name}>
+                    {s.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -329,8 +337,15 @@ export function AllChurches({
   externalAddOpen, 
   onAddOpenChange 
 }: AllChurchesProps = {}) {
-  // Data state (simulating mutable list)
-  const [churches, setChurches] = useState<Church[]>(mockChurches);
+  const churchesQuery = useChurches();
+  const sectionsQuery = useSections();
+  const createChurch = useCreateChurch();
+  const updateChurch = useUpdateChurch();
+  const deleteChurch = useDeleteChurch();
+  const churches = churchesQuery.data ?? EMPTY_CHURCHES;
+  const sections = sectionsQuery.data ?? EMPTY_SECTIONS;
+  const loading = churchesQuery.isLoading || sectionsQuery.isLoading;
+  const error = churchesQuery.error ?? sectionsQuery.error;
 
   // Filter / sort state
   const [search, setSearch] = useState("");
@@ -412,41 +427,72 @@ export function AllChurches({
     setDeleteOpen(true);
   };
 
-  const handleAddSubmit = (data: ChurchFormData) => {
-    const newChurch: Church = {
-      id: String(Date.now()),
-      name: data.name,
-      location: data.location,
-      section: data.section,
-      pastorCount: 0,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
-    setChurches((prev) => [...prev, newChurch]);
-    toast.success(MESSAGES.CHURCH.ADD_SUCCESS);
+  const handleAddSubmit = async (data: ChurchFormData) => {
+    // Look up the numeric section ID by matching the section name the user picked
+    const sectionId = sections.find((s) => s.name === data.section)?.id;
+    if (!sectionId) return toast.error("Invalid section selected.");
+    try {
+      await createChurch.mutateAsync({
+        sectionId,
+        name: data.name,
+        location: data.location,
+      });
+      toast.success(MESSAGES.CHURCH.ADD_SUCCESS);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add church.");
+    }
   };
 
-  const handleEditSubmit = (data: ChurchFormData) => {
+  const handleEditSubmit = async (data: ChurchFormData) => {
     if (!selectedChurch) return;
-    setChurches((prev) =>
-      prev.map((c) =>
-        c.id === selectedChurch.id
-          ? { ...c, name: data.name, section: data.section, location: data.location }
-          : c
-      )
-    );
-    toast.success(MESSAGES.CHURCH.EDIT_SUCCESS);
-    setSelectedChurch(null);
+    const sectionId = sections.find((s) => s.name === data.section)?.id;
+    if (!sectionId) return toast.error("Invalid section selected.");
+    try {
+      await updateChurch.mutateAsync({
+        id: selectedChurch.id,
+        input: {
+          sectionId,
+          name: data.name,
+          location: data.location,
+        },
+      });
+      toast.success(MESSAGES.CHURCH.EDIT_SUCCESS);
+      setSelectedChurch(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update church.");
+    }
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!selectedChurch) return;
-    setChurches((prev) => prev.filter((c) => c.id !== selectedChurch.id));
-    toast.success(MESSAGES.CHURCH.DELETE_SUCCESS);
-    setDeleteOpen(false);
-    setSelectedChurch(null);
+    try {
+      await deleteChurch.mutateAsync(selectedChurch.id);
+      toast.success(MESSAGES.CHURCH.DELETE_SUCCESS);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete church.");
+    } finally {
+      setDeleteOpen(false);
+      setSelectedChurch(null);
+    }
   };
 
   // ── Render ──────────────────────────────────────────────────────────────────
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-sm text-muted-foreground">
+        Loading churches...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-20 text-sm text-brand-error">
+        {error instanceof Error ? error.message : "Failed to load churches"}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -465,7 +511,7 @@ export function AllChurches({
           </div>
 
           {/* Section filter */}
-          <Select value={sectionFilter} onValueChange={(v: string) => setSectionFilter(v ?? "all")}>
+          <Select value={sectionFilter} onValueChange={(v: string | null) => setSectionFilter(v ?? "all")}>
             <SelectTrigger>
               <SelectValue placeholder="All Sections" />
             </SelectTrigger>
@@ -480,7 +526,7 @@ export function AllChurches({
           </Select>
 
           {/* Sort */}
-          <Select value={sortBy} onValueChange={(v: string) => setSortBy((v ?? "name") as SortField)}>
+          <Select value={sortBy} onValueChange={(v: string | null) => setSortBy((v ?? "name") as SortField)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -538,6 +584,7 @@ export function AllChurches({
         open={addOpen}
         onOpenChange={setAddOpen}
         mode="add"
+        sections={sections}
         onSubmit={handleAddSubmit}
       />
 
@@ -549,6 +596,7 @@ export function AllChurches({
           if (!open) setSelectedChurch(null);
         }}
         mode="edit"
+        sections={sections}
         initialData={
           selectedChurch
             ? {

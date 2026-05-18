@@ -25,7 +25,12 @@ export interface ChurchRoleFormData {
   name: string;
 }
 
-export type PastorTitle = "Reverend" | "Bishop" | "Pastor" | "Presbyter";
+export type PastorTitle =
+  | "ArchBishop"
+  | "Reverend"
+  | "Bishop"
+  | "Pastor"
+  | "Presbyter";
 
 export interface Pastor {
   id: string;

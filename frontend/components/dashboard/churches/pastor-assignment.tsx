@@ -38,20 +38,27 @@ import { ConfirmDialog } from "@/components/patterns/confirm-dialog";
 import { FormField } from "@/components/patterns/form-field";
 import { EmptyState } from "@/components/patterns/empty-state";
 
+import type { ApiPastor } from "@/lib/api/churches";
 import {
-  mockPastors,
-  mockPastorAssignments,
-} from "@/lib/mock-data/mock-pastor-assignments";
-import { mockChurches } from "@/lib/mock-data/mock-churches";
-import { mockChurchRoles } from "@/lib/mock-data/mock-church-roles";
+  useChurches,
+  useChurchRoles,
+  useCreatePastorAssignment,
+  useDeletePastorAssignment,
+  usePastorAssignments,
+  usePastors,
+} from "@/lib/hooks/use-church-module";
 import { MESSAGES } from "@/constants/message";
 import { PASTOR_TITLE_COLORS } from "@/constants/pastor-status";
 import type {
+  Church,
   PastorAssignment,
   PastorAssignmentFormData,
 } from "@/types/church";
 
 const ITEMS_PER_PAGE = 10;
+const EMPTY_ASSIGNMENTS: PastorAssignment[] = [];
+const EMPTY_CHURCHES: Church[] = [];
+const EMPTY_PASTORS: ApiPastor[] = [];
 
 // ─── Assignment Form Dialog ───────────────────────────────────────────────────
 
@@ -59,12 +66,18 @@ interface AssignmentFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: PastorAssignmentFormData) => void;
+  churches: Pick<Church, "id" | "name">[];
+  pastors: ApiPastor[];
+  roles: { id: string; name: string }[];
 }
 
 function AssignmentFormDialog({
   open,
   onOpenChange,
   onSubmit,
+  churches,
+  pastors,
+  roles,
 }: AssignmentFormDialogProps) {
   const [churchId, setChurchId] = useState("");
   const [pastorId, setPastorId] = useState("");
@@ -114,14 +127,14 @@ function AssignmentFormDialog({
             >
               <SelectTrigger className="w-full">
                 <span className="flex flex-1 text-left">
-                  {churchId 
-                    ? mockChurches.find(c => c.id === churchId)?.name 
+                  {churchId
+                    ? churches.find((c) => String(c.id) === churchId)?.name
                     : <span className="text-muted-foreground">Select a church</span>}
                 </span>
               </SelectTrigger>
               <SelectContent>
-                {mockChurches.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
+                {churches.map((c) => (
+                  <SelectItem key={c.id} value={String(c.id)}>
                     {c.name}
                   </SelectItem>
                 ))}
@@ -136,15 +149,15 @@ function AssignmentFormDialog({
             >
               <SelectTrigger className="w-full">
                 <span className="flex flex-1 text-left">
-                  {pastorId 
-                    ? mockPastors.find(p => p.id === pastorId)?.name 
+                  {pastorId
+                    ? pastors.find((p) => String(p.id) === pastorId)?.full_name
                     : <span className="text-muted-foreground">Select a pastor</span>}
                 </span>
               </SelectTrigger>
               <SelectContent>
-                {mockPastors.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
+                {pastors.map((p) => (
+                  <SelectItem key={p.id} value={String(p.id)}>
+                    {p.full_name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -155,12 +168,15 @@ function AssignmentFormDialog({
             <Select value={role} onValueChange={(v) => setRole(v ?? "")}>
               <SelectTrigger className="w-full">
                 <span className="flex flex-1 text-left">
-                  {role || <span className="text-muted-foreground">Select a role</span>}
+                  {role
+                    ? roles.find((r) => r.id === role)?.name
+                    : <span className="text-muted-foreground">Select a role</span>}
                 </span>
               </SelectTrigger>
               <SelectContent>
-                {mockChurchRoles.map((r) => (
-                  <SelectItem key={r.id} value={r.name}>
+                {roles.map((r) => (
+                  // value = role ID so the parent can send it directly to the API
+                  <SelectItem key={r.id} value={r.id}>
                     {r.name}
                   </SelectItem>
                 ))}
@@ -239,8 +255,29 @@ function Pagination({
 // ─── Pastor Assignments (main export) ─────────────────────────────────────────
 
 export function PastorAssignments() {
-  const [assignments, setAssignments] =
-    useState<PastorAssignment[]>(mockPastorAssignments);
+  const assignmentsQuery = usePastorAssignments();
+  const churchesQuery = useChurches();
+  const pastorsQuery = usePastors();
+  const rolesQuery = useChurchRoles();
+  const createAssignment = useCreatePastorAssignment();
+  const deleteAssignment = useDeletePastorAssignment();
+  const assignments = assignmentsQuery.data ?? EMPTY_ASSIGNMENTS;
+  const formChurches = churchesQuery.data ?? EMPTY_CHURCHES;
+  const formPastors = pastorsQuery.data ?? EMPTY_PASTORS;
+  const formRoles = (rolesQuery.data ?? []).map((r) => ({
+    id: r.id,
+    name: r.name,
+  }));
+  const loading =
+    assignmentsQuery.isLoading ||
+    churchesQuery.isLoading ||
+    pastorsQuery.isLoading ||
+    rolesQuery.isLoading;
+  const error =
+    assignmentsQuery.error ??
+    churchesQuery.error ??
+    pastorsQuery.error ??
+    rolesQuery.error;
 
   // Filters
   const [churchFilter, setChurchFilter] = useState("all");
@@ -252,8 +289,6 @@ export function PastorAssignments() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedAssignment, setSelectedAssignment] =
     useState<PastorAssignment | null>(null);
-
-  // ── Available filter options ──────────────────────────────────────────────
 
   const availableChurches = useMemo(() => {
     const set = new Set(assignments.map((a) => a.churchName));
@@ -296,40 +331,49 @@ export function PastorAssignments() {
     setDeleteOpen(true);
   };
 
-  const handleAddSubmit = (data: PastorAssignmentFormData) => {
-    const church = mockChurches.find((c) => c.id === data.churchId);
-    const pastor = mockPastors.find((p) => p.id === data.pastorId);
-    if (!church || !pastor) return;
-
-    const newAssignment: PastorAssignment = {
-      id: `A${String(Date.now()).slice(-4)}`,
-      churchId: church.id,
-      churchName: church.name,
-      pastorId: pastor.id,
-      pastorName: pastor.name,
-      pastorTitle: pastor.title,
-      role: data.role,
-      assignedDate: new Date().toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      }),
-    };
-    setAssignments((prev) => [...prev, newAssignment]);
-    toast.success(MESSAGES.ASSIGNMENT.ADD_SUCCESS);
+  const handleAddSubmit = async (data: PastorAssignmentFormData) => {
+    try {
+      await createAssignment.mutateAsync({
+        churchId: data.churchId,
+        pastorId: data.pastorId,
+        roleId: data.role,
+      });
+      toast.success(MESSAGES.ASSIGNMENT.ADD_SUCCESS);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add assignment.");
+    }
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!selectedAssignment) return;
-    setAssignments((prev) =>
-      prev.filter((a) => a.id !== selectedAssignment.id)
-    );
-    toast.success(MESSAGES.ASSIGNMENT.DELETE_SUCCESS);
-    setDeleteOpen(false);
-    setSelectedAssignment(null);
+    try {
+      await deleteAssignment.mutateAsync(selectedAssignment.id);
+      toast.success(MESSAGES.ASSIGNMENT.DELETE_SUCCESS);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete assignment.");
+    } finally {
+      setDeleteOpen(false);
+      setSelectedAssignment(null);
+    }
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-sm text-muted-foreground">
+        Loading assignments...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-20 text-sm text-brand-error">
+        {error instanceof Error ? error.message : "Failed to load assignments"}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -463,6 +507,9 @@ export function PastorAssignments() {
         open={addOpen}
         onOpenChange={setAddOpen}
         onSubmit={handleAddSubmit}
+        churches={formChurches}
+        pastors={formPastors}
+        roles={formRoles}
       />
 
       {/* Delete Confirmation */}

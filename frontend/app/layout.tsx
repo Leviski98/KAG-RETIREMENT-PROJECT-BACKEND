@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Providers } from "@/components/providers";
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Geist, Geist_Mono } from "next/font/google";
 import { Mulish } from "next/font/google";
@@ -39,7 +40,7 @@ export default function RootLayout({
         
       >
         <TooltipProvider>
-          {children}
+          <Providers>{children}</Providers>
         </TooltipProvider>
       </body>
     </html>
