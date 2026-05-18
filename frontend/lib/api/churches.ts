@@ -1,4 +1,5 @@
-import { apiClient } from "@/lib/api-client";
+import { PASTOR_RANK_MAP } from "@/constants/pastor-status";
+import { apiClient } from "@/lib/api/client";
 import type { Church, ChurchRole, PastorAssignment } from "@/types/church";
 
 interface ApiChurch {
@@ -82,7 +83,7 @@ function toAssignment(api: ApiChurchPastor): PastorAssignment {
     churchName: api.church_name,
     pastorId: String(api.pastor),
     pastorName: api.pastor_name,
-    pastorTitle: api.pastor_rank as PastorAssignment["pastorTitle"],
+    pastorTitle: PASTOR_RANK_MAP[api.pastor_rank] ?? "Pastor",
     role: api.role_name,
     assignedDate: new Date(api.created_at).toLocaleDateString("en-GB", {
       day: "numeric",

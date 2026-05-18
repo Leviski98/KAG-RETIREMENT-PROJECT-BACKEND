@@ -1,0 +1,20 @@
+# Root level gitignore for monorepo
+
+# Node modules at root (if any)
+/node_modules
+/package.json
+/pnpm-lock.yaml
+/package-lock.json
+/yarn.lock
+
+# Debug and temporary files
+*.html
+*.ps1
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

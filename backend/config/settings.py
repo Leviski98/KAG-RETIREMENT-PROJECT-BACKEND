@@ -132,9 +132,14 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Django REST Framework
+# Django REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    'DEFAULT_AUTHENTICATION_CLASSES': [],  # No authentication required for now
+    'DEFAULT_PERMISSION_CLASSES': [],  # No permissions required for now
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 100,  # Default page size
 }
 
 # API Documentation (Swagger)
@@ -148,6 +153,28 @@ SPECTACULAR_SETTINGS = {
 # CORS Settings
 # Allow all origins only in development mode
 CORS_ALLOW_ALL_ORIGINS = DEBUG
+
+# Additional CORS settings
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 # In production (DEBUG=False), only allow specific origins
 if not DEBUG:

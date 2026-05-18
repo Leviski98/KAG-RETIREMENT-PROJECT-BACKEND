@@ -1,23 +1,39 @@
 ﻿// District type definitions
 export interface District {
-  id: string;
-  district_name: string;
-  sections_count?: number;
+  id: number;
+  district_id: string; // e.g., "DIS001"
+  name: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface CreateDistrictInput {
-  district_name: string;
+  name: string;
 }
 
 export interface UpdateDistrictInput {
-  district_name?: string;
+  name?: string;
 }
 
-export interface DistrictListResponse {
-  results: District[];
-  count: number;
-  next: string | null;
-  previous: string | null;
+export interface DistrictStatistics {
+  total_districts: number;
+  recent_districts: number;
+  oldest_district: string | null;
+  newest_district: string | null;
+}
+
+export interface DistrictSummary {
+  district: District;
+}
+
+export interface BulkCreateDistrictInput {
+  districts: CreateDistrictInput[];
+}
+
+export interface DistrictQueryParams {
+  search?: string;
+  ordering?: string;
+  name?: string;
+  page?: number;
+  page_size?: number;
 }

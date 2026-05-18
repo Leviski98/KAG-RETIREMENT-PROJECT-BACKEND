@@ -39,9 +39,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${mulish.variable} antialiased`}
         
       >
-        <TooltipProvider>
-          <Providers>{children}</Providers>
-        </TooltipProvider>
+        <Providers>
+          <TooltipProvider>
+            {children}
+          </TooltipProvider>
+        </Providers>
       </body>
     </html>
   );
