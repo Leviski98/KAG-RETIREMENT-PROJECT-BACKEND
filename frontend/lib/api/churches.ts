@@ -70,6 +70,7 @@ function toChurch(api: ApiChurch): Church {
     name: api.church_name,
     location: api.location,
     section: api.section_name,
+    sectionId: api.section,
     pastorCount: api.pastor_count,
     createdAt: api.created_at.split("T")[0],
   };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { PageHeader } from "@/components/global/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,13 +37,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import {
   Plus,
   Search,
   Eye,
@@ -58,15 +51,15 @@ import {
   ExternalLink,
   AlertTriangle,
   Download,
-  ChevronDown,
   UserX,
   X,
   Loader2,
 } from "lucide-react";
-import { mockChurches } from "@/lib/mock-data/mock-churches";
 import { useDistricts } from "@/lib/hooks/use-districts";
 import { useSections } from "@/lib/hooks/use-sections";
+import { useChurches } from "@/lib/hooks/use-church-module";
 import { usePastors, useCreatePastor, useUpdatePastor, useDeletePastor } from "@/lib/hooks/use-pastors";
+import { useDebounce } from "@/lib/hooks/use-debounce";
 import { Pastor, PastorRank, PastorStatus } from "@/types/pastor";
 import { toast } from "sonner";
 import { PASTOR_TITLE_COLORS } from "@/constants/pastor-status";
@@ -79,15 +72,41 @@ export function PastorsManager() {
   const [selectedSection, setSelectedSection] = useState("all");
   const [selectedChurch, setSelectedChurch] = useState("all");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  
+  // Ref to maintain search input focus
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
-  // Fetch data from API
-  const { data: pastorsData, isLoading, error } = usePastors({ search: searchQuery });
+  // Debounce search query to avoid excessive API calls
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  // Build query parameters for backend filtering
+  const queryParams = {
+    search: debouncedSearchQuery,
+    pastor_rank: selectedRank !== "all" ? (selectedRank as PastorRank) : undefined,
+    status: selectedStatus !== "all" ? (selectedStatus as PastorStatus) : undefined,
+    district: selectedDistrict !== "all" ? Number(selectedDistrict) : undefined,
+    section: selectedSection !== "all" ? Number(selectedSection) : undefined,
+    church: selectedChurch !== "all" ? Number(selectedChurch) : undefined,
+  };
+
+  // Fetch data from API with all filters applied on backend
+  const { data: pastorsData, isLoading, isFetching, error } = usePastors(queryParams);
   const { data: districtsData } = useDistricts();
   const { data: sectionsData } = useSections();
+  const { data: churchesData } = useChurches();
+  
+  // Maintain focus on search input when user is actively searching
+  useEffect(() => {
+    if (isSearchFocused && searchInputRef.current && document.activeElement !== searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [pastorsData, isSearchFocused]); // Re-run when data updates
 
   const pastors = pastorsData?.results || [];
   const districts = districtsData?.results || [];
   const sections = sectionsData?.results || [];
+  const churches = churchesData || [];
 
   // Mutations
   const createMutation = useCreatePastor();
@@ -138,9 +157,6 @@ export function PastorsManager() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingPastorId, setDeletingPastorId] = useState<number | null>(null);
 
-  // Export dropdown state
-  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
-
   // Calculate stats from current pastors state
   const stats = {
     total: pastors.length,
@@ -165,12 +181,8 @@ export function PastorsManager() {
 
   // Cascading filter logic: get available churches based on selected section
   const availableChurches = selectedSection === "all"
-    ? mockChurches
-    : mockChurches.filter(church => {
-        // Find the selected section's name to match with church.section
-        const section = sections.find(s => s.id === Number(selectedSection));
-        return section ? church.section === section.name : false;
-      });
+    ? churches
+    : churches.filter((church: { sectionId: number }) => church.sectionId === Number(selectedSection));
 
   // Reset section when district changes
   const handleDistrictChange = (value: string | null) => {
@@ -185,25 +197,8 @@ export function PastorsManager() {
     setSelectedChurch("all");
   };
 
-  // Filter pastors based on search and filters
-  const filteredPastors = pastors.filter((pastor) => {
-    const matchesSearch =
-      pastor.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pastor.pastor_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pastor.phone_number?.includes(searchQuery);
-
-    const matchesRank =
-      selectedRank === "all" || pastor.pastor_rank === selectedRank;
-
-    const matchesStatus =
-      selectedStatus === "all" || pastor.status === selectedStatus;
-
-    // TODO: Add district/section/church filtering when assignment relationships are implemented
-    // const matchesDistrict =
-    //   selectedDistrict === "all" || pastor.district_id === selectedDistrict;
-
-    return matchesSearch && matchesRank && matchesStatus;
-  });
+  // All filtering is now done on the backend, so we use pastors directly
+  const filteredPastors = pastors;
 
   const handleView = (id: number) => {
     const pastor = pastors.find((p) => p.id === id);
@@ -283,6 +278,44 @@ export function PastorsManager() {
       return;
     }
 
+    // Validate Date of Birth is not in the future
+    if (formData.dateOfBirth) {
+      const birthDate = new Date(formData.dateOfBirth + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (birthDate > today) {
+        toast.error("Date of Birth cannot be in the future");
+        return;
+      }
+    }
+
+    // Validate Start of Service is after Date of Birth
+    if (formData.startOfService && formData.dateOfBirth) {
+      const birthDate = new Date(formData.dateOfBirth + 'T00:00:00');
+      const serviceDate = new Date(formData.startOfService + 'T00:00:00');
+      
+      if (serviceDate <= birthDate) {
+        toast.error("Start of Service must be after Date of Birth");
+        return;
+      }
+    }
+
+    // Check for existing active Archbishop
+    if (formData.pastorRank === "ArchBishop" && formData.status === "active") {
+      const existingActiveArchbishop = pastors.find(
+        (p) => p.pastor_rank === "ArchBishop" && p.status === "active"
+      );
+      
+      if (existingActiveArchbishop) {
+        toast.error(
+          `Only one active Archbishop is allowed. ${existingActiveArchbishop.full_name} is currently the active Archbishop.`,
+          { duration: 5000 }
+        );
+        return;
+      }
+    }
+
     try {
       await createMutation.mutateAsync({
         full_name: formData.fullName,
@@ -309,9 +342,18 @@ export function PastorsManager() {
       setIsAddDialogOpen(false);
 
       toast.success("Pastor added successfully");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error creating pastor:", error);
-      toast.error("Failed to create pastor");
+      
+      // Check if the error is about the Archbishop constraint
+      let errorMessage = "Failed to create pastor";
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const response = (error as { response?: { data?: { non_field_errors?: string[]; detail?: string } } }).response;
+        errorMessage = response?.data?.non_field_errors?.[0] || response?.data?.detail || errorMessage;
+      }
+      
+      toast.error(errorMessage, { duration: 5000 });
     }
   };
 
@@ -333,6 +375,44 @@ export function PastorsManager() {
     if (!editFormData.fullName.trim() || !editFormData.phoneNumber.trim() || !selectedPastor) {
       toast.error("Please fill in required fields");
       return;
+    }
+
+    // Validate Date of Birth is not in the future
+    if (editFormData.dateOfBirth) {
+      const birthDate = new Date(editFormData.dateOfBirth + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (birthDate > today) {
+        toast.error("Date of Birth cannot be in the future");
+        return;
+      }
+    }
+
+    // Validate Start of Service is after Date of Birth
+    if (editFormData.startOfService && editFormData.dateOfBirth) {
+      const birthDate = new Date(editFormData.dateOfBirth + 'T00:00:00');
+      const serviceDate = new Date(editFormData.startOfService + 'T00:00:00');
+      
+      if (serviceDate <= birthDate) {
+        toast.error("Start of Service must be after Date of Birth");
+        return;
+      }
+    }
+
+    // Check for existing active Archbishop (excluding the current pastor being edited)
+    if (editFormData.pastorRank === "ArchBishop" && editFormData.status === "active") {
+      const existingActiveArchbishop = pastors.find(
+        (p) => p.pastor_rank === "ArchBishop" && p.status === "active" && p.id !== selectedPastor.id
+      );
+      
+      if (existingActiveArchbishop) {
+        toast.error(
+          `Only one active Archbishop is allowed. ${existingActiveArchbishop.full_name} is currently the active Archbishop.`,
+          { duration: 5000 }
+        );
+        return;
+      }
     }
 
     try {
@@ -374,9 +454,18 @@ export function PastorsManager() {
       setIsEditDialogOpen(false);
 
       toast.success("Pastor updated successfully");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error updating pastor:", error);
-      toast.error("Failed to update pastor");
+      
+      // Check if the error is about the Archbishop constraint
+      let errorMessage = "Failed to update pastor";
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const response = (error as { response?: { data?: { non_field_errors?: string[]; detail?: string } } }).response;
+        errorMessage = response?.data?.non_field_errors?.[0] || response?.data?.detail || errorMessage;
+      }
+      
+      toast.error(errorMessage, { duration: 5000 });
     }
   };
 
@@ -479,12 +568,23 @@ export function PastorsManager() {
     return name.substring(0, 2).toUpperCase();
   };
 
-  const handleExportPDF = (exportAll: boolean) => {
-    const dataToExport = exportAll ? pastors : filteredPastors;
-    const exportType = exportAll ? "All Pastors" : "Filtered Results";
+  const handleExportPDF = () => {
+    const dataToExport = filteredPastors;
 
-    // Create print-friendly content
-    const printWindow = window.open('', '_blank', 'height=800,width=1000');
+    // Calculate position for right side of screen
+    const windowWidth = 1000;
+    const windowHeight = 800;
+    const screenWidth = window.screen.availWidth;
+    const screenHeight = window.screen.availHeight;
+    const leftPosition = screenWidth - windowWidth - 20; // 20px from right edge
+    const topPosition = (screenHeight - windowHeight) / 2; // Vertically centered
+
+    // Create print-friendly content positioned on the right
+    const printWindow = window.open(
+      '', 
+      '_blank', 
+      `width=${windowWidth},height=${windowHeight},left=${leftPosition},top=${topPosition},resizable=yes,scrollbars=yes`
+    );
 
     if (!printWindow) {
       // Popup was blocked
@@ -492,11 +592,30 @@ export function PastorsManager() {
       return;
     }
 
+    // Build filter summary
+    const filters = [];
+    if (searchQuery) filters.push(`Search: "${searchQuery}"`);
+    if (selectedRank !== 'all') filters.push(`Rank: ${selectedRank}`);
+    if (selectedStatus !== 'all') filters.push(`Status: ${selectedStatus}`);
+    if (selectedDistrict !== 'all') {
+      const district = districts.find(d => d.id === Number(selectedDistrict));
+      if (district) filters.push(`District: ${district.name}`);
+    }
+    if (selectedSection !== 'all') {
+      const section = sections.find(s => s.id === Number(selectedSection));
+      if (section) filters.push(`Section: ${section.name}`);
+    }
+    if (selectedChurch !== 'all') {
+      const church = churches.find(c => c.id === selectedChurch);
+      if (church) filters.push(`Church: ${church.name}`);
+    }
+    const filterSummary = filters.length > 0 ? `<br/>Filters: ${filters.join(', ')}` : '<br/>No filters applied';
+
     const htmlContent = `
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Pastors Export - ${exportType}</title>
+          <title>Pastors Export</title>
           <style>
             body {
               font-family: Arial, sans-serif;
@@ -512,27 +631,6 @@ export function PastorsManager() {
               color: #666;
               margin-bottom: 20px;
               font-size: 14px;
-            }
-            .print-button-container {
-              margin-bottom: 20px;
-              display: flex;
-              gap: 12px;
-            }
-            .print-button {
-              background-color: #2563eb;
-              color: white;
-              border: none;
-              padding: 10px 20px;
-              border-radius: 6px;
-              font-size: 14px;
-              font-weight: 500;
-              cursor: pointer;
-              display: inline-flex;
-              align-items: center;
-              gap: 8px;
-            }
-            .print-button:hover {
-              background-color: #1d4ed8;
             }
             table {
               width: 100%;
@@ -560,22 +658,14 @@ export function PastorsManager() {
             .text-center { text-align: center; }
             @media print {
               body { padding: 10px; }
-              .print-button-container { display: none; }
             }
           </style>
         </head>
         <body>
-          <h1>Pastors Manager - ${exportType}</h1>
+          <h1>Pastors Manager</h1>
           <div class="subtitle">
             ${dataToExport.length} records | Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-            ${!exportAll && searchQuery ? `<br/>Search: "${searchQuery}"` : ''}
-            ${!exportAll && selectedRank !== 'all' ? `<br/>Rank: ${selectedRank}` : ''}
-            ${!exportAll && selectedStatus !== 'all' ? `<br/>Status: ${selectedStatus}` : ''}
-          </div>
-          <div class="print-button-container">
-            <button class="print-button" onclick="window.print()">
-              🖨️ Print / Save as PDF
-            </button>
+            ${filterSummary}
           </div>
           <table>
             <thead>
@@ -607,6 +697,19 @@ export function PastorsManager() {
               `).join('')}
             </tbody>
           </table>
+          <script>
+            // Automatically open print dialog when page loads
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 100);
+            };
+            
+            // Close window after print dialog is closed (whether printed or cancelled)
+            window.onafterprint = function() {
+              window.close();
+            };
+          </script>
         </body>
       </html>
     `;
@@ -614,16 +717,11 @@ export function PastorsManager() {
     try {
       printWindow.document.write(htmlContent);
       printWindow.document.close();
-
-      // Focus the window and let user choose when to print
-      printWindow.focus();
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('An error occurred while generating the PDF. Please try again.');
       printWindow.close();
     }
-
-    setIsExportDropdownOpen(false);
   };
 
   return (
@@ -662,7 +760,7 @@ export function PastorsManager() {
       />
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+      <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 transition-opacity duration-200 ${isFetching && !isLoading ? 'opacity-70' : 'opacity-100'}`}>
         {/* Total Pastors */}
         <Card>
           <CardContent className="flex items-center gap-4 p-4">
@@ -786,12 +884,19 @@ export function PastorsManager() {
       {/* Search and Filter Bar */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="relative flex-1 max-w-xs min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          {isFetching && !isLoading ? (
+            <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 size-4 animate-spin text-brand-primary" />
+          ) : (
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          )}
           <Input
+            ref={searchInputRef}
             type="text"
-            placeholder="Search by name, ID, or phone..."
+            placeholder="Search by name or National ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
             className="pl-9"
           />
         </div>
@@ -802,12 +907,12 @@ export function PastorsManager() {
         >
           <SelectTrigger className="w-fit min-w-37.5">
             <SelectValue placeholder="All Ranks">
-              {selectedRank === "all" ? "All Ranks" : selectedRank}
+              {selectedRank === "all" ? "All Ranks" : selectedRank === "ArchBishop" ? "Archbishop" : selectedRank}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Ranks</SelectItem>
-            <SelectItem value="Archbishop">Archbishop</SelectItem>
+            <SelectItem value="ArchBishop">Archbishop</SelectItem>
             <SelectItem value="Bishop">Bishop</SelectItem>
             <SelectItem value="Presbyter">Presbyter</SelectItem>
             <SelectItem value="Reverend">Reverend</SelectItem>
@@ -887,12 +992,12 @@ export function PastorsManager() {
             <SelectValue placeholder="All Churches">
               {selectedChurch === "all"
                 ? "All Churches"
-                : availableChurches.find(c => c.id === selectedChurch)?.name || "All Churches"}
+                : availableChurches.find((c: { id: string }) => c.id === selectedChurch)?.name || "All Churches"}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Churches</SelectItem>
-            {availableChurches.map((church) => (
+            {availableChurches.map((church: { id: string; name: string }) => (
               <SelectItem key={church.id} value={church.id}>
                 {church.name}
               </SelectItem>
@@ -905,55 +1010,10 @@ export function PastorsManager() {
             {filteredPastors.length} pastors
           </span>
 
-          <DropdownMenu open={isExportDropdownOpen} onOpenChange={setIsExportDropdownOpen}>
-            <DropdownMenuTrigger>
-              <Button variant="outline" size="default" className="gap-2">
-                <Download className="size-4" />
-                Export PDF
-                <ChevronDown className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64">
-              <div className="px-2 py-1.5">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Export as PDF
-                </p>
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => handleExportPDF(true)}
-                className="flex flex-col items-start py-3 cursor-pointer"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="font-medium">All Pastors</span>
-                  <Printer className="size-4 text-muted-foreground" />
-                </div>
-                <span className="text-xs text-muted-foreground mt-0.5">
-                  {pastors.length} records
-                </span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => handleExportPDF(false)}
-                className="flex flex-col items-start py-3 cursor-pointer"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="font-medium">Filtered Results</span>
-                  <Printer className="size-4 text-muted-foreground" />
-                </div>
-                <span className="text-xs text-muted-foreground mt-0.5">
-                  {searchQuery || selectedRank !== 'all' || selectedStatus !== 'all' || selectedDistrict !== 'all' || selectedSection !== 'all' || selectedChurch !== 'all'
-                    ? `${filteredPastors.length} records with active filters`
-                    : 'No filters applied'}
-                </span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <div className="px-2 py-1.5">
-                <p className="text-xs text-muted-foreground">
-                  Includes all auto-calculated fields
-                </p>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button variant="outline" size="default" className="gap-2" onClick={handleExportPDF}>
+            <Download className="size-4" />
+            Export PDF
+          </Button>
 
           <div className="flex items-center rounded-lg border">
             <Button
@@ -979,7 +1039,7 @@ export function PastorsManager() {
       </div>
 
       {/* Pastors Table */}
-      <div className="rounded-lg border bg-card">
+      <div className={`rounded-lg border bg-card transition-opacity duration-200 ${isFetching && !isLoading ? 'opacity-70' : 'opacity-100'}`}>
         <Table>
           <TableHeader>
             <TableRow>
@@ -1248,7 +1308,7 @@ export function PastorsManager() {
                     <SelectValue placeholder="Select rank" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Archbishop">Archbishop</SelectItem>
+                    <SelectItem value="ArchBishop">Archbishop</SelectItem>
                     <SelectItem value="Bishop">Bishop</SelectItem>
                     <SelectItem value="Presbyter">Presbyter</SelectItem>
                     <SelectItem value="Reverend">Reverend</SelectItem>
@@ -1468,7 +1528,7 @@ export function PastorsManager() {
                     <SelectValue placeholder="Select rank" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Archbishop">Archbishop</SelectItem>
+                    <SelectItem value="ArchBishop">Archbishop</SelectItem>
                     <SelectItem value="Bishop">Bishop</SelectItem>
                     <SelectItem value="Presbyter">Presbyter</SelectItem>
                     <SelectItem value="Reverend">Reverend</SelectItem>
@@ -1639,7 +1699,7 @@ export function PastorsManager() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Gender</span>
                       <span className="text-sm font-medium">
-                        Male
+                        {selectedPastor.gender}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -1684,7 +1744,13 @@ export function PastorsManager() {
                         Start of Service
                       </span>
                       <span className="text-sm font-medium">
-                        1 June 1992
+                        {selectedPastor.start_of_service
+                          ? new Date(selectedPastor.start_of_service).toLocaleDateString("en-GB", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            })
+                          : "—"}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -1698,19 +1764,34 @@ export function PastorsManager() {
                     <div className="flex flex-col gap-2">
                       <span className="text-sm text-muted-foreground">
                         {selectedPastor.status === "active"
-                          ? "Current Assignments"
-                          : "Last Assignment"}
+                          ? "Current Assignment"
+                          : selectedPastor.status === "retired" || selectedPastor.status === "deceased"
+                          ? "Last Assignment"
+                          : "Assignment"}
                       </span>
-                      <div className="flex flex-col gap-0.5 bg-muted/50 p-3 rounded-md">
-                        <span className="text-sm font-medium">
-                          {/* TODO: Add church assignment relationship */}
-                          —
-                        </span>
-                        <span className="text-xs text-brand-primary">
-                          {/* TODO: Add role field to pastor */}
-                          —
-                        </span>
-                      </div>
+                      {selectedPastor.church_assignments && selectedPastor.church_assignments.length > 0 ? (
+                        <div className="flex flex-col gap-2">
+                          {selectedPastor.church_assignments.map((assignment) => (
+                            <div key={assignment.id} className="flex flex-col gap-0.5 bg-muted/50 p-3 rounded-md">
+                              <span className="text-sm font-medium">
+                                {assignment.church_name}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {assignment.section_name}, {assignment.district_name}
+                              </span>
+                              <span className="text-xs text-brand-primary">
+                                Role: {assignment.role_name}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-0.5 bg-muted/50 p-3 rounded-md">
+                          <span className="text-sm text-muted-foreground">
+                            No church assignments
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
