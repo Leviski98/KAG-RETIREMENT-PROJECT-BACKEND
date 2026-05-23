@@ -37,7 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Plus,
+  Plus as PlusIcon,
   Search,
   Eye,
   Pencil,
@@ -63,6 +63,7 @@ import { useDebounce } from "@/lib/hooks/use-debounce";
 import { Pastor, PastorRank, PastorStatus } from "@/types/pastor";
 import { toast } from "sonner";
 import { PASTOR_TITLE_COLORS } from "@/constants/pastor-status";
+import { EmptyState } from "@/components/patterns/empty-state";
 
 export function PastorsManager() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -753,7 +754,7 @@ export function PastorsManager() {
         description="Maintain pastor records, track assignments, and manage retirement status."
         action={
           <Button onClick={handleAddPastor} size="default">
-            <Plus className="size-4" />
+            <PlusIcon className="size-4" />
             Add Pastor
           </Button>
         }
@@ -1147,17 +1148,16 @@ export function PastorsManager() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={10} className="h-24 text-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <p className="text-sm text-muted-foreground">
-                      No pastors found
-                    </p>
-                    {searchQuery && (
-                      <p className="text-xs text-muted-foreground">
-                        Try adjusting your search query or filters
-                      </p>
-                    )}
-                  </div>
+                <TableCell colSpan={10} className="py-0">
+                  <EmptyState
+                    title="No Pastor found"
+                    action={
+                      <Button onClick={() => setIsAddDialogOpen(true)}>
+                        <PlusIcon data-icon="inline-start" />
+                        Add Pastor
+                      </Button>
+                    }
+                  />
                 </TableCell>
               </TableRow>
             )}

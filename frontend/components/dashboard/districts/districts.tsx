@@ -19,8 +19,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Pencil, Trash2, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
+import { Plus as PlusIcon, Search, Pencil, Trash2, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { EmptyState } from "@/components/patterns/empty-state";
 import {
   useDistricts,
   useCreateDistrict,
@@ -201,7 +202,7 @@ export function DistrictsManager() {
         description="Manage all administrative districts in the KAG organization."
         action={
           <Button onClick={handleAddDistrict} size="default">
-            <Plus className="size-4" />
+            <PlusIcon className="size-4" />
             Add District
           </Button>
         }
@@ -305,17 +306,16 @@ export function DistrictsManager() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <p className="text-sm text-muted-foreground">
-                      No districts found
-                    </p>
-                    {searchQuery && (
-                      <p className="text-xs text-muted-foreground">
-                        Try adjusting your search query
-                      </p>
-                    )}
-                  </div>
+                <TableCell colSpan={5} className="py-0">
+                  <EmptyState
+                    title="No District found"
+                    action={
+                      <Button onClick={() => setIsAddDialogOpen(true)}>
+                        <PlusIcon data-icon="inline-start" />
+                        Add District
+                      </Button>
+                    }
+                  />
                 </TableCell>
               </TableRow>
             )}

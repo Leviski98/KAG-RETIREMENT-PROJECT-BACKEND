@@ -26,9 +26,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Pencil, Trash2, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
+import { Plus as PlusIcon, Search, Pencil, Trash2, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
+import { EmptyState } from "@/components/patterns/empty-state";
 import {
   useSections,
   useCreateSection,
@@ -217,7 +218,7 @@ export function SectionsManager() {
         description="Organize and manage sections within each district."
         action={
           <Button onClick={handleAddSection} size="default">
-            <Plus className="size-4" />
+            <PlusIcon className="size-4" />
             Add Section
           </Button>
         }
@@ -338,15 +339,16 @@ export function SectionsManager() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <p className="text-sm text-muted-foreground">No sections found</p>
-                    {searchQuery && (
-                      <p className="text-xs text-muted-foreground">
-                        Try adjusting your search query
-                      </p>
-                    )}
-                  </div>
+                <TableCell colSpan={5} className="py-0">
+                  <EmptyState
+                    title="No Section found"
+                    action={
+                      <Button onClick={() => setIsAddDialogOpen(true)}>
+                        <PlusIcon data-icon="inline-start" />
+                        Add Section
+                      </Button>
+                    }
+                  />
                 </TableCell>
               </TableRow>
             )}
