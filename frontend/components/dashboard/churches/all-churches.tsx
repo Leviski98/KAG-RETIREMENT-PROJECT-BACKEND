@@ -468,8 +468,20 @@ export function AllChurches({
     try {
       await deleteChurch.mutateAsync(selectedChurch.id);
       toast.success(MESSAGES.CHURCH.DELETE_SUCCESS);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete church.");
+    } catch (error: unknown) {
+      // Extract error message from backend response
+      let errorMessage = "Failed to delete church";
+      
+      if (error && typeof error === 'object') {
+        if ('response' in error) {
+          const response = (error as { response?: { detail?: string; error?: string } }).response;
+          errorMessage = response?.detail || response?.error || errorMessage;
+        } else if ('message' in error && typeof (error as { message?: string }).message === 'string') {
+          errorMessage = (error as { message: string }).message;
+        }
+      }
+      
+      toast.error(errorMessage, { duration: 5000 });
     } finally {
       setDeleteOpen(false);
       setSelectedChurch(null);

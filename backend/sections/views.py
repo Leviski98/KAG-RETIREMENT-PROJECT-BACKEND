@@ -39,6 +39,31 @@ class SectionViewSet(viewsets.ModelViewSet):
     filterset_fields = ['name', 'district']
     ordering = ['name']  # Default ordering
     
+    def destroy(self, request, *args, **kwargs):
+        """
+        Delete a section with dependency validation.
+        
+        Blocks deletion if the section has related churches or pastor assignments.
+        """
+        from churches.models import Church
+        
+        section = self.get_object()
+        
+        # Check for related churches
+        churches_count = Church.objects.filter(section=section).count()
+        
+        if churches_count > 0:
+            return Response(
+                {
+                    'error': 'Cannot delete section',
+                    'detail': f'This section has {churches_count} church(es) linked to it. Please delete all churches first.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # If no dependencies, proceed with deletion
+        return super().destroy(request, *args, **kwargs)
+    
     def get_queryset(self):
         """
         Optionally restricts the returned sections based on query parameters.

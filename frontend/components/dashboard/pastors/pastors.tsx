@@ -167,14 +167,6 @@ export function PastorsManager() {
     deceased: pastors.filter((p) => p.status === "deceased").length,
   };
 
-  const rankStats = {
-    archbishop: pastors.filter((p) => p.pastor_rank === "ArchBishop").length,
-    bishop: pastors.filter((p) => p.pastor_rank === "Bishop").length,
-    presbyter: pastors.filter((p) => p.pastor_rank === "Presbyter").length,
-    reverend: pastors.filter((p) => p.pastor_rank === "Reverend").length,
-    pastor: pastors.filter((p) => p.pastor_rank === "Pastor").length,
-  };
-
   // Cascading filter logic: get available sections based on selected district
   const availableSections = selectedDistrict === "all"
     ? sections
@@ -291,6 +283,18 @@ export function PastorsManager() {
       }
     }
 
+    // Validate Start of Service is not in the future
+    if (formData.startOfService) {
+      const serviceDate = new Date(formData.startOfService + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (serviceDate > today) {
+        toast.error("Start of Service cannot be in the future");
+        return;
+      }
+    }
+
     // Validate Start of Service is after Date of Birth
     if (formData.startOfService && formData.dateOfBirth) {
       const birthDate = new Date(formData.dateOfBirth + 'T00:00:00');
@@ -386,6 +390,18 @@ export function PastorsManager() {
       
       if (birthDate > today) {
         toast.error("Date of Birth cannot be in the future");
+        return;
+      }
+    }
+
+    // Validate Start of Service is not in the future
+    if (editFormData.startOfService) {
+      const serviceDate = new Date(editFormData.startOfService + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (serviceDate > today) {
+        toast.error("Start of Service cannot be in the future");
         return;
       }
     }
@@ -761,7 +777,7 @@ export function PastorsManager() {
       />
 
       {/* Stats Cards */}
-      <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 transition-opacity duration-200 ${isFetching && !isLoading ? 'opacity-70' : 'opacity-100'}`}>
+      <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 transition-opacity duration-200 ${isFetching && !isLoading ? 'opacity-70' : 'opacity-100'}`}>
         {/* Total Pastors */}
         <Card>
           <CardContent className="flex items-center gap-4 p-4">
@@ -825,58 +841,6 @@ export function PastorsManager() {
             <div className="flex flex-col">
               <span className="text-sm text-muted-foreground">Deceased</span>
               <span className="text-2xl font-bold">{stats.deceased}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* By Rank Chart */}
-        <Card>
-          <CardContent className="flex flex-col gap-2 p-4">
-            <div className="flex items-center gap-2">
-              <LayoutGrid className="size-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">By Rank</span>
-            </div>
-            <div className="flex items-end gap-1">
-              {/* Archbishop */}
-              <div className="flex flex-col items-center gap-1">
-                <div
-                  className="w-8 rounded-t bg-amber-400"
-                  style={{ height: `${rankStats.archbishop > 0 ? (rankStats.archbishop / stats.total) * 60 : 2}px` }}
-                />
-                <span className="text-xs text-muted-foreground">Arc</span>
-              </div>
-              {/* Bishop */}
-              <div className="flex flex-col items-center gap-1">
-                <div
-                  className="w-8 rounded-t bg-blue-400"
-                  style={{ height: `${rankStats.bishop > 0 ? (rankStats.bishop / stats.total) * 60 : 2}px` }}
-                />
-                <span className="text-xs text-muted-foreground">Bis</span>
-              </div>
-              {/* Presbyter */}
-              <div className="flex flex-col items-center gap-1">
-                <div
-                  className="w-8 rounded-t bg-purple-400"
-                  style={{ height: `${rankStats.presbyter > 0 ? (rankStats.presbyter / stats.total) * 60 : 2}px` }}
-                />
-                <span className="text-xs text-muted-foreground">Pre</span>
-              </div>
-              {/* Reverend */}
-              <div className="flex flex-col items-center gap-1">
-                <div
-                  className="w-8 rounded-t bg-emerald-400"
-                  style={{ height: `${rankStats.reverend > 0 ? (rankStats.reverend / stats.total) * 60 : 2}px` }}
-                />
-                <span className="text-xs text-muted-foreground">Rev</span>
-              </div>
-              {/* Pastor */}
-              <div className="flex flex-col items-center gap-1">
-                <div
-                  className="w-8 rounded-t bg-slate-400"
-                  style={{ height: `${rankStats.pastor > 0 ? (rankStats.pastor / stats.total) * 60 : 2}px` }}
-                />
-                <span className="text-xs text-muted-foreground">Pas</span>
-              </div>
             </div>
           </CardContent>
         </Card>

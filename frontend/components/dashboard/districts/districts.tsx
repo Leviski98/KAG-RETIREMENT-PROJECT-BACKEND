@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/global/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -106,9 +107,20 @@ export function DistrictsManager() {
           setDistrictToDelete(null);
           setIsDeleteDialogOpen(false);
         },
-        onError: (error) => {
+        onError: (error: unknown) => {
           console.error("Error deleting district:", error);
-          // You can add error toast here
+          
+          // Extract error message from backend response
+          let errorMessage = "Failed to delete district";
+          
+          if (error && typeof error === 'object' && 'response' in error) {
+            const response = (error as { response?: { detail?: string; error?: string } }).response;
+            errorMessage = response?.detail || response?.error || errorMessage;
+          }
+          
+          toast.error(errorMessage, { duration: 5000 });
+          setDistrictToDelete(null);
+          setIsDeleteDialogOpen(false);
         },
       });
     }

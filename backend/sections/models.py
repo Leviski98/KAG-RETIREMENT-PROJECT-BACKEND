@@ -4,7 +4,7 @@ from districts.models import District
 
 class Section(models.Model):
     id = models.AutoField(primary_key=True)
-    district = models.ForeignKey(District, on_delete=models.CASCADE, related_name='sections')
+    district = models.ForeignKey(District, on_delete=models.PROTECT, related_name='sections')
     name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
