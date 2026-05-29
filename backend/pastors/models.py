@@ -36,6 +36,7 @@ class Pastor(models.Model):
     date_of_birth = models.DateField()
     phone_number = models.CharField(max_length=13, validators=[phone_regex])
     start_of_service = models.DateField(blank=True, null=True)
+    end_of_service = models.DateField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

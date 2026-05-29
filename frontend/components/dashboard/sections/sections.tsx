@@ -38,7 +38,9 @@ import {
   useDeleteSection,
 } from "@/lib/hooks/use-sections";
 import { useDistricts } from "@/lib/hooks/use-districts";
+import { useChurches } from "@/lib/hooks/use-church-module";
 import type { Section } from "@/types/section";
+import type { Church } from "@/types/church";
 
 export function SectionsManager() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -74,6 +76,9 @@ export function SectionsManager() {
   // Fetch districts for dropdown
   const { data: districtsResponse } = useDistricts();
 
+  // Fetch churches to count churches per section
+  const { data: churchesResponse } = useChurches();
+
   // Mutations
   const createMutation = useCreateSection();
   const updateMutation = usePartialUpdateSection();
@@ -82,6 +87,13 @@ export function SectionsManager() {
   // Extract data from paginated responses
   const sections = useMemo(() => sectionsResponse?.results || [], [sectionsResponse]);
   const districts = useMemo(() => districtsResponse?.results || [], [districtsResponse]);
+  // useChurches returns an array directly, not a paginated response
+  const churches = useMemo(() => churchesResponse || [], [churchesResponse]);
+
+  // Count churches per section
+  const getChurchCount = (sectionId: number): number => {
+    return churches.filter((church: Church) => church.sectionId === sectionId).length;
+  };
 
   // Show success toast helper
   const showSuccess = (message: string) => {
@@ -284,6 +296,7 @@ export function SectionsManager() {
               <TableHead className="w-30">ID</TableHead>
               <TableHead>Section Name</TableHead>
               <TableHead>District</TableHead>
+              <TableHead className="w-28 text-center">Churches</TableHead>
               <TableHead className="w-35">Created</TableHead>
               <TableHead className="w-25 text-right">Actions</TableHead>
             </TableRow>
@@ -291,7 +304,7 @@ export function SectionsManager() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-24">
+                <TableCell colSpan={6} className="h-24">
                   <div className="flex items-center justify-center gap-2">
                     <Loader2 className="size-4 animate-spin text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">Loading sections...</p>
@@ -300,7 +313,7 @@ export function SectionsManager() {
               </TableRow>
             ) : error ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-24">
+                <TableCell colSpan={6} className="h-24">
                   <div className="flex items-center justify-center gap-2 text-destructive">
                     <AlertTriangle className="size-4" />
                     <p className="text-sm">Error loading sections</p>
@@ -322,6 +335,11 @@ export function SectionsManager() {
                     >
                       {section.district_name}
                     </Link>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <span className="inline-flex items-center justify-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-sm font-semibold text-emerald-600">
+                      {getChurchCount(section.id)}
+                    </span>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {format(new Date(section.created_at), "d MMM yyyy")}
@@ -352,7 +370,7 @@ export function SectionsManager() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="py-0">
+                <TableCell colSpan={6} className="py-0">
                   <EmptyState
                     title="No Section found"
                     action={

@@ -18,6 +18,7 @@ class PastorSerializer(serializers.ModelSerializer):
             'date_of_birth',
             'phone_number',
             'start_of_service',
+            'end_of_service',
             'status',
             'church_assignments',
             'created_at',
@@ -43,6 +44,7 @@ class PastorSerializer(serializers.ModelSerializer):
     def validate(self, data):
         """
         Validate that only one active Archbishop can exist at a time.
+        Also ensures end_of_service is cleared when status is set to active.
         """
         # Get the rank and status from data, or from the instance if updating
         pastor_rank = data.get('pastor_rank', None)
@@ -54,6 +56,19 @@ class PastorSerializer(serializers.ModelSerializer):
                 pastor_rank = self.instance.pastor_rank
             if status is None:
                 status = self.instance.status
+        
+        # Clear end_of_service when status is set to active
+        if status == 'active':
+            data['end_of_service'] = None
+        
+        # Require end_of_service for non-active statuses when status is being changed
+        if 'status' in data and data['status'] in ['retired', 'suspended', 'deceased']:
+            end_of_service = data.get('end_of_service', None)
+            
+            if not end_of_service:
+                raise serializers.ValidationError({
+                    'end_of_service': 'End of Service is required for retired, suspended, or deceased pastors.'
+                })
         
         # Check if trying to create/update an active Archbishop
         if pastor_rank == 'ArchBishop' and status == 'active':

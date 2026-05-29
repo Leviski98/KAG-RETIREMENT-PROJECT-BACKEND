@@ -124,6 +124,7 @@ export function PastorsManager() {
     phoneNumber: "+254",
     pastorRank: "Pastor",
     startOfService: "",
+    endOfService: "",
     status: "active",
   });
 
@@ -141,6 +142,7 @@ export function PastorsManager() {
     phoneNumber: "+254",
     pastorRank: "Pastor",
     startOfService: "",
+    endOfService: "",
     status: "active",
   });
   const [originalEditFormData, setOriginalEditFormData] = useState({
@@ -151,6 +153,7 @@ export function PastorsManager() {
     phoneNumber: "+254",
     pastorRank: "Pastor",
     startOfService: "",
+    endOfService: "",
     status: "active",
   });
 
@@ -212,6 +215,7 @@ export function PastorsManager() {
         phoneNumber: pastor.phone_number || "+254",
         pastorRank: pastor.pastor_rank,
         startOfService: pastor.start_of_service ? pastor.start_of_service.split("T")[0] : "",
+        endOfService: pastor.end_of_service ? pastor.end_of_service.split("T")[0] : "",
         status: pastor.status,
       };
 
@@ -306,6 +310,42 @@ export function PastorsManager() {
       }
     }
 
+    // Validate End of Service is required for non-active statuses
+    if (['retired', 'suspended', 'deceased'].includes(formData.status)) {
+      if (!formData.endOfService) {
+        toast.error("End of Service is required for retired, suspended, or deceased pastors");
+        return;
+      }
+
+      // Validate End of Service is not in the future
+      const endDate = new Date(formData.endOfService + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (endDate > today) {
+        toast.error("End of Service cannot be in the future");
+        return;
+      }
+
+      // Validate End of Service is after Start of Service
+      if (formData.startOfService) {
+        const startDate = new Date(formData.startOfService + 'T00:00:00');
+        if (endDate <= startDate) {
+          toast.error("End of Service must be after Start of Service");
+          return;
+        }
+      }
+
+      // Validate End of Service is after Date of Birth
+      if (formData.dateOfBirth) {
+        const birthDate = new Date(formData.dateOfBirth + 'T00:00:00');
+        if (endDate <= birthDate) {
+          toast.error("End of Service must be after Date of Birth");
+          return;
+        }
+      }
+    }
+
     // Check for existing active Archbishop
     if (formData.pastorRank === "ArchBishop" && formData.status === "active") {
       const existingActiveArchbishop = pastors.find(
@@ -330,6 +370,7 @@ export function PastorsManager() {
         date_of_birth: formData.dateOfBirth,
         phone_number: formData.phoneNumber,
         start_of_service: formData.startOfService || undefined,
+        end_of_service: formData.endOfService || undefined,
         status: formData.status as PastorStatus,
       });
 
@@ -342,6 +383,7 @@ export function PastorsManager() {
         phoneNumber: "+254",
         pastorRank: "Pastor",
         startOfService: "",
+        endOfService: "",
         status: "active",
       });
       setIsAddDialogOpen(false);
@@ -371,6 +413,7 @@ export function PastorsManager() {
       phoneNumber: "+254",
       pastorRank: "Pastor",
       startOfService: "",
+      endOfService: "",
       status: "active",
     });
     setIsAddDialogOpen(false);
@@ -417,6 +460,42 @@ export function PastorsManager() {
       }
     }
 
+    // Validate End of Service is required for non-active statuses
+    if (['retired', 'suspended', 'deceased'].includes(editFormData.status)) {
+      if (!editFormData.endOfService) {
+        toast.error("End of Service is required for retired, suspended, or deceased pastors");
+        return;
+      }
+
+      // Validate End of Service is not in the future
+      const endDate = new Date(editFormData.endOfService + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (endDate > today) {
+        toast.error("End of Service cannot be in the future");
+        return;
+      }
+
+      // Validate End of Service is after Start of Service
+      if (editFormData.startOfService) {
+        const startDate = new Date(editFormData.startOfService + 'T00:00:00');
+        if (endDate <= startDate) {
+          toast.error("End of Service must be after Start of Service");
+          return;
+        }
+      }
+
+      // Validate End of Service is after Date of Birth
+      if (editFormData.dateOfBirth) {
+        const birthDate = new Date(editFormData.dateOfBirth + 'T00:00:00');
+        if (endDate <= birthDate) {
+          toast.error("End of Service must be after Date of Birth");
+          return;
+        }
+      }
+    }
+
     // Check for existing active Archbishop (excluding the current pastor being edited)
     if (editFormData.pastorRank === "ArchBishop" && editFormData.status === "active") {
       const existingActiveArchbishop = pastors.find(
@@ -443,6 +522,7 @@ export function PastorsManager() {
           date_of_birth: editFormData.dateOfBirth,
           phone_number: editFormData.phoneNumber,
           start_of_service: editFormData.startOfService || undefined,
+          end_of_service: editFormData.endOfService || undefined,
           status: editFormData.status as PastorStatus,
         },
       });
@@ -456,6 +536,7 @@ export function PastorsManager() {
         phoneNumber: "+254",
         pastorRank: "Pastor",
         startOfService: "",
+        endOfService: "",
         status: "active",
       });
       setOriginalEditFormData({
@@ -466,6 +547,7 @@ export function PastorsManager() {
         phoneNumber: "+254",
         pastorRank: "Pastor",
         startOfService: "",
+        endOfService: "",
         status: "active",
       });
       setIsEditDialogOpen(false);
@@ -495,6 +577,7 @@ export function PastorsManager() {
       phoneNumber: "+254",
       pastorRank: "Pastor",
       startOfService: "",
+      endOfService: "",
       status: "active",
     });
     setOriginalEditFormData({
@@ -505,6 +588,7 @@ export function PastorsManager() {
       phoneNumber: "+254",
       pastorRank: "Pastor",
       startOfService: "",
+      endOfService: "",
       status: "active",
     });
     setIsEditDialogOpen(false);
@@ -525,15 +609,19 @@ export function PastorsManager() {
   };
 
   // Helper function to calculate years of service
-  const calculateYearsOfService = (startOfService: string | null): number => {
+  const calculateYearsOfService = (startOfService: string | null, status: PastorStatus = 'active', endOfService: string | null = null): number => {
     if (!startOfService) return 0;
 
     const startDate = new Date(startOfService);
-    const today = new Date();
-    let years = today.getFullYear() - startDate.getFullYear();
-    const monthDiff = today.getMonth() - startDate.getMonth();
+    // Use end of service date for non-active pastors, otherwise use today
+    const endDate = (['retired', 'suspended', 'deceased'].includes(status) && endOfService) 
+      ? new Date(endOfService)
+      : new Date();
+    
+    let years = endDate.getFullYear() - startDate.getFullYear();
+    const monthDiff = endDate.getMonth() - startDate.getMonth();
 
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < startDate.getDate())) {
+    if (monthDiff < 0 || (monthDiff === 0 && endDate.getDate() < startDate.getDate())) {
       years--;
     }
 
@@ -547,6 +635,19 @@ export function PastorsManager() {
     const retirementYear = birthDate.getFullYear() + retirementAge;
     const retirementMonth = birthDate.toLocaleString('default', { month: 'short' });
     return `${retirementMonth} ${retirementYear}`;
+  };
+
+  // Helper function to get retirement date based on status
+  const getRetirementDate = (pastor: Pastor): string => {
+    // For retired, deceased, or suspended pastors, show actual end of service date if available
+    if (['retired', 'deceased', 'suspended'].includes(pastor.status) && pastor.end_of_service) {
+      const endDate = new Date(pastor.end_of_service);
+      const month = endDate.toLocaleString('default', { month: 'short' });
+      const year = endDate.getFullYear();
+      return `${month} ${year}`;
+    }
+    // For active pastors or those without end_of_service, show projected retirement
+    return calculateProjectedRetirement(pastor.date_of_birth);
   };
 
   // Helper function to calculate remaining tenure until retirement
@@ -567,6 +668,7 @@ export function PastorsManager() {
       editFormData.phoneNumber !== originalEditFormData.phoneNumber ||
       editFormData.pastorRank !== originalEditFormData.pastorRank ||
       editFormData.startOfService !== originalEditFormData.startOfService ||
+      editFormData.endOfService !== originalEditFormData.endOfService ||
       editFormData.status !== originalEditFormData.status
     );
   };
@@ -693,7 +795,7 @@ export function PastorsManager() {
                 <th>Status</th>
                 <th class="text-center">Age</th>
                 <th class="text-center">Years Served</th>
-                <th>Proj. Retirement</th>
+                <th>Retirement Date</th>
                 <th class="text-center">Remaining Tenure</th>
                 <th>Phone</th>
               </tr>
@@ -706,8 +808,8 @@ export function PastorsManager() {
                   <td>${pastor.pastor_rank}</td>
                   <td class="status-${pastor.status}">${pastor.status.charAt(0).toUpperCase() + pastor.status.slice(1)}</td>
                   <td class="text-center">${calculateAge(pastor.date_of_birth) || '-'}</td>
-                  <td class="text-center">${calculateYearsOfService(pastor.start_of_service) || '0'} yrs</td>
-                  <td>${calculateProjectedRetirement(pastor.date_of_birth) || '-'}</td>
+                  <td class="text-center">${calculateYearsOfService(pastor.start_of_service, pastor.status, pastor.end_of_service) || '0'} yrs</td>
+                  <td>${getRetirementDate(pastor) || '-'}</td>
                   <td class="text-center">${calculateRemainingTenure(pastor.date_of_birth, pastor.status)} yrs</td>
                   <td>${pastor.phone_number || '-'}</td>
                 </tr>
@@ -926,49 +1028,51 @@ export function PastorsManager() {
           </SelectContent>
         </Select>
 
-        <Select
-          value={selectedSection}
-          onValueChange={handleSectionChange}
-          disabled={selectedDistrict === "all"}
-        >
-          <SelectTrigger className="w-fit min-w-37.5">
-            <SelectValue placeholder="All Sections">
-              {selectedSection === "all"
-                ? "All Sections"
-                : availableSections.find(s => s.id === Number(selectedSection))?.name || "All Sections"}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Sections</SelectItem>
-            {availableSections.map((section) => (
-              <SelectItem key={section.id} value={String(section.id)}>
-                {section.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {selectedDistrict !== "all" && (
+          <Select
+            value={selectedSection}
+            onValueChange={handleSectionChange}
+          >
+            <SelectTrigger className="w-fit min-w-37.5">
+              <SelectValue placeholder="All Sections">
+                {selectedSection === "all"
+                  ? "All Sections"
+                  : availableSections.find(s => s.id === Number(selectedSection))?.name || "All Sections"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Sections</SelectItem>
+              {availableSections.map((section) => (
+                <SelectItem key={section.id} value={String(section.id)}>
+                  {section.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
-        <Select
-          value={selectedChurch}
-          onValueChange={(value) => setSelectedChurch(value || "all")}
-          disabled={selectedSection === "all"}
-        >
-          <SelectTrigger className="w-fit min-w-37.5">
-            <SelectValue placeholder="All Churches">
-              {selectedChurch === "all"
-                ? "All Churches"
-                : availableChurches.find((c: { id: string }) => c.id === selectedChurch)?.name || "All Churches"}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Churches</SelectItem>
-            {availableChurches.map((church: { id: string; name: string }) => (
-              <SelectItem key={church.id} value={church.id}>
-                {church.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {selectedSection !== "all" && (
+          <Select
+            value={selectedChurch}
+            onValueChange={(value) => setSelectedChurch(value || "all")}
+          >
+            <SelectTrigger className="w-fit min-w-37.5">
+              <SelectValue placeholder="All Churches">
+                {selectedChurch === "all"
+                  ? "All Churches"
+                  : availableChurches.find((c: { id: string }) => c.id === selectedChurch)?.name || "All Churches"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Churches</SelectItem>
+              {availableChurches.map((church: { id: string; name: string }) => (
+                <SelectItem key={church.id} value={church.id}>
+                  {church.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         <div className="ml-auto flex items-center gap-2">
           <span className="text-sm text-muted-foreground">
@@ -1014,7 +1118,7 @@ export function PastorsManager() {
               <TableHead className="w-28">Status</TableHead>
               <TableHead className="w-16 text-center">Age</TableHead>
               <TableHead className="w-28 text-center">Years Served</TableHead>
-              <TableHead className="w-32 text-center">Proj. Retirement</TableHead>
+              <TableHead className="w-32 text-center">Retirement Date</TableHead>
               <TableHead className="w-32 text-center">Remaining Tenure</TableHead>
               <TableHead className="w-36">Phone</TableHead>
               <TableHead className="w-24 text-right">Actions</TableHead>
@@ -1075,10 +1179,10 @@ export function PastorsManager() {
                     {calculateAge(pastor.date_of_birth)}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-center">
-                    {calculateYearsOfService(pastor.start_of_service)} yrs
+                    {calculateYearsOfService(pastor.start_of_service, pastor.status, pastor.end_of_service)} yrs
                   </TableCell>
                   <TableCell className="text-muted-foreground text-center">
-                    {calculateProjectedRetirement(pastor.date_of_birth)}
+                    {getRetirementDate(pastor)}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-center">
                     {calculateRemainingTenure(pastor.date_of_birth, pastor.status)} yrs
@@ -1296,14 +1400,40 @@ export function PastorsManager() {
                 />
               </div>
 
+              {/* End of Service - Only show for non-active statuses */}
+              {['retired', 'suspended', 'deceased'].includes(formData.status) && (
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="endOfService">
+                    End of Service <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="endOfService"
+                    type="date"
+                    value={formData.endOfService}
+                    onChange={(e) =>
+                      setFormData({ ...formData, endOfService: e.target.value })
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Required for retired, suspended, or deceased pastors
+                  </p>
+                </div>
+              )}
+
               {/* Status */}
               <div className="flex flex-col gap-2">
                 <Label htmlFor="status">Status <span className="text-red-500">*</span></Label>
                 <Select
                   value={formData.status}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, status: value || "active" })
-                  }
+                  onValueChange={(value) => {
+                    const newStatus = value || "active";
+                    // Clear end of service when changing to active status
+                    setFormData({ 
+                      ...formData, 
+                      status: newStatus,
+                      endOfService: newStatus === "active" ? "" : formData.endOfService
+                    });
+                  }}
                 >
                   <SelectTrigger id="status">
                     <SelectValue placeholder="Select status" />
@@ -1516,14 +1646,40 @@ export function PastorsManager() {
                 />
               </div>
 
+              {/* End of Service - Only show for non-active statuses */}
+              {['retired', 'suspended', 'deceased'].includes(editFormData.status) && (
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="editEndOfService">
+                    End of Service <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="editEndOfService"
+                    type="date"
+                    value={editFormData.endOfService}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, endOfService: e.target.value })
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Required for retired, suspended, or deceased pastors
+                  </p>
+                </div>
+              )}
+
               {/* Status */}
               <div className="flex flex-col gap-2">
                 <Label htmlFor="editStatus">Status</Label>
                 <Select
                   value={editFormData.status}
-                  onValueChange={(value) =>
-                    setEditFormData({ ...editFormData, status: value || "active" })
-                  }
+                  onValueChange={(value) => {
+                    const newStatus = value || "active";
+                    // Clear end of service when changing to active status
+                    setEditFormData({ 
+                      ...editFormData, 
+                      status: newStatus,
+                      endOfService: newStatus === "active" ? "" : editFormData.endOfService
+                    });
+                  }}
                 >
                   <SelectTrigger id="editStatus">
                     <SelectValue placeholder="Select status" />
@@ -1717,12 +1873,29 @@ export function PastorsManager() {
                           : "—"}
                       </span>
                     </div>
+                    {/* End of Service - only show for retired, suspended, or deceased pastors */}
+                    {['retired', 'suspended', 'deceased'].includes(selectedPastor.status) && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">
+                          End of Service
+                        </span>
+                        <span className="text-sm font-medium">
+                          {selectedPastor.end_of_service
+                            ? new Date(selectedPastor.end_of_service).toLocaleDateString("en-GB", {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              })
+                            : "—"}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">
                         Years Active
                       </span>
                       <span className="text-sm font-medium">
-                        {calculateYearsOfService(selectedPastor.start_of_service)} years
+                        {calculateYearsOfService(selectedPastor.start_of_service, selectedPastor.status, selectedPastor.end_of_service)} years
                       </span>
                     </div>
                     <div className="flex flex-col gap-2">
