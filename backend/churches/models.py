@@ -6,7 +6,7 @@ class Church(models.Model):
     
     section = models.ForeignKey(
         'sections.Section',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='churches'
     )
     church_name = models.CharField(max_length=150)
@@ -54,7 +54,7 @@ class ChurchPastor(models.Model):
     
     church = models.ForeignKey(
         Church,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='church_pastors'
     )
     pastor = models.ForeignKey(

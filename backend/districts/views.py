@@ -37,6 +37,29 @@ class DistrictViewSet(viewsets.ModelViewSet):
     filterset_fields = ['name']
     ordering = ['name']  # Default ordering
     
+    def destroy(self, request, *args, **kwargs):
+        """
+        Delete a district with dependency validation.
+        
+        Blocks deletion if the district has related sections, churches, or pastor assignments.
+        """
+        district = self.get_object()
+        
+        # Check for related sections
+        sections_count = district.sections.count()
+        
+        if sections_count > 0:
+            return Response(
+                {
+                    'error': 'Cannot delete district',
+                    'detail': f'This district has {sections_count} section(s) linked to it. Please delete all sections first.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # If no dependencies, proceed with deletion
+        return super().destroy(request, *args, **kwargs)
+    
     @action(detail=False, methods=['get'])
     def statistics(self, request):
         """

@@ -27,10 +27,10 @@ class PastorViewSet(viewsets.ModelViewSet):
     - GET /api/pastors/retired/ - Get all retired pastors
     - GET /api/pastors/{id}/summary/ - Get detailed pastor summary
     """
-    queryset = Pastor.objects.all()
+    queryset = Pastor.objects.prefetch_related('church_assignments__church__section__district', 'church_assignments__role').all()
     serializer_class = PastorSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['full_name', 'national_id', 'phone_number', 'pastor_rank']
+    search_fields = ['full_name', 'national_id']
     ordering_fields = ['full_name', 'pastor_rank', 'date_of_birth', 'start_of_service', 'created_at', 'status']
     filterset_fields = ['gender', 'pastor_rank', 'status']
     ordering = ['full_name']  # Default ordering
@@ -38,8 +38,9 @@ class PastorViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """
         Optionally restricts the returned pastors based on query parameters.
+        Supports filtering by district, section, and church through assignments.
         """
-        queryset = Pastor.objects.all()
+        queryset = Pastor.objects.prefetch_related('church_assignments__church__section__district', 'church_assignments__role').all()
         
         # Filter by rank if provided
         rank = self.request.query_params.get('rank', None)
@@ -55,6 +56,21 @@ class PastorViewSet(viewsets.ModelViewSet):
         gender = self.request.query_params.get('gender', None)
         if gender is not None:
             queryset = queryset.filter(gender=gender)
+        
+        # Filter by church if provided (through church_assignments)
+        church = self.request.query_params.get('church', None)
+        if church is not None:
+            queryset = queryset.filter(church_assignments__church_id=church).distinct()
+        
+        # Filter by section if provided (through church_assignments)
+        section = self.request.query_params.get('section', None)
+        if section is not None:
+            queryset = queryset.filter(church_assignments__church__section_id=section).distinct()
+        
+        # Filter by district if provided (through church_assignments)
+        district = self.request.query_params.get('district', None)
+        if district is not None:
+            queryset = queryset.filter(church_assignments__church__section__district_id=district).distinct()
         
         return queryset
     

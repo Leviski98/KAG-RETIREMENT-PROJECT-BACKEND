@@ -12,6 +12,32 @@ class ChurchViewSet(viewsets.ModelViewSet):
     search_fields = ['church_name', 'location']
     ordering_fields = ['church_name', 'created_at']
     filterset_fields = ['section', 'church_name']
+    
+    def destroy(self, request, *args, **kwargs):
+        """
+        Delete a church with dependency validation.
+        
+        Blocks deletion if the church has related pastor assignments.
+        """
+        from rest_framework.response import Response
+        from rest_framework import status
+        
+        church = self.get_object()
+        
+        # Check for related pastor assignments
+        assignments_count = ChurchPastor.objects.filter(church=church).count()
+        
+        if assignments_count > 0:
+            return Response(
+                {
+                    'error': 'Cannot delete church',
+                    'detail': f'This church has {assignments_count} pastor assignment(s) linked to it. Please delete all assignments first.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # If no dependencies, proceed with deletion
+        return super().destroy(request, *args, **kwargs)
 
 
 class ChurchRoleViewSet(viewsets.ModelViewSet):

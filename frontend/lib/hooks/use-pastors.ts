@@ -37,6 +37,7 @@ export function usePastors(
   return useQuery<PaginatedResponse<Pastor>>({
     queryKey: pastorKeys.list(params),
     queryFn: () => pastorApi.getAll(params),
+    placeholderData: (previousData) => previousData, // Keep previous data while fetching to prevent flickering
     ...options,
   });
 }

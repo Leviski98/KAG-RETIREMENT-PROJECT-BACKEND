@@ -3,6 +3,18 @@ export type PastorStatus = 'active' | 'retired' | 'suspended' | 'deceased';
 export type PastorRank = 'ArchBishop' | 'Bishop' | 'Presbyter' | 'Reverend' | 'Pastor';
 export type PastorGender = 'Male' | 'Female';
 
+export interface ChurchAssignment {
+  id: number;
+  church_id: number;
+  church_name: string;
+  section_id: number;
+  section_name: string;
+  district_id: number;
+  district_name: string;
+  role_id: number;
+  role_name: string;
+}
+
 export interface Pastor {
   id: number;
   pastor_id: string; // Computed field like "PAS001"
@@ -14,6 +26,7 @@ export interface Pastor {
   phone_number: string;
   start_of_service: string | null;
   status: PastorStatus;
+  church_assignments: ChurchAssignment[];
   created_at: string;
   updated_at: string;
 }
@@ -45,6 +58,9 @@ export interface PastorQueryParams {
   pastor_rank?: PastorRank;
   status?: PastorStatus;
   gender?: PastorGender;
+  church?: number;
+  section?: number;
+  district?: number;
   ordering?: string;
   page?: number;
 }
