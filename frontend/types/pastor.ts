@@ -25,6 +25,7 @@ export interface Pastor {
   date_of_birth: string;
   phone_number: string;
   start_of_service: string | null;
+  end_of_service: string | null;
   status: PastorStatus;
   church_assignments: ChurchAssignment[];
   created_at: string;
@@ -39,6 +40,7 @@ export interface CreatePastorInput {
   date_of_birth: string;
   phone_number: string;
   start_of_service?: string;
+  end_of_service?: string;
   status?: PastorStatus;
 }
 
@@ -50,6 +52,7 @@ export interface UpdatePastorInput {
   date_of_birth?: string;
   phone_number?: string;
   start_of_service?: string;
+  end_of_service?: string;
   status?: PastorStatus;
 }
 
