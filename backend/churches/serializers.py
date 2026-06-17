@@ -6,7 +6,7 @@ class ChurchSerializer(serializers.ModelSerializer):
     """Serializer for Church model"""
     church_id = serializers.ReadOnlyField()
     section_name = serializers.CharField(source='section.name', read_only=True)
-    # Count how many pastors are assigned to this church
+    district_name = serializers.CharField(source='section.district.name', read_only=True)
     pastor_count = serializers.SerializerMethodField()
 
     def get_pastor_count(self, obj):
@@ -19,6 +19,7 @@ class ChurchSerializer(serializers.ModelSerializer):
             'church_id',
             'section',
             'section_name',
+            'district_name',
             'church_name',
             'location',
             'pastor_count',

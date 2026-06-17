@@ -26,4 +26,6 @@ urlpatterns = [
     path('api/', include('sections.urls')),
     path('api/', include('pastors.urls')),
     path('api/', include('churches.urls')),
+    path('api/', include('reports.urls')),
+    path('api/', include('app_settings.urls')),
 ]

@@ -8,6 +8,7 @@ interface ApiChurch {
   church_name: string;
   section: number;
   section_name: string;
+  district_name: string;
   location: string;
   pastor_count: number;
   created_at: string;
@@ -34,6 +35,8 @@ interface ApiChurchPastor {
 export interface ApiSection {
   id: number;
   name: string;
+  district: number;
+  district_name: string;
 }
 
 export interface ApiPastor {
@@ -69,6 +72,7 @@ function toChurch(api: ApiChurch): Church {
     id: String(api.id),
     name: api.church_name,
     location: api.location,
+    district: api.district_name,
     section: api.section_name,
     sectionId: api.section,
     pastorCount: api.pastor_count,

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOutIcon } from "lucide-react";
@@ -7,7 +8,8 @@ import { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { sidebarItems } from "@/configs/sidebar-config";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSettings } from "@/lib/hooks/use-settings";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -23,27 +25,48 @@ interface SidebarItem {
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { data: settings } = useSettings();
+
+  const initials = settings?.account_display_name
+    ? settings.account_display_name
+        .split(" ")
+        .map((w) => w[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
+    : "SA";
 
   return (
     <aside className="hidden w-60 shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex lg:flex-col">
       {/* Logo */}
       <div className="flex h-14 items-center gap-2.5 border-b border-sidebar-border px-4">
-        <div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="size-4"
-          >
-            <path d="M18 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Z" />
-            <path d="m9 16 3-8 3 8" />
-          </svg>
+        <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+          {settings?.org_logo ? (
+            <Image
+              src={settings.org_logo}
+              alt="Organization logo"
+              width={32}
+              height={32}
+              unoptimized
+              className="size-8 rounded-lg object-cover"
+            />
+          ) : (
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="size-4"
+            >
+              <path d="M18 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Z" />
+              <path d="m9 16 3-8 3 8" />
+            </svg>
+          )}
         </div>
         <span className="text-sm font-semibold tracking-tight text-sidebar-foreground">
-          KAG Retire
+          {settings?.org_abbreviation ? `${settings.org_abbreviation} Retire` : "KAG Retire"}
         </span>
       </div>
 
@@ -76,15 +99,15 @@ export function Sidebar() {
         <div className="flex items-center gap-3">
           <Avatar size="default">
             <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs">
-              AK
+              {initials}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-sidebar-foreground">
-              Admin Kamau
+              {settings?.account_display_name || "System Administrator"}
             </p>
             <p className="truncate text-xs text-sidebar-foreground/50">
-              admin@kagretire.co.ke
+              {settings?.account_email || ""}
             </p>
           </div>
           <Tooltip>

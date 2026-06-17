@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'sections',
     'pastors',
     'churches',
+    'reports',
+    'app_settings',
 ]
 
 MIDDLEWARE = [
@@ -138,8 +140,8 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_AUTHENTICATION_CLASSES': [],  # No authentication required for now
     'DEFAULT_PERMISSION_CLASSES': [],  # No permissions required for now
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 100,  # Default page size
+    'DEFAULT_PAGINATION_CLASS': 'config.pagination.DynamicPageNumberPagination',
+    'PAGE_SIZE': 10,  # Fallback used when SystemSettings row does not exist yet
 }
 
 # API Documentation (Swagger)

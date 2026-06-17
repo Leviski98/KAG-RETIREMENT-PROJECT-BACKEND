@@ -1,9 +1,18 @@
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from .models import Church, ChurchRole, ChurchPastor
 from .serializers import ChurchSerializer, ChurchRoleSerializer, ChurchPastorSerializer
 
 
+@extend_schema_view(
+    list=extend_schema(tags=['Churches']),
+    create=extend_schema(tags=['Churches']),
+    retrieve=extend_schema(tags=['Churches']),
+    update=extend_schema(tags=['Churches']),
+    partial_update=extend_schema(tags=['Churches']),
+    destroy=extend_schema(tags=['Churches']),
+)
 class ChurchViewSet(viewsets.ModelViewSet):
     """ViewSet for Church model with filtering and search"""
     queryset = Church.objects.all()
@@ -40,6 +49,14 @@ class ChurchViewSet(viewsets.ModelViewSet):
         return super().destroy(request, *args, **kwargs)
 
 
+@extend_schema_view(
+    list=extend_schema(tags=['Churches']),
+    create=extend_schema(tags=['Churches']),
+    retrieve=extend_schema(tags=['Churches']),
+    update=extend_schema(tags=['Churches']),
+    partial_update=extend_schema(tags=['Churches']),
+    destroy=extend_schema(tags=['Churches']),
+)
 class ChurchRoleViewSet(viewsets.ModelViewSet):
     """ViewSet for ChurchRole model"""
     queryset = ChurchRole.objects.all()
@@ -50,6 +67,14 @@ class ChurchRoleViewSet(viewsets.ModelViewSet):
     filterset_fields = ['role_name']
 
 
+@extend_schema_view(
+    list=extend_schema(tags=['Churches']),
+    create=extend_schema(tags=['Churches']),
+    retrieve=extend_schema(tags=['Churches']),
+    update=extend_schema(tags=['Churches']),
+    partial_update=extend_schema(tags=['Churches']),
+    destroy=extend_schema(tags=['Churches']),
+)
 class ChurchPastorViewSet(viewsets.ModelViewSet):
     """ViewSet for ChurchPastor assignments with filtering"""
     queryset = ChurchPastor.objects.all()

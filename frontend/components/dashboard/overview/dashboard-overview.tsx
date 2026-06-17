@@ -328,12 +328,12 @@ export function DashboardOverview() {
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold">Recent Activity</h3>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/dashboard/reports">
+            <Link href="/dashboard/reports">
+              <Button variant="ghost" size="sm">
                 View All
                 <ArrowUpRight className="size-4 ml-1" />
-              </Link>
-            </Button>
+              </Button>
+            </Link>
           </div>
 
           <div className="space-y-4">
@@ -357,33 +357,33 @@ export function DashboardOverview() {
 
       {/* Action Buttons */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Button asChild size="lg" variant="outline" className="h-auto flex-col gap-2 p-6">
-          <Link href="/dashboard/districts">
+        <Link href="/dashboard/districts">
+          <Button size="lg" variant="outline" className="h-auto w-full flex-col gap-2 p-6">
             <Plus className="size-5" />
             <span>Add New District</span>
-          </Link>
-        </Button>
+          </Button>
+        </Link>
 
-        <Button asChild size="lg" variant="outline" className="h-auto flex-col gap-2 p-6">
-          <Link href="/dashboard/pastors">
+        <Link href="/dashboard/pastors">
+          <Button size="lg" variant="outline" className="h-auto w-full flex-col gap-2 p-6">
             <Plus className="size-5" />
             <span>Add New Pastor</span>
-          </Link>
-        </Button>
+          </Button>
+        </Link>
 
-        <Button asChild size="lg" variant="outline" className="h-auto flex-col gap-2 p-6">
-          <Link href="/dashboard/churches">
+        <Link href="/dashboard/churches">
+          <Button size="lg" variant="outline" className="h-auto w-full flex-col gap-2 p-6">
             <Eye className="size-5" />
             <span>View All Churches</span>
-          </Link>
-        </Button>
+          </Button>
+        </Link>
 
-        <Button asChild size="lg" variant="outline" className="h-auto flex-col gap-2 p-6">
-          <Link href="/dashboard/reports">
+        <Link href="/dashboard/reports">
+          <Button size="lg" variant="outline" className="h-auto w-full flex-col gap-2 p-6">
             <FileText className="size-5" />
             <span>Generate Report</span>
-          </Link>
-        </Button>
+          </Button>
+        </Link>
       </div>
     </div>
   );
