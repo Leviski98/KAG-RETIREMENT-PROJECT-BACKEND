@@ -102,9 +102,10 @@ function ChurchCard({ church, onView, onEdit, onDelete }: ChurchCardProps) {
           <MapPinIcon className="size-3 shrink-0" />
           <span className="truncate">{church.location}</span>
         </div>
-        <div className="truncate">
-          Section: {church.section}
-        </div>
+        {church.district && (
+          <div className="truncate">District: {church.district}</div>
+        )}
+        <div className="truncate">Section: {church.section}</div>
       </CardContent>
 
       <CardFooter className="gap-1">
@@ -160,23 +161,54 @@ function ChurchFormDialog({
   sections,
 }: ChurchFormDialogProps) {
   const [name, setName] = useState(initialData?.name ?? "");
+  const [district, setDistrict] = useState("");
   const [section, setSection] = useState(initialData?.section ?? "");
   const [location, setLocation] = useState(initialData?.location ?? "");
-  const [errors, setErrors] = useState<Partial<Record<keyof ChurchFormData, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof ChurchFormData | "district", string>>>({});
 
   // Reset form when dialog opens/closes or initialData changes
   React.useEffect(() => {
     if (open) {
       setName(initialData?.name ?? "");
-      setSection(initialData?.section ?? "");
       setLocation(initialData?.location ?? "");
+      const initSection = initialData?.section ?? "";
+      setSection(initSection);
+      // Derive district from the initial section so the dropdown pre-fills
+      const initDistrict = initSection
+        ? (sections.find((s) => s.name === initSection)?.district_name ?? "")
+        : "";
+      setDistrict(initDistrict);
       setErrors({});
     }
-  }, [open, initialData]);
+  }, [open, initialData, sections]);
+
+  // Unique district names derived from the sections list
+  const districts = useMemo(() => {
+    const seen = new Set<string>();
+    return sections
+      .map((s) => s.district_name)
+      .filter((d) => { if (seen.has(d)) return false; seen.add(d); return true; })
+      .sort();
+  }, [sections]);
+
+  // Sections filtered to the selected district
+  const filteredSections = useMemo(
+    () => (district ? sections.filter((s) => s.district_name === district) : sections),
+    [sections, district]
+  );
+
+  const handleDistrictChange = (value: string | null) => {
+    const val = value ?? "";
+    setDistrict(val);
+    // Reset section if it no longer belongs to the new district
+    const valid = sections.filter((s) => s.district_name === val).some((s) => s.name === section);
+    if (!valid) setSection("");
+  };
 
   const validate = (): boolean => {
-    const newErrors: Partial<Record<keyof ChurchFormData, string>> = {};
+    const newErrors: Partial<Record<keyof ChurchFormData | "district", string>> = {};
     if (!name.trim()) newErrors.name = "Church name is required.";
+    if (!district) newErrors.district = "Please select a district.";
     if (!section) newErrors.section = "Please select a section.";
     if (!location.trim()) newErrors.location = "Location is required.";
     setErrors(newErrors);
@@ -214,17 +246,41 @@ function ChurchFormDialog({
           </FormField>
 
           <FormField
-            label="Section"
+            label="District"
             required
-            description="Select the section this church belongs to."
-            error={errors.section}
+            description="Select the district this church is in."
+            error={errors.district}
           >
-            <Select value={section} onValueChange={(v: string | null) => setSection(v ?? "")}>
+            <Select value={district} onValueChange={handleDistrictChange}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a section" />
+                <SelectValue placeholder="Select a district" />
               </SelectTrigger>
               <SelectContent>
-                {sections.map((s) => (
+                {districts.map((d) => (
+                  <SelectItem key={d} value={d}>
+                    {d}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
+
+          <FormField
+            label="Section"
+            required
+            description={district ? "Select the section within this district." : "Select a district first."}
+            error={errors.section}
+          >
+            <Select
+              value={section}
+              onValueChange={(v: string | null) => setSection(v ?? "")}
+              disabled={!district}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={district ? "Select a section" : "Select a district first"} />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredSections.map((s) => (
                   <SelectItem key={s.id} value={s.name}>
                     {s.name}
                   </SelectItem>
@@ -255,7 +311,7 @@ function ChurchFormDialog({
               Cancel
             </Button>
             <Button type="submit">
-              {mode === "add" ? "Save Church" : "Save Church"}
+              {mode === "add" ? "Save Church" : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>

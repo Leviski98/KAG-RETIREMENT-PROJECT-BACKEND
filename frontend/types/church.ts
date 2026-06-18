@@ -2,6 +2,7 @@ export interface Church {
   id: string;
   name: string;
   location: string;
+  district: string;
   section: string;
   sectionId: number;
   pastorCount: number;

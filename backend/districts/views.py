@@ -7,10 +7,19 @@ from django.utils import timezone
 from django.db import transaction, IntegrityError
 from django.db.models import Count, Min, Max, Q
 from django.conf import settings
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from .models import District
 from .serializers import DistrictSerializer
 
 
+@extend_schema_view(
+    list=extend_schema(tags=['Districts']),
+    create=extend_schema(tags=['Districts']),
+    retrieve=extend_schema(tags=['Districts']),
+    update=extend_schema(tags=['Districts']),
+    partial_update=extend_schema(tags=['Districts']),
+    destroy=extend_schema(tags=['Districts']),
+)
 class DistrictViewSet(viewsets.ModelViewSet):
     """
     API endpoint for managing districts.
@@ -40,14 +49,14 @@ class DistrictViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         """
         Delete a district with dependency validation.
-        
+
         Blocks deletion if the district has related sections, churches, or pastor assignments.
         """
         district = self.get_object()
-        
+
         # Check for related sections
         sections_count = district.sections.count()
-        
+
         if sections_count > 0:
             return Response(
                 {
@@ -56,10 +65,11 @@ class DistrictViewSet(viewsets.ModelViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # If no dependencies, proceed with deletion
         return super().destroy(request, *args, **kwargs)
-    
+
+    @extend_schema(tags=['Districts'])
     @action(detail=False, methods=['get'])
     def statistics(self, request):
         """
@@ -108,6 +118,7 @@ class DistrictViewSet(viewsets.ModelViewSet):
             'newest_district': newest_district,
         })
     
+    @extend_schema(tags=['Districts'])
     @action(detail=True, methods=['get'])
     def summary(self, request, pk=None):
         """
@@ -129,6 +140,7 @@ class DistrictViewSet(viewsets.ModelViewSet):
             # 'sections_count': district.sections.count(),
         })
     
+    @extend_schema(tags=['Districts'])
     @action(detail=False, methods=['post'])
     def bulk_create(self, request):
         """

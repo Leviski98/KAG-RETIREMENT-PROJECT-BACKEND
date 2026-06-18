@@ -4,10 +4,19 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Count, Q
 from datetime import date
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from .models import Pastor
 from .serializers import PastorSerializer
 
 
+@extend_schema_view(
+    list=extend_schema(tags=['Pastors']),
+    create=extend_schema(tags=['Pastors']),
+    retrieve=extend_schema(tags=['Pastors']),
+    update=extend_schema(tags=['Pastors']),
+    partial_update=extend_schema(tags=['Pastors']),
+    destroy=extend_schema(tags=['Pastors']),
+)
 class PastorViewSet(viewsets.ModelViewSet):
     """
     API endpoint for managing pastors.
@@ -74,6 +83,7 @@ class PastorViewSet(viewsets.ModelViewSet):
         
         return queryset
     
+    @extend_schema(tags=['Pastors'])
     @action(detail=False, methods=['get'])
     def statistics(self, request):
         """
@@ -126,6 +136,7 @@ class PastorViewSet(viewsets.ModelViewSet):
             'pastors_by_gender': list(pastors_by_gender),
         })
     
+    @extend_schema(tags=['Pastors'])
     @action(detail=False, methods=['get'])
     def active(self, request):
         """
@@ -142,6 +153,7 @@ class PastorViewSet(viewsets.ModelViewSet):
             'pastors': serialized_data
         })
     
+    @extend_schema(tags=['Pastors'])
     @action(detail=False, methods=['get'])
     def retired(self, request):
         """
@@ -158,6 +170,7 @@ class PastorViewSet(viewsets.ModelViewSet):
             'pastors': serialized_data
         })
     
+    @extend_schema(tags=['Pastors'])
     @action(detail=True, methods=['get'])
     def summary(self, request, pk=None):
         """
@@ -192,6 +205,7 @@ class PastorViewSet(viewsets.ModelViewSet):
             # 'current_church': pastor.current_church if hasattr(pastor, 'current_church') else None,
         })
     
+    @extend_schema(tags=['Pastors'])
     @action(detail=False, methods=['post'])
     def bulk_create(self, request):
         """

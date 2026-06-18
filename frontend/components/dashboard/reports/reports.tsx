@@ -1,77 +1,713 @@
 "use client";
 
-import { PageHeader } from "@/components/global/page-header";
+import {
+  Download,
+  Calendar,
+  CheckCircle,
+  ChevronDown,
+  Clock,
+  FileText,
+  Loader2,
+  MapPin,
+  Printer,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
+import { useMemo, useState, type ReactNode } from "react";
+
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Download, Calendar, TrendingUp } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  useDistrictSummaryReport,
+  usePastorDemographicsReport,
+  useDownloadDistrictSummaryPDF,
+  useDownloadPastorDemographicsPDF,
+} from "@/lib/hooks/use-reports";
+import type {
+  DistrictSummaryReport,
+  PastorDemographicsReport,
+  ReportMetric,
+  ReportType,
+} from "@/types/report";
+
+type ReportCard = {
+  type: ReportType;
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  iconClassName: string;
+  iconWrapClassName: string;
+  fallbackMetrics: ReportMetric[];
+};
+
+type RecentReport = {
+  type: ReportType;
+  name: string;
+  category: string;
+  date: string;
+};
+
+const reportCards: ReportCard[] = [
+  {
+    type: "district-summary",
+    title: "District Summary Report",
+    description:
+      "Comprehensive overview of all districts including section counts, church statistics, and pastoral coverage across the KAG organization.",
+    icon: MapPin,
+    iconClassName: "text-[#3377ff]",
+    iconWrapClassName: "bg-[#eaf1ff]",
+    fallbackMetrics: [
+      { label: "Districts", value: "-" },
+      { label: "Sections", value: "-" },
+      { label: "Churches", value: "-" },
+    ],
+  },
+  {
+    type: "pastor-demographics",
+    title: "Pastor Demographics Report",
+    description:
+      "Printable district and section report of pastors including rank, status, age, service years, projected retirement, and remaining tenure.",
+    icon: Users,
+    iconClassName: "text-[#06c270]",
+    iconWrapClassName: "bg-[#def8ed]",
+    fallbackMetrics: [
+      { label: "Pastors", value: "-" },
+      { label: "Active", value: "-" },
+      { label: "Avg. Service", value: "-" },
+    ],
+  },
+];
+
+const recentReports: RecentReport[] = [
+  {
+    type: "district-summary",
+    name: "District Summary Live Report",
+    category: "District Summary",
+    date: "Live data",
+  },
+  {
+    type: "pastor-demographics",
+    name: "Pastor Demographics Live Report",
+    category: "Pastor Demographics",
+    date: "Live data",
+  },
+];
 
 export function ReportsManager() {
+  const [activeReport, setActiveReport] = useState<ReportType | null>(null);
+
+  // Always enabled so metric cards populate on page load
+  const districtSummary = useDistrictSummaryReport(true);
+  const pastorDemographics = usePastorDemographicsReport(true);
+
+  const downloadDistrictPDF = useDownloadDistrictSummaryPDF();
+  const downloadPastorPDF = useDownloadPastorDemographicsPDF();
+
+  const reportMetrics = useMemo<Record<ReportType, ReportMetric[]>>(
+    () => ({
+      "district-summary":
+        districtSummary.data?.metrics ?? reportCards[0].fallbackMetrics,
+      "pastor-demographics":
+        pastorDemographics.data?.metrics ?? reportCards[1].fallbackMetrics,
+    }),
+    [districtSummary.data?.metrics, pastorDemographics.data?.metrics]
+  );
+
+  // Generating = user triggered a preview but data hasn't arrived yet
+  const isGenerating =
+    (activeReport === "district-summary" && districtSummary.isLoading) ||
+    (activeReport === "pastor-demographics" && pastorDemographics.isLoading);
+
+  const activeError =
+    activeReport === "district-summary"
+      ? districtSummary.error
+      : activeReport === "pastor-demographics"
+        ? pastorDemographics.error
+        : null;
+
+  const downloadError = downloadDistrictPDF.error ?? downloadPastorPDF.error;
+
+  // Toggle: clicking the same active type collapses the preview
+  const handlePreview = (type: ReportType) => {
+    setActiveReport((prev) => (prev === type ? null : type));
+  };
+
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <PageHeader
-        title="Reports"
-        description="Generate and view reports for churches, pastors, and districts."
-      />
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex size-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
-              <FileText className="size-6 text-brand-primary" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm text-muted-foreground">Total Reports</span>
-              <span className="text-2xl font-bold">0</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex size-12 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-              <Download className="size-6 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm text-muted-foreground">Downloads</span>
-              <span className="text-2xl font-bold">0</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex size-12 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/30">
-              <Calendar className="size-6 text-violet-600 dark:text-violet-400" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm text-muted-foreground">This Month</span>
-              <span className="text-2xl font-bold">0</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex size-12 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
-              <TrendingUp className="size-6 text-amber-600 dark:text-amber-400" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm text-muted-foreground">Growth</span>
-              <span className="text-2xl font-bold">0%</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="flex items-center justify-center rounded-lg border border-dashed p-12">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <FileText className="size-12 text-muted-foreground" />
-          <h3 className="text-lg font-semibold">Reports Coming Soon</h3>
-          <p className="text-sm text-muted-foreground max-w-md">
-            Report generation and viewing features are under development. You will be able to
-            generate church statistics, pastor assignments, and district reports here.
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-[28px] font-extrabold tracking-normal text-[#111827]">
+            Reports & Analytics
+          </h1>
+          <p className="mt-1 text-[15px] leading-6 text-[#607391]">
+            Preview and download live district summaries and pastor demographic
+            reports.
           </p>
         </div>
+
+        <Button
+          variant="outline"
+          className="h-11 w-full justify-between rounded-xl border-[#dbe4f0] bg-[#f8fbff] px-5 text-sm font-semibold text-[#111827] shadow-none sm:w-[116px]"
+        >
+          All Time
+          <ChevronDown className="size-4 text-[#8da0bb]" />
+        </Button>
+      </div>
+
+      {/* Report cards */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        {reportCards.map((report) => {
+          const isDownloading =
+            report.type === "district-summary"
+              ? downloadDistrictPDF.isPending
+              : downloadPastorPDF.isPending;
+          return (
+            <ReportCardItem
+              key={report.title}
+              report={report}
+              metrics={reportMetrics[report.type]}
+              isActive={activeReport === report.type}
+              isGenerating={activeReport === report.type && isGenerating}
+              isDownloading={isDownloading}
+              onPreview={() => handlePreview(report.type)}
+              onDownload={
+                report.type === "district-summary"
+                  ? () => downloadDistrictPDF.mutate()
+                  : () => downloadPastorPDF.mutate()
+              }
+            />
+          );
+        })}
+      </div>
+
+      {/* ── Preview panel — sits between cards and Recent Reports ── */}
+
+      {isGenerating && (
+        <div className="flex min-h-[180px] items-center justify-center rounded-2xl border border-dashed border-[#9fc7ff] bg-[#f1f6ff]">
+          <div className="flex items-center gap-3 text-sm font-bold text-[#3377ff]">
+            <Loader2 className="size-5 animate-spin" />
+            Generating report preview…
+          </div>
+        </div>
+      )}
+
+      {activeError && (
+        <Card className="rounded-2xl border-[#ffd6d6] bg-[#fff7f7] shadow-none">
+          <CardContent className="p-6">
+            <p className="text-sm font-bold text-[#b42318]">
+              Unable to generate this report.
+            </p>
+            <p className="mt-1 text-sm text-[#7a4550]">
+              {activeError instanceof Error
+                ? activeError.message
+                : "Please confirm the backend API is running and try again."}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {activeReport === "district-summary" && districtSummary.data && (
+        <DistrictSummaryPreview report={districtSummary.data} />
+      )}
+
+      {activeReport === "pastor-demographics" && pastorDemographics.data && (
+        <PastorDemographicsPreview report={pastorDemographics.data} />
+      )}
+
+      {/* ── Recent reports ── */}
+      <RecentReportsTable reports={recentReports} onPreview={handlePreview} />
+
+      {/* Download error — only visible on failure */}
+      {downloadError && (
+        <Card className="rounded-2xl border-[#ffd6d6] bg-[#fff7f7] shadow-none">
+          <CardContent className="p-6">
+            <p className="text-sm font-bold text-[#b42318]">
+              Failed to download PDF.
+            </p>
+            <p className="mt-1 text-sm text-[#7a4550]">
+              {downloadError instanceof Error
+                ? downloadError.message
+                : "Please confirm the backend API is running and try again."}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// ─── Report card ──────────────────────────────────────────────────────────────
+
+function ReportCardItem({
+  report,
+  metrics,
+  isActive,
+  isGenerating,
+  isDownloading,
+  onPreview,
+  onDownload,
+}: {
+  report: ReportCard;
+  metrics: ReportMetric[];
+  isActive: boolean;
+  isGenerating: boolean;
+  isDownloading: boolean;
+  onPreview: () => void;
+  onDownload: () => void;
+}) {
+  const Icon = report.icon;
+
+  return (
+    <Card className="rounded-2xl border-[#eef2f7] bg-white shadow-[0_4px_18px_rgba(15,23,42,0.07)]">
+      <CardContent className="p-6 sm:p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+          <div
+            className={`flex size-14 shrink-0 items-center justify-center rounded-2xl ${report.iconWrapClassName}`}
+          >
+            <Icon className={`size-7 ${report.iconClassName}`} />
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-xl font-extrabold tracking-normal text-[#111827]">
+              {report.title}
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-[#607391]">
+              {report.description}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 overflow-hidden rounded-xl border border-[#dbe4f0] bg-[#f8fbff] sm:grid-cols-3">
+          {metrics.map((metric) => (
+            <div
+              key={metric.label}
+              className="border-b border-[#dbe4f0] px-4 py-4 last:border-b-0 sm:border-r sm:border-b-0 sm:last:border-r-0"
+            >
+              <p className="text-[11px] font-bold uppercase tracking-normal text-[#9aabc4]">
+                {metric.label}
+              </p>
+              <p className="mt-1 text-lg font-extrabold leading-none text-[#111827]">
+                {metric.value}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 flex gap-3">
+          <Button
+            className="h-12 flex-1 rounded-xl bg-gradient-to-r from-[#3377ff] to-[#5aa0f6] text-sm font-extrabold text-white shadow-none hover:from-[#2f6eea] hover:to-[#4e94ea]"
+            onClick={onPreview}
+            disabled={isGenerating || isDownloading}
+            aria-label={`Preview ${report.title}`}
+          >
+            {isGenerating ? (
+              <Loader2 className="size-5 animate-spin" />
+            ) : (
+              <FileText className="size-5" />
+            )}
+            {isActive ? "Hide Preview" : "Preview"}
+          </Button>
+          <Button
+            className="h-12 flex-1 rounded-xl border-2 border-[#3377ff] bg-white text-sm font-extrabold text-[#3377ff] shadow-none hover:bg-[#f0f4ff]"
+            onClick={onDownload}
+            disabled={isGenerating || isDownloading}
+            aria-label={`Download ${report.title} as PDF`}
+          >
+            {isDownloading ? (
+              <Loader2 className="size-5 animate-spin" />
+            ) : (
+              <Download className="size-5" />
+            )}
+            {isDownloading ? "Downloading…" : "Download PDF"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Recent reports table ─────────────────────────────────────────────────────
+
+function RecentReportsTable({
+  reports,
+  onPreview,
+}: {
+  reports: RecentReport[];
+  onPreview: (type: ReportType) => void;
+}) {
+  return (
+    <Card className="overflow-hidden rounded-2xl border-[#eef2f7] bg-white shadow-[0_4px_18px_rgba(15,23,42,0.06)]">
+      <div className="flex items-center justify-between border-b border-[#eef2f7] px-6 py-5">
+        <div className="flex items-center gap-3">
+          <div className="flex size-9 items-center justify-center rounded-xl bg-[#eef5ff]">
+            <Clock className="size-4 text-[#3377ff]" />
+          </div>
+          <h2 className="text-base font-extrabold text-[#111827]">
+            Recent Reports
+          </h2>
+        </div>
+        <p className="text-sm font-medium text-[#8ca0bb]">
+          {reports.length} reports
+        </p>
+      </div>
+
+      <Table>
+        <TableHeader className="bg-[#f6f8fb]">
+          <TableRow className="border-[#eef2f7] hover:bg-[#f6f8fb]">
+            <TableHead className="h-11 px-6 text-[11px] font-extrabold uppercase tracking-normal text-[#94a5bd]">
+              Report Name
+            </TableHead>
+            <TableHead className="h-11 px-6 text-[11px] font-extrabold uppercase tracking-normal text-[#94a5bd]">
+              Type
+            </TableHead>
+            <TableHead className="h-11 px-6 text-[11px] font-extrabold uppercase tracking-normal text-[#94a5bd]">
+              Date
+            </TableHead>
+            <TableHead className="h-11 px-6 text-[11px] font-extrabold uppercase tracking-normal text-[#94a5bd]">
+              Status
+            </TableHead>
+            <TableHead className="h-11 px-6 text-right text-[11px] font-extrabold uppercase tracking-normal text-[#94a5bd]">
+              Action
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {reports.map((report) => (
+            <TableRow
+              key={report.name}
+              className="border-[#eef2f7] hover:bg-[#f9fbff]"
+            >
+              <TableCell className="min-w-[270px] px-6 py-5">
+                <div className="flex items-center gap-3">
+                  <FileText className="size-4 shrink-0 text-[#3377ff]" />
+                  <span className="font-extrabold text-[#111827]">
+                    {report.name}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell className="min-w-[210px] px-6 py-5">
+                <span className="rounded-md bg-[#edf4ff] px-2.5 py-1 text-xs font-extrabold text-[#3377ff]">
+                  {report.category}
+                </span>
+              </TableCell>
+              <TableCell className="min-w-[160px] px-6 py-5">
+                <div className="flex items-center gap-2 text-sm text-[#607391]">
+                  <Calendar className="size-4 text-[#8ca0bb]" />
+                  {report.date}
+                </div>
+              </TableCell>
+              <TableCell className="min-w-[130px] px-6 py-5">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e8f9f1] px-3 py-1.5 text-xs font-extrabold text-[#05a86a]">
+                  <CheckCircle className="size-3.5" />
+                  Ready
+                </span>
+              </TableCell>
+              <TableCell className="min-w-[140px] px-6 py-5 text-right">
+                <Button
+                  variant="link"
+                  className="h-auto gap-1.5 px-0 text-sm font-extrabold text-[#3377ff] hover:no-underline"
+                  onClick={() => onPreview(report.type)}
+                >
+                  <Printer className="size-4" />
+                  Preview
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Card>
+  );
+}
+
+// ─── Preview shells ───────────────────────────────────────────────────────────
+
+function PrintableReportShell({
+  reportTitle,
+  generatedAt,
+  children,
+}: {
+  reportTitle: string;
+  generatedAt: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-[#d9e2ef] bg-white p-4 shadow-[0_4px_18px_rgba(15,23,42,0.07)] sm:p-8">
+      <div className="border-b border-[#cbd5e1] pb-6 text-center">
+        <p className="text-lg font-extrabold uppercase tracking-normal text-[#111827]">
+          KAG Retirement Management System
+        </p>
+        <h2 className="mt-2 text-lg font-extrabold uppercase tracking-normal text-[#111827]">
+          {reportTitle}
+        </h2>
+        <p className="mt-2 text-xs font-semibold text-[#607391]">
+          Generated {new Date(generatedAt).toLocaleString()}
+        </p>
+      </div>
+      <div className="pt-6">{children}</div>
+    </section>
+  );
+}
+
+function ReportTotal({
+  label,
+  value,
+}: {
+  label: string;
+  value: number | string;
+}) {
+  return (
+    <div className="rounded-xl border border-[#dbe4f0] bg-[#f8fbff] px-4 py-3">
+      <p className="text-[11px] font-bold uppercase tracking-normal text-[#8ca0bb]">
+        {label}
+      </p>
+      <p className="mt-1 text-lg font-extrabold text-[#111827]">{value}</p>
+    </div>
+  );
+}
+
+function DistrictSummaryPreview({
+  report,
+}: {
+  report: DistrictSummaryReport;
+}) {
+  return (
+    <PrintableReportShell
+      reportTitle={report.title}
+      generatedAt={report.generated_at}
+    >
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <ReportTotal label="Districts" value={report.totals.districts} />
+        <ReportTotal label="Sections" value={report.totals.sections} />
+        <ReportTotal label="Churches" value={report.totals.churches} />
+        <ReportTotal
+          label="Assigned Pastors"
+          value={report.totals.assigned_pastors}
+        />
+      </div>
+
+      <div className="mt-8">
+        <h3 className="mb-3 text-sm font-extrabold uppercase tracking-normal text-[#003a70]">
+          District Summary
+        </h3>
+        <div className="overflow-x-auto">
+          <Table className="min-w-[760px] border border-[#808080]">
+            <TableHeader className="bg-[#1f4e78]">
+              <TableRow className="border-[#808080] hover:bg-[#1f4e78]">
+                {[
+                  "ID",
+                  "District",
+                  "Sections",
+                  "Churches",
+                  "Assigned Pastors",
+                ].map((h) => (
+                  <TableHead
+                    key={h}
+                    className="border border-[#808080] px-3 py-2 text-xs font-extrabold text-white"
+                  >
+                    {h}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {report.districts.length > 0 ? (
+                report.districts.map((d, i) => (
+                  <TableRow
+                    key={d.district_id}
+                    className={
+                      i % 2 === 0
+                        ? "bg-[#f5f5f5] hover:bg-[#f5f5f5]"
+                        : "bg-[#f5f5dc] hover:bg-[#f5f5dc]"
+                    }
+                  >
+                    <PastorCell>{d.district_id}</PastorCell>
+                    <PastorCell className="font-bold">
+                      {d.district_name}
+                    </PastorCell>
+                    <PastorCell>{d.sections}</PastorCell>
+                    <PastorCell>{d.churches}</PastorCell>
+                    <PastorCell>{d.assigned_pastors}</PastorCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className="border border-[#808080] px-3 py-6 text-center text-sm text-[#607391]"
+                  >
+                    No district data available.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    </PrintableReportShell>
+  );
+}
+
+function PastorDemographicsPreview({
+  report,
+}: {
+  report: PastorDemographicsReport;
+}) {
+  return (
+    <PrintableReportShell
+      reportTitle={report.title}
+      generatedAt={report.generated_at}
+    >
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <ReportTotal label="Pastors" value={report.totals.total_pastors} />
+        <ReportTotal label="Active" value={report.totals.active_pastors} />
+        <ReportTotal label="Retired" value={report.totals.retired_pastors} />
+        <ReportTotal
+          label="Avg. Service"
+          value={`${report.totals.average_years_served} yrs`}
+        />
+      </div>
+
+      <div className="mt-6 grid gap-4 md:grid-cols-3">
+        <DemographicList title="Gender" rows={report.by_gender} />
+        <DemographicList title="Rank" rows={report.by_rank} />
+        <DemographicList title="Status" rows={report.by_status} />
+      </div>
+
+      <div className="mt-8 space-y-8">
+        {report.districts.length > 0 ? (
+          report.districts.map((district) => (
+            <div key={district.district_id}>
+              <h3 className="text-sm font-extrabold uppercase tracking-normal text-[#003a70]">
+                {district.district_name}
+              </h3>
+              <div className="mt-4 space-y-6">
+                {district.sections.map((section) => (
+                  <div key={section.section_id}>
+                    <h4 className="mb-3 text-sm font-extrabold italic text-[#111827]">
+                      Section: {section.section_name.toUpperCase()}
+                    </h4>
+                    <div className="overflow-x-auto">
+                      <Table className="min-w-[980px] border border-[#808080]">
+                        <TableHeader className="bg-[#1f4e78]">
+                          <TableRow className="border-[#808080] hover:bg-[#1f4e78]">
+                            {[
+                              "ID",
+                              "Name",
+                              "Rank",
+                              "Status",
+                              "Age",
+                              "Years Served",
+                              "Proj. Retirement",
+                              "Remaining Tenure",
+                            ].map((h) => (
+                              <TableHead
+                                key={h}
+                                className="border border-[#808080] px-3 py-2 text-xs font-extrabold text-white"
+                              >
+                                {h}
+                              </TableHead>
+                            ))}
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {section.pastors.map((pastor, i) => (
+                            <TableRow
+                              key={`${section.section_id}-${pastor.pastor_id}`}
+                              className={
+                                i % 2 === 0
+                                  ? "bg-[#f5f5f5] hover:bg-[#f5f5f5]"
+                                  : "bg-[#f5f5dc] hover:bg-[#f5f5dc]"
+                              }
+                            >
+                              <PastorCell>{pastor.pastor_id}</PastorCell>
+                              <PastorCell className="font-bold">
+                                {pastor.name}
+                              </PastorCell>
+                              <PastorCell>{pastor.rank}</PastorCell>
+                              <PastorCell>{pastor.status}</PastorCell>
+                              <PastorCell>{pastor.age ?? "-"}</PastorCell>
+                              <PastorCell>
+                                {pastor.years_served === null
+                                  ? "-"
+                                  : `${pastor.years_served} yrs`}
+                              </PastorCell>
+                              <PastorCell>
+                                {pastor.projected_retirement}
+                              </PastorCell>
+                              <PastorCell>{pastor.remaining_tenure}</PastorCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="rounded-xl border border-dashed border-[#cbd5e1] px-4 py-8 text-center text-sm text-[#607391]">
+            No pastor assignment data available for this report.
+          </div>
+        )}
+      </div>
+    </PrintableReportShell>
+  );
+}
+
+function DemographicList({
+  title,
+  rows,
+}: {
+  title: string;
+  rows: Array<{ label: string; count: number }>;
+}) {
+  return (
+    <div className="rounded-xl border border-[#dbe4f0] bg-white">
+      <div className="border-b border-[#dbe4f0] bg-[#f8fbff] px-4 py-3">
+        <h3 className="text-xs font-extrabold uppercase tracking-normal text-[#1f4e78]">
+          {title}
+        </h3>
+      </div>
+      <div className="divide-y divide-[#eef2f7]">
+        {rows.length > 0 ? (
+          rows.map((row) => (
+            <div
+              key={`${title}-${row.label}`}
+              className="flex items-center justify-between px-4 py-2 text-sm"
+            >
+              <span className="font-semibold text-[#111827]">{row.label}</span>
+              <span className="font-extrabold text-[#3377ff]">{row.count}</span>
+            </div>
+          ))
+        ) : (
+          <p className="px-4 py-4 text-sm text-[#607391]">No data available.</p>
+        )}
       </div>
     </div>
+  );
+}
+
+function PastorCell({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <TableCell
+      className={`border border-[#808080] px-3 py-2 text-xs text-[#111827] ${className}`}
+    >
+      {children}
+    </TableCell>
   );
 }

@@ -12,6 +12,11 @@
 
 # testing
 /coverage
+/playwright-report/
+/test-results/
+
+# debug logs
+debug.log
 
 # next.js
 /.next/
@@ -50,3 +55,4 @@ APPLY-BRAND-GUIDE.md
 BRAND-APPLIED.md
 INTEGRATION_GUIDE.md
 DISTRICT_INTEGRATION_GUIDE.md
+

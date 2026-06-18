@@ -8,8 +8,17 @@ from .serializers import SectionSerializer
 from django.utils import timezone
 from datetime import timedelta
 from districts.models import District
+from drf_spectacular.utils import extend_schema, extend_schema_view
 
 
+@extend_schema_view(
+    list=extend_schema(tags=['Sections']),
+    create=extend_schema(tags=['Sections']),
+    retrieve=extend_schema(tags=['Sections']),
+    update=extend_schema(tags=['Sections']),
+    partial_update=extend_schema(tags=['Sections']),
+    destroy=extend_schema(tags=['Sections']),
+)
 class SectionViewSet(viewsets.ModelViewSet):
     """
     API endpoint for managing sections.
@@ -71,6 +80,7 @@ class SectionViewSet(viewsets.ModelViewSet):
         """
         return super().get_queryset()
     
+    @extend_schema(tags=['Sections'])
     @action(detail=False, methods=['get'])
     def statistics(self, request):
         """
@@ -114,6 +124,7 @@ class SectionViewSet(viewsets.ModelViewSet):
             'newest_section': newest_section.name if newest_section else None,
         })
     
+    @extend_schema(tags=['Sections'])
     @action(detail=True, methods=['get'])
     def summary(self, request, pk=None):
         """
@@ -140,6 +151,7 @@ class SectionViewSet(viewsets.ModelViewSet):
             # 'pastors_count': section.pastors.count(),
         })
     
+    @extend_schema(tags=['Sections'])
     @action(detail=False, methods=['post'])
     def bulk_create(self, request):
         """
