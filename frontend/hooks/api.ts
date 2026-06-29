@@ -37,15 +37,17 @@ interface ChurchPastor {
   created_at: string;
 }
 
+const FETCH_OPTS: RequestInit = { credentials: "include" };
+
 export function usePastorStats() {
   return useQuery({
     queryKey: ["pastorStats"],
     queryFn: async () => {
-      const response = await fetch(`${API_URL}/pastors/statistics/`);
+      const response = await fetch(`${API_URL}/pastors/statistics/`, FETCH_OPTS);
       if (!response.ok) throw new Error("Failed to fetch pastor statistics");
       return response.json() as Promise<PastorStats>;
     },
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 30000,
     refetchOnWindowFocus: true,
   });
 }
@@ -54,7 +56,7 @@ export function useDistrictStats() {
   return useQuery({
     queryKey: ["districtStats"],
     queryFn: async () => {
-      const response = await fetch(`${API_URL}/districts/statistics/`);
+      const response = await fetch(`${API_URL}/districts/statistics/`, FETCH_OPTS);
       if (!response.ok) throw new Error("Failed to fetch district statistics");
       return response.json() as Promise<DistrictStats>;
     },
@@ -67,7 +69,7 @@ export function useSectionStats() {
   return useQuery({
     queryKey: ["sectionStats"],
     queryFn: async () => {
-      const response = await fetch(`${API_URL}/sections/statistics/`);
+      const response = await fetch(`${API_URL}/sections/statistics/`, FETCH_OPTS);
       if (!response.ok) throw new Error("Failed to fetch section statistics");
       return response.json() as Promise<SectionStats>;
     },
@@ -80,7 +82,7 @@ export function useChurches() {
   return useQuery({
     queryKey: ["churches"],
     queryFn: async () => {
-      const response = await fetch(`${API_URL}/churches/`);
+      const response = await fetch(`${API_URL}/churches/`, FETCH_OPTS);
       if (!response.ok) throw new Error("Failed to fetch churches");
       return response.json() as Promise<{ results: Church[] }>;
     },
@@ -93,7 +95,7 @@ export function useChurchPastors() {
   return useQuery({
     queryKey: ["churchPastors"],
     queryFn: async () => {
-      const response = await fetch(`${API_URL}/church-pastors/?limit=5`);
+      const response = await fetch(`${API_URL}/church-pastors/?limit=5`, FETCH_OPTS);
       if (!response.ok) throw new Error("Failed to fetch recent activities");
       return response.json() as Promise<{ results: ChurchPastor[] }>;
     },

@@ -4,6 +4,7 @@ import {
   LayersIcon,
   ChurchIcon,
   UsersIcon,
+  UserCheckIcon,
   BarChart3Icon,
   SettingsIcon,
   type LucideIcon,
@@ -14,6 +15,8 @@ export interface SidebarItem {
   label: string;
   href: string;
   icon: LucideIcon;
+  /** Only shown to admin (is_staff) users. */
+  adminOnly?: boolean;
 }
 
 export const sidebarItems: SidebarItem[] = [
@@ -23,5 +26,6 @@ export const sidebarItems: SidebarItem[] = [
   { label: "Churches", href: ROUTES.CHURCHES, icon: ChurchIcon },
   { label: "Pastors", href: ROUTES.PASTORS, icon: UsersIcon },
   { label: "Reports", href: ROUTES.REPORTS, icon: BarChart3Icon },
+  { label: "Users", href: ROUTES.USERS, icon: UserCheckIcon, adminOnly: true },
   { label: "Settings", href: ROUTES.SETTINGS, icon: SettingsIcon },
 ];

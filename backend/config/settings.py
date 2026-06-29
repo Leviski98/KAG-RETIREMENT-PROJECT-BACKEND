@@ -10,10 +10,23 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
+from datetime import timedelta
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / '.env')
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in ('1', 'true', 'yes', 'on')
 
 
 # Quick-start development settings - unsuitable for production
@@ -38,6 +51,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'drf_spectacular',
     'django_filters',
     'corsheaders',
@@ -138,11 +153,42 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
-    'DEFAULT_AUTHENTICATION_CLASSES': [],  # No authentication required for now
-    'DEFAULT_PERMISSION_CLASSES': [],  # No permissions required for now
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'accounts.authentication.JWTCookieAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
     'DEFAULT_PAGINATION_CLASS': 'config.pagination.DynamicPageNumberPagination',
     'PAGE_SIZE': 10,  # Fallback used when SystemSettings row does not exist yet
 }
+
+# JSON Web Tokens (delivered via httpOnly cookies, see accounts.authentication)
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_COOKIE': 'kag_access',
+    'AUTH_REFRESH_COOKIE': 'kag_refresh',
+    'AUTH_COOKIE_SECURE': not DEBUG,
+    'AUTH_COOKIE_SAMESITE': 'Lax',
+    'AUTH_COOKIE_PATH': '/',
+}
+
+# Email — console backend in dev (prints to the runserver terminal), SMTP in prod
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'KAG Retirement <noreply@kag.local>')
+
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.getenv('EMAIL_HOST', '')
+    EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+    EMAIL_USE_TLS = _env_bool('EMAIL_USE_TLS', True)
+    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 
 # API Documentation (Swagger)
 SPECTACULAR_SETTINGS = {
@@ -153,8 +199,15 @@ SPECTACULAR_SETTINGS = {
 }
 
 # CORS Settings
-# Allow all origins only in development mode
-CORS_ALLOW_ALL_ORIGINS = DEBUG
+# Credentialed (cookie-bearing) requests cannot use a wildcard origin, so we always
+# list explicit origins. Extra dev/prod origins can be added via the CORS_ORIGINS env var.
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+_extra_origins = os.getenv('CORS_ORIGINS', '')
+if _extra_origins:
+    CORS_ALLOWED_ORIGINS += [o.strip() for o in _extra_origins.split(',') if o.strip()]
 
 # Additional CORS settings
 CORS_ALLOW_CREDENTIALS = True
@@ -178,11 +231,5 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-# In production (DEBUG=False), only allow specific origins
-if not DEBUG:
-    CORS_ALLOWED_ORIGINS = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        # Add your production frontend URLs here
-        # "https://your-production-domain.com",
-    ]
+# In production add your frontend origin(s) via the CORS_ORIGINS env var
+# (comma-separated), e.g. CORS_ORIGINS="https://app.kag.org".

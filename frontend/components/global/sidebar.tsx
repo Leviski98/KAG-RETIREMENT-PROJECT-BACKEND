@@ -2,13 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LogOutIcon } from "lucide-react";
-import { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { sidebarItems } from "@/configs/sidebar-config";
+import { sidebarItems, type SidebarItem } from "@/configs/sidebar-config";
 import { useSettings } from "@/lib/hooks/use-settings";
+import { useAuth } from "@/components/providers";
+import { useLogout } from "@/lib/hooks/use-auth";
+import { ROUTES } from "@/constants/route";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,24 +19,31 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-interface SidebarItem {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-}
-
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: settings } = useSettings();
+  const { user } = useAuth();
+  const logout = useLogout();
 
-  const initials = settings?.account_display_name
-    ? settings.account_display_name
-        .split(" ")
-        .map((w) => w[0])
-        .slice(0, 2)
-        .join("")
-        .toUpperCase()
-    : "SA";
+  const displayName = user?.full_name || settings?.account_display_name || "System Administrator";
+  const displayEmail = user?.email || settings?.account_email || "";
+  const initials = displayName
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  const visibleItems = sidebarItems.filter(
+    (item) => !item.adminOnly || user?.is_admin
+  );
+
+  function handleSignOut() {
+    logout.mutate(undefined, {
+      onSettled: () => router.push(ROUTES.LOGIN),
+    });
+  }
 
   return (
     <aside className="hidden w-60 shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex lg:flex-col">
@@ -72,7 +81,7 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">
-        {sidebarItems.map((item: SidebarItem) => {
+        {visibleItems.map((item: SidebarItem) => {
           const isActive =
             pathname === item.href || pathname.startsWith(item.href + "/");
 
@@ -104,10 +113,10 @@ export function Sidebar() {
           </Avatar>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-sidebar-foreground">
-              {settings?.account_display_name || "System Administrator"}
+              {displayName}
             </p>
             <p className="truncate text-xs text-sidebar-foreground/50">
-              {settings?.account_email || ""}
+              {displayEmail}
             </p>
           </div>
           <Tooltip>
@@ -116,6 +125,8 @@ export function Sidebar() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
+                  onClick={handleSignOut}
+                  disabled={logout.isPending}
                   className="text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                 />
               }
