@@ -7,4 +7,9 @@ export const ROUTES = {
   PASTORS: "/dashboard/pastors",
   REPORTS: "/dashboard/reports",
   SETTINGS: "/dashboard/settings",
+  USERS: "/dashboard/users",
+  LOGIN: "/login",
+  SIGNUP: "/signup",
+  VERIFY_EMAIL: "/verify-email",
+  OTP: "/otp",
 } as const;

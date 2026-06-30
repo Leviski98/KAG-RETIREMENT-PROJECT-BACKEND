@@ -92,12 +92,24 @@ async function parseResponse<T>(response: Response): Promise<T> {
   return text as any as T;
 }
 
+// Auth endpoints must never trigger the refresh-and-retry loop below.
+const AUTH_ENDPOINTS = ['/auth/login', '/auth/signup', '/auth/refresh', '/auth/otp/', '/auth/verify-email'];
+
+function isAuthEndpoint(endpoint: string): boolean {
+  return AUTH_ENDPOINTS.some((path) => endpoint.startsWith(path));
+}
+
 /**
- * Generic request handler
+ * Generic request handler.
+ *
+ * The JWT lives in httpOnly cookies, so every request sends credentials. When a
+ * protected call returns 401 (access token expired), we transparently hit the
+ * refresh endpoint once and replay the original request.
  */
 async function request<T>(
   endpoint: string,
-  config: RequestConfig = {}
+  config: RequestConfig = {},
+  retryOn401 = true
 ): Promise<T> {
   const { params, ...fetchConfig } = config;
 
@@ -109,6 +121,7 @@ async function request<T>(
 
   const mergedConfig: RequestInit = {
     ...fetchConfig,
+    credentials: 'include',
     headers: {
       ...defaultHeaders,
       ...fetchConfig.headers,
@@ -117,6 +130,14 @@ async function request<T>(
 
   try {
     const response = await fetch(url, mergedConfig);
+
+    if (response.status === 401 && retryOn401 && !isAuthEndpoint(endpoint)) {
+      const refreshed = await tryRefresh();
+      if (refreshed) {
+        return request<T>(endpoint, config, false);
+      }
+    }
+
     return await parseResponse<T>(response);
   } catch (error) {
     if (error instanceof ApiRequestError) {
@@ -128,6 +149,20 @@ async function request<T>(
       error instanceof Error ? error.message : 'Network error occurred',
       0
     );
+  }
+}
+
+/** Attempt a one-shot token refresh. Returns true if a new access cookie was set. */
+async function tryRefresh(): Promise<boolean> {
+  try {
+    const response = await fetch(buildUrl('/auth/refresh'), {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return response.ok;
+  } catch {
+    return false;
   }
 }
 

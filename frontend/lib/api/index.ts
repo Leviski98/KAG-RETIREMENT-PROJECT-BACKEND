@@ -27,3 +27,7 @@ export { reportApi } from '@/lib/api/reports';
 
 // Settings API
 export { settingsApi } from '@/lib/api/settings';
+
+// Auth API
+export { authApi } from '@/lib/api/auth';
+export type { SignupInput } from '@/lib/api/auth';
