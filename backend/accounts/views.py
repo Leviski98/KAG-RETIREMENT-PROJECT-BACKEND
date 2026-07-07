@@ -73,6 +73,7 @@ def _issue_otp(user) -> None:
 
 class SignupView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'signup'
 
@@ -109,6 +110,7 @@ class SignupView(APIView):
 
 class VerifyEmailView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     @extend_schema(tags=['Auth'], request=VerifyEmailSerializer)
     def post(self, request):
@@ -144,6 +146,7 @@ class VerifyEmailView(APIView):
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'login'
 
@@ -188,6 +191,7 @@ class LoginView(APIView):
 
 class OTPVerifyView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'otp_verify'
 
@@ -230,6 +234,7 @@ class OTPVerifyView(APIView):
 
 class OTPResendView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'otp_resend'
 
@@ -261,6 +266,7 @@ class OTPResendView(APIView):
 
 class RefreshView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     @extend_schema(tags=['Auth'], request=None)
     def post(self, request):
