@@ -161,6 +161,14 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'config.pagination.DynamicPageNumberPagination',
     'PAGE_SIZE': 10,  # Fallback used when SystemSettings row does not exist yet
+    # Per-view opt-in via throttle_scope; see accounts.views for the auth endpoints
+    # that actually set one (login, otp verify/resend, signup).
+    'DEFAULT_THROTTLE_RATES': {
+        'login': '5/min',
+        'signup': '5/hour',
+        'otp_verify': '10/min',
+        'otp_resend': '3/min',
+    },
 }
 
 # JSON Web Tokens (delivered via httpOnly cookies, see accounts.authentication)
