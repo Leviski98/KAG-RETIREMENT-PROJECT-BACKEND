@@ -33,12 +33,15 @@ def _env_bool(name: str, default: bool) -> bool:
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-a_4g&itp^_l08oun0pp*q(o2rd)=emk8!f3)vgycw3gx+llocn'
+SECRET_KEY = os.getenv(
+    'SECRET_KEY', 'django-insecure-a_4g&itp^_l08oun0pp*q(o2rd)=emk8!f3)vgycw3gx+llocn'
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = _env_bool('DEBUG', True)
 
-ALLOWED_HOSTS = []
+_allowed_hosts = os.getenv('ALLOWED_HOSTS', '')
+ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts.split(',') if h.strip()]
 
 
 # Application definition
@@ -67,6 +70,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -102,7 +106,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': os.getenv('SQLITE_PATH', str(BASE_DIR / 'db.sqlite3')),
     }
 }
 
@@ -142,6 +146,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STORAGES = {
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
@@ -161,6 +171,14 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'config.pagination.DynamicPageNumberPagination',
     'PAGE_SIZE': 10,  # Fallback used when SystemSettings row does not exist yet
+    # Per-view opt-in via throttle_scope; see accounts.views for the auth endpoints
+    # that actually set one (login, otp verify/resend, signup).
+    'DEFAULT_THROTTLE_RATES': {
+        'login': '5/min',
+        'signup': '5/hour',
+        'otp_verify': '10/min',
+        'otp_resend': '3/min',
+    },
 }
 
 # JSON Web Tokens (delivered via httpOnly cookies, see accounts.authentication)

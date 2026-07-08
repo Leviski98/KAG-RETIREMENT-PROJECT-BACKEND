@@ -8,6 +8,7 @@ from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -72,6 +73,9 @@ def _issue_otp(user) -> None:
 
 class SignupView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'signup'
 
     @extend_schema(
         tags=['Auth'],
@@ -106,6 +110,7 @@ class SignupView(APIView):
 
 class VerifyEmailView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     @extend_schema(tags=['Auth'], request=VerifyEmailSerializer)
     def post(self, request):
@@ -141,6 +146,9 @@ class VerifyEmailView(APIView):
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'login'
 
     @extend_schema(
         tags=['Auth'],
@@ -183,6 +191,9 @@ class LoginView(APIView):
 
 class OTPVerifyView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'otp_verify'
 
     @extend_schema(
         tags=['Auth'],
@@ -223,6 +234,9 @@ class OTPVerifyView(APIView):
 
 class OTPResendView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'otp_resend'
 
     @extend_schema(tags=['Auth'], request=OTPResendSerializer)
     def post(self, request):
@@ -252,6 +266,7 @@ class OTPResendView(APIView):
 
 class RefreshView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     @extend_schema(tags=['Auth'], request=None)
     def post(self, request):
