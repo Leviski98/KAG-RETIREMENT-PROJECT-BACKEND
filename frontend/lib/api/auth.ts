@@ -19,6 +19,9 @@ export const authApi = {
   verifyEmail: (token: string): Promise<VerifyEmailResult> =>
     apiClient.post<VerifyEmailResult>('/auth/verify-email', { token }),
 
+  resendVerificationEmail: (email: string): Promise<MessageResult> =>
+    apiClient.post<MessageResult>('/auth/verify-email/resend', { email }),
+
   login: (email: string, password: string): Promise<LoginResult> =>
     apiClient.post<LoginResult>('/auth/login', { email, password }),
 

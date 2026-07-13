@@ -51,6 +51,12 @@ class EmailVerificationToken(models.Model):
             self.expires_at = timezone.now() + timezone.timedelta(hours=24)
         super().save(*args, **kwargs)
 
+    @classmethod
+    def issue(cls, user) -> 'EmailVerificationToken':
+        """Invalidate any outstanding tokens and create a fresh one for `user`."""
+        cls.objects.filter(user=user, used=False).update(used=True)
+        return cls.objects.create(user=user)
+
     @property
     def is_valid(self) -> bool:
         return not self.used and timezone.now() < self.expires_at
