@@ -5,9 +5,13 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2Icon, ClockIcon, XCircleIcon, Loader2Icon } from "lucide-react";
 
-import { useVerifyEmail } from "@/lib/hooks/use-auth";
+import { useResendVerificationEmail, useVerifyEmail } from "@/lib/hooks/use-auth";
 import { ApiRequestError } from "@/lib/api/client";
 import { ROUTES } from "@/constants/route";
+import { resendVerificationSchema } from "@/schemas/auth-schema";
+import { FormField } from "@/components/patterns/form-field";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -16,6 +20,49 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+function ResendVerificationForm() {
+  const resend = useResendVerificationEmail();
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [sent, setSent] = useState(false);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const parsed = resendVerificationSchema.safeParse({ email });
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Enter a valid email address");
+      return;
+    }
+    setError("");
+    resend.mutate(parsed.data.email, { onSuccess: () => setSent(true) });
+  }
+
+  if (sent) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        If <strong>{email}</strong> needs verifying, a new link is on its way. Check your inbox.
+      </p>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
+      <FormField label="Resend the verification link" error={error}>
+        <Input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@church.org"
+          autoComplete="email"
+        />
+      </FormField>
+      <Button type="submit" variant="outline" disabled={resend.isPending} className="w-full">
+        {resend.isPending ? "Sending..." : "Send new link"}
+      </Button>
+    </form>
+  );
+}
 
 type Status = "verifying" | "awaiting_approval" | "verified" | "error";
 
@@ -87,7 +134,7 @@ function VerifyEmailInner() {
       </CardHeader>
       {status !== "verifying" && (
         <>
-          <CardContent />
+          <CardContent>{status === "error" && <ResendVerificationForm />}</CardContent>
           <CardFooter>
             <Link
               href={ROUTES.LOGIN}

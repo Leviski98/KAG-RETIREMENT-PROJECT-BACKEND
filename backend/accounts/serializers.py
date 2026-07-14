@@ -34,6 +34,10 @@ class VerifyEmailSerializer(serializers.Serializer):
     token = serializers.CharField()
 
 
+class ResendVerificationSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
 class OTPVerifySerializer(serializers.Serializer):
     otp_token = serializers.CharField()
     code = serializers.RegexField(r'^\d{6}$', error_messages={

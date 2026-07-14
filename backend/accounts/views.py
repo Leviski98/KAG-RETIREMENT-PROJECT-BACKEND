@@ -19,6 +19,7 @@ from .serializers import (
     LoginSerializer,
     OTPResendSerializer,
     OTPVerifySerializer,
+    ResendVerificationSerializer,
     SignupSerializer,
     UserSerializer,
     VerifyEmailSerializer,
@@ -139,6 +140,44 @@ class VerifyEmailView(APIView):
         return Response({
             'detail': 'Email verified. An administrator will activate your account shortly.',
             'awaiting_approval': not token.user.is_active,
+        })
+
+
+class ResendVerificationEmailView(APIView):
+    """
+    Issue a fresh verification link for a signed-up-but-unverified email.
+
+    Signup can't be repeated for an existing email, and the original link
+    expires in 24h, so without this a user who loses or outlasts their first
+    link had no way back in short of an admin intervening by hand. Always
+    returns the same generic response regardless of whether the address is
+    registered, already verified, or unknown, so this can't be used to probe
+    which emails have accounts.
+    """
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'verify_resend'
+
+    @extend_schema(
+        tags=['Auth'],
+        request=ResendVerificationSerializer,
+        responses={200: OpenApiResponse(description='Generic acknowledgement.')},
+    )
+    def post(self, request):
+        serializer = ResendVerificationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email'].lower().strip()
+
+        user = User.objects.filter(email__iexact=email).select_related('profile').first()
+        if user is not None:
+            profile = getattr(user, 'profile', None)
+            if not (profile and profile.email_verified):
+                token = EmailVerificationToken.issue(user)
+                send_verification_email(user, token.token)
+
+        return Response({
+            'detail': 'If that email needs verifying, a new link is on its way.',
         })
 
 

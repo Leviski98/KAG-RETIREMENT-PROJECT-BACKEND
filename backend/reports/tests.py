@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
@@ -9,10 +10,17 @@ from districts.models import District
 from pastors.models import Pastor
 from sections.models import Section
 
+User = get_user_model()
+
 
 class ReportsApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
+        # DEFAULT_PERMISSION_CLASSES is IsAuthenticated globally, so every request
+        # needs a caller. force_authenticate bypasses JWTCookieAuthentication
+        # entirely (no cookie/OTP flow needed) and sets request.user directly.
+        user = User.objects.create_user(username='reports-tester', email='reports-tester@kag.test')
+        self.client.force_authenticate(user=user)
 
     def test_district_summary_empty_database(self):
         response = self.client.get(reverse('report-district-summary'))

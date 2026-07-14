@@ -178,6 +178,7 @@ REST_FRAMEWORK = {
         'signup': '5/hour',
         'otp_verify': '10/min',
         'otp_resend': '3/min',
+        'verify_resend': '5/hour',
     },
 }
 

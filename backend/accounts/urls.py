@@ -9,6 +9,7 @@ from .views import (
     OTPVerifyView,
     PendingUsersView,
     RefreshView,
+    ResendVerificationEmailView,
     SignupView,
     VerifyEmailView,
 )
@@ -16,6 +17,7 @@ from .views import (
 urlpatterns = [
     path('auth/signup', SignupView.as_view(), name='auth-signup'),
     path('auth/verify-email', VerifyEmailView.as_view(), name='auth-verify-email'),
+    path('auth/verify-email/resend', ResendVerificationEmailView.as_view(), name='auth-verify-email-resend'),
     path('auth/login', LoginView.as_view(), name='auth-login'),
     path('auth/otp/verify', OTPVerifyView.as_view(), name='auth-otp-verify'),
     path('auth/otp/resend', OTPResendView.as_view(), name='auth-otp-resend'),

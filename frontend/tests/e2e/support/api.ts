@@ -1,7 +1,8 @@
 import { expect, type APIRequestContext, type APIResponse } from "@playwright/test";
 
-export const API_BASE_URL =
-  process.env.PLAYWRIGHT_API_URL ?? "http://127.0.0.1:8000/api";
+import { apiUrl } from "../../../playwright.config";
+
+export const API_BASE_URL = apiUrl;
 
 export type PaginatedResponse<T> = {
   count: number;

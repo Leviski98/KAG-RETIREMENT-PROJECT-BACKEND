@@ -39,6 +39,12 @@ export function useVerifyEmail() {
   });
 }
 
+export function useResendVerificationEmail() {
+  return useMutation({
+    mutationFn: (email: string) => authApi.resendVerificationEmail(email),
+  });
+}
+
 export function useLogin() {
   return useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) =>
