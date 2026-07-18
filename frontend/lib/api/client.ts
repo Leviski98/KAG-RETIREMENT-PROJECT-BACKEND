@@ -17,9 +17,9 @@ export interface PaginatedResponse<T> {
 }
 
 export interface ApiError {
-  error: string;
+  error?: string;
   detail?: string;
-  [key: string]: string | undefined;
+  [key: string]: string | string[] | undefined;
 }
 
 // Request configuration
@@ -59,6 +59,28 @@ function buildUrl(endpoint: string, params?: object): string {
 }
 
 /**
+ * Extract a human-readable message from a DRF error body.
+ *
+ * DRF represents errors two ways depending on the failure: a top-level
+ * `{error}` or `{detail}` string (auth failures, throttling, 404s), or a
+ * serializer validation error shaped as `{field_name: ["message", ...]}`
+ * (invalid password, duplicate email, etc). Without this fallback the
+ * latter shape has no `error`/`detail` key and silently renders as a
+ * generic "An error occurred".
+ */
+function extractErrorMessage(data: ApiError): string {
+  if (typeof data.error === 'string' && data.error) return data.error;
+  if (typeof data.detail === 'string' && data.detail) return data.detail;
+
+  const messages = Object.values(data).flatMap((value) =>
+    Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : []
+  );
+  if (messages.length) return messages.join(' ');
+
+  return 'An error occurred';
+}
+
+/**
  * Parse API response
  */
 async function parseResponse<T>(response: Response): Promise<T> {
@@ -68,11 +90,7 @@ async function parseResponse<T>(response: Response): Promise<T> {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new ApiRequestError(
-        data.error || data.detail || 'An error occurred',
-        response.status,
-        data
-      );
+      throw new ApiRequestError(extractErrorMessage(data), response.status, data);
     }
 
     return data;
