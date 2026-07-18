@@ -1,15 +1,26 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+export interface PastorRankCount {
+  pastor_rank: string;
+  count: number;
+}
+
+export interface PastorStatusCount {
+  status: string;
+  count: number;
+}
 
 interface PastorStats {
   total_pastors: number;
   active_pastors: number;
   retired_pastors: number;
-  pastors_by_rank: Array<{ pastor_rank: string; count: number }>;
-  pastors_by_status: Array<{ status: string; count: number }>;
+  pastors_by_rank: PastorRankCount[];
+  pastors_by_status: PastorStatusCount[];
 }
+
+export type { ChurchPastor };
 
 interface DistrictStats {
   total_districts: number;
@@ -29,12 +40,20 @@ interface Church {
   created_at: string;
 }
 
+// ChurchPastorSerializer flattens the nested joins into `*_name` fields for
+// the frontend, so consumers get strings, not nested objects. See
+// backend/churches/serializers.py::ChurchPastorSerializer.
 interface ChurchPastor {
   id: number;
-  church: Church;
-  pastor: { id: number; full_name: string };
-  role: { id: number; role_name: string };
+  church: number;
+  church_name: string;
+  pastor: number;
+  pastor_name: string;
+  pastor_rank: string;
+  role: number;
+  role_name: string;
   created_at: string;
+  updated_at: string;
 }
 
 const FETCH_OPTS: RequestInit = { credentials: "include" };

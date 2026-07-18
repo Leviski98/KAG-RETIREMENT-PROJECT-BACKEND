@@ -63,6 +63,7 @@ type SelectFieldProps = {
 const settingsTabs: SettingsTab[] = [
   { id: "organization", label: "Organization", icon: Building2 },
   { id: "preferences", label: "Preferences", icon: SlidersHorizontal },
+  { id: "notifications", label: "Notifications", icon: Bell },
   { id: "account", label: "Account", icon: UserCog },
   { id: "about", label: "About", icon: Info },
 ];

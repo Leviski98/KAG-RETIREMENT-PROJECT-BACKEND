@@ -12,7 +12,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend,
 } from "recharts";
 import { TrendingUp, Users, Building2, UserCheck, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -21,7 +20,12 @@ import {
   useDistrictStats,
   useSectionStats,
   useChurchPastors,
+  type ChurchPastor,
+  type PastorRankCount,
+  type PastorStatusCount,
 } from "@/hooks/api";
+
+const ACTIVITY_COLORS = ["blue", "green", "yellow", "purple", "indigo"] as const;
 
 const RANK_COLORS = ["#4B5563", "#63B3ED", "#48BB78", "#ECC94B", "#38A169"];
 
@@ -72,8 +76,9 @@ export function DashboardOverview() {
 
   // Transform pastor stats for rank chart
   const pastorsByRankData = (pastorStats?.pastors_by_rank || [])
-    .sort((a: any, b: any) => b.count - a.count)
-    .map((item: any) => ({
+    .slice()
+    .sort((a: PastorRankCount, b: PastorRankCount) => b.count - a.count)
+    .map((item: PastorRankCount) => ({
       name: item.pastor_rank || "Unknown",
       value: item.count,
     }));
@@ -82,8 +87,8 @@ export function DashboardOverview() {
   const statusOrder = ["active", "retired", "suspended", "deceased"];
 
   // Create a map of statuses from API data
-  const statusMap = new Map(
-    (pastorStats?.pastors_by_status || []).map((item: any) => [
+  const statusMap = new Map<string, number>(
+    (pastorStats?.pastors_by_status || []).map((item: PastorStatusCount) => [
       item.status?.toLowerCase() || "unknown",
       item.count,
     ])
@@ -135,11 +140,17 @@ export function DashboardOverview() {
     },
   ];
 
-  // Transform recent activities
+  // Transform recent activities.
+  // Colour is picked deterministically from the row id so a re-render never
+  // reshuffles avatar tints (React's purity rule bars Math.random() at render).
   const recentActivities = (churchPastorsData?.results || [])
-    .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice()
+    .sort(
+      (a: ChurchPastor, b: ChurchPastor) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )
     .slice(0, 5)
-    .map((assignment: any) => {
+    .map((assignment: ChurchPastor) => {
       const pastorName = assignment.pastor_name || "Unknown Pastor";
       const churchName = assignment.church_name || "a church";
       const roleName = assignment.role_name || "pastor";
@@ -148,7 +159,7 @@ export function DashboardOverview() {
         action: `${pastorName} was assigned to ${churchName} as ${roleName}`,
         time: formatTime(assignment.created_at),
         avatar: getInitials(pastorName),
-        color: `bg-${["blue", "green", "yellow", "purple", "indigo"][Math.floor(Math.random() * 5)]}-500`,
+        color: `bg-${ACTIVITY_COLORS[assignment.id % ACTIVITY_COLORS.length]}-500`,
       };
     });
 
@@ -171,7 +182,7 @@ export function DashboardOverview() {
           Manage Your Church Retirement with Confidence
         </h1>
         <p className="text-blue-100">
-          Welcome back, Admin! Here's your overview of the KAG organization.
+          Welcome back, Admin! Here&apos;s your overview of the KAG organization.
         </p>
       </div>
 
