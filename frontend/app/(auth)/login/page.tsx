@@ -86,6 +86,14 @@ export default function LoginPage() {
               autoComplete="current-password"
             />
           </FormField>
+          <div className="-mt-2 text-right">
+            <Link
+              href={ROUTES.FORGOT_PASSWORD}
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <Button type="submit" disabled={login.isPending} className="w-full">
             {login.isPending ? "Signing in..." : "Continue"}
           </Button>

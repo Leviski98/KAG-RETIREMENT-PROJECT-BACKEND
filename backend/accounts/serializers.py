@@ -38,6 +38,22 @@ class ResendVerificationSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
 
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    token = serializers.CharField()
+    password = serializers.CharField(write_only=True, style={'input_type': 'password'})
+
+    def validate_password(self, value):
+        try:
+            validate_password(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(list(exc.messages))
+        return value
+
+
 class OTPVerifySerializer(serializers.Serializer):
     otp_token = serializers.CharField()
     code = serializers.RegexField(r'^\d{6}$', error_messages={

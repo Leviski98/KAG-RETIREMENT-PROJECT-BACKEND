@@ -65,6 +65,42 @@ class EmailVerificationToken(models.Model):
         return f'VerificationToken<{self.user_id}>'
 
 
+class PasswordResetToken(models.Model):
+    """One-time token emailed when a user requests a password reset."""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='password_reset_tokens',
+    )
+    token = models.CharField(max_length=64, unique=True, default=_verification_token)
+    expires_at = models.DateTimeField()
+    used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            # Shorter than the 24h verification window: a reset link grants
+            # account access, so it should not linger.
+            self.expires_at = timezone.now() + timezone.timedelta(hours=1)
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def issue(cls, user) -> 'PasswordResetToken':
+        """Invalidate any outstanding tokens and create a fresh one for `user`."""
+        cls.objects.filter(user=user, used=False).update(used=True)
+        return cls.objects.create(user=user)
+
+    @property
+    def is_valid(self) -> bool:
+        return not self.used and timezone.now() < self.expires_at
+
+    def __str__(self):
+        return f'PasswordResetToken<{self.user_id}>'
+
+
 class OTPCode(models.Model):
     """
     Step-up one-time password emailed after a valid password login.

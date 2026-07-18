@@ -179,6 +179,7 @@ REST_FRAMEWORK = {
         'otp_verify': '10/min',
         'otp_resend': '3/min',
         'verify_resend': '5/hour',
+        'password_reset': '5/hour',
     },
 }
 

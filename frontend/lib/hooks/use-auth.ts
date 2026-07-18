@@ -45,6 +45,19 @@ export function useResendVerificationEmail() {
   });
 }
 
+export function useRequestPasswordReset() {
+  return useMutation({
+    mutationFn: (email: string) => authApi.requestPasswordReset(email),
+  });
+}
+
+export function useConfirmPasswordReset() {
+  return useMutation({
+    mutationFn: ({ token, password }: { token: string; password: string }) =>
+      authApi.confirmPasswordReset(token, password),
+  });
+}
+
 export function useLogin() {
   return useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) =>
