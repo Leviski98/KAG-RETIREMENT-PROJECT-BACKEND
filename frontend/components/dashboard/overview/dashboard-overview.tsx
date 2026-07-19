@@ -126,7 +126,7 @@ export function DashboardOverview() {
             Manage Your Church Retirement with Confidence
           </h1>
           <p className="text-blue-100 max-w-2xl">
-            Welcome back, Admin! Here's your overview of the KAG organization
+            Welcome back, Admin! Here&apos;s your overview of the KAG organization
           </p>
         </div>
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20" />
@@ -134,7 +134,7 @@ export function DashboardOverview() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {/* Total Districts */}
         <Card className="hover:shadow-md transition-shadow">
           <CardContent className="p-6">
@@ -174,6 +174,24 @@ export function DashboardOverview() {
               </div>
               <div className="flex size-12 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                 <Layers className="size-6" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total Churches */}
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Church className="size-4" />
+                  <span>Total Churches</span>
+                </div>
+                <div className="text-3xl font-bold">{totalChurches}</div>
+              </div>
+              <div className="flex size-12 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                <Church className="size-6" />
               </div>
             </div>
           </CardContent>

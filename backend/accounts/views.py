@@ -13,12 +13,19 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .emails import send_approved_email, send_otp_email, send_verification_email
-from .models import EmailVerificationToken, OTPCode, UserProfile
+from .emails import (
+    send_approved_email,
+    send_otp_email,
+    send_password_reset_email,
+    send_verification_email,
+)
+from .models import EmailVerificationToken, OTPCode, PasswordResetToken, UserProfile
 from .serializers import (
     LoginSerializer,
     OTPResendSerializer,
     OTPVerifySerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
     ResendVerificationSerializer,
     SignupSerializer,
     UserSerializer,
@@ -68,6 +75,17 @@ def _issue_otp(user) -> None:
     code = f'{secrets.randbelow(1_000_000):06d}'
     OTPCode.issue(user, code)
     send_otp_email(user, code)
+
+
+def _blacklist_all_refresh_tokens(user) -> None:
+    """Blacklist every outstanding refresh token for `user`, revoking all sessions."""
+    from rest_framework_simplejwt.token_blacklist.models import (
+        BlacklistedToken,
+        OutstandingToken,
+    )
+
+    for outstanding in OutstandingToken.objects.filter(user=user):
+        BlacklistedToken.objects.get_or_create(token=outstanding)
 
 
 # --- account creation & verification -----------------------------------------
@@ -179,6 +197,87 @@ class ResendVerificationEmailView(APIView):
         return Response({
             'detail': 'If that email needs verifying, a new link is on its way.',
         })
+
+
+# --- password reset -----------------------------------------------------------
+
+class PasswordResetRequestView(APIView):
+    """
+    Email a password-reset link for a registered address.
+
+    Always returns the same generic response whether or not the address has an
+    account, so it can't be used to enumerate registered emails. A user must
+    have a usable password (i.e. not a placeholder / unset one) to receive a
+    link.
+    """
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'password_reset'
+
+    @extend_schema(
+        tags=['Auth'],
+        request=PasswordResetRequestSerializer,
+        responses={200: OpenApiResponse(description='Generic acknowledgement.')},
+    )
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email'].lower().strip()
+
+        user = User.objects.filter(email__iexact=email).first()
+        if user is not None and user.has_usable_password():
+            token = PasswordResetToken.issue(user)
+            send_password_reset_email(user, token.token)
+
+        return Response({
+            'detail': 'If an account exists for that email, a reset link is on its way.',
+        })
+
+
+class PasswordResetConfirmView(APIView):
+    """
+    Set a new password given a valid reset token.
+
+    On success every outstanding refresh token for the user is blacklisted, so
+    any session opened with the old password (e.g. by whoever prompted the
+    reset) is forced to re-authenticate.
+    """
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'password_reset'
+
+    @extend_schema(
+        tags=['Auth'],
+        request=PasswordResetConfirmSerializer,
+        responses={200: OpenApiResponse(description='Password updated.')},
+    )
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        token = (
+            PasswordResetToken.objects
+            .filter(token=serializer.validated_data['token'])
+            .select_related('user')
+            .first()
+        )
+        if token is None or not token.is_valid:
+            return Response(
+                {'detail': 'This reset link is invalid or has expired.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            user = token.user
+            user.set_password(serializer.validated_data['password'])
+            user.save(update_fields=['password'])
+            token.used = True
+            token.save(update_fields=['used'])
+            _blacklist_all_refresh_tokens(user)
+
+        return Response({'detail': 'Your password has been reset. You can now sign in.'})
 
 
 # --- sign in with OTP step-up -------------------------------------------------

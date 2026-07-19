@@ -22,6 +22,12 @@ export const authApi = {
   resendVerificationEmail: (email: string): Promise<MessageResult> =>
     apiClient.post<MessageResult>('/auth/verify-email/resend', { email }),
 
+  requestPasswordReset: (email: string): Promise<MessageResult> =>
+    apiClient.post<MessageResult>('/auth/password-reset', { email }),
+
+  confirmPasswordReset: (token: string, password: string): Promise<MessageResult> =>
+    apiClient.post<MessageResult>('/auth/password-reset/confirm', { token, password }),
+
   login: (email: string, password: string): Promise<LoginResult> =>
     apiClient.post<LoginResult>('/auth/login', { email, password }),
 

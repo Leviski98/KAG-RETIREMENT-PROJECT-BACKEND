@@ -21,6 +21,17 @@ export const resendVerificationSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
+});
+
+export const resetPasswordSchema = z.object({
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(128, 'Password is too long'),
+});
+
 export const otpSchema = z.object({
   code: z
     .string()
@@ -31,4 +42,6 @@ export const otpSchema = z.object({
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type SignupFormData = z.infer<typeof signupSchema>;
 export type ResendVerificationFormData = z.infer<typeof resendVerificationSchema>;
+export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 export type OtpFormData = z.infer<typeof otpSchema>;

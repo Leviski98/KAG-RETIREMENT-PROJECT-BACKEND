@@ -29,6 +29,24 @@ def send_verification_email(user, token: str) -> None:
     )
 
 
+def send_password_reset_email(user, token: str) -> None:
+    link = f'{settings.FRONTEND_URL}/reset-password?token={token}'
+    send_mail(
+        subject='Reset your KAG Retirement password',
+        message=(
+            f'Hi {_display_name(user)},\n\n'
+            f'We received a request to reset your password. Click the link below to '
+            f'choose a new one:\n\n'
+            f'{link}\n\n'
+            f'This link expires in 1 hour. If you did not request a reset, ignore this '
+            f'email — your password will not change.'
+        ),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
+
+
 def send_otp_email(user, code: str) -> None:
     send_mail(
         subject='Your KAG Retirement sign-in code',
