@@ -10,6 +10,7 @@
 # Debug and temporary files
 *.html
 *.ps1
+datadump.json
 
 # IDE
 .vscode/
