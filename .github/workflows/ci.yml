@@ -12,6 +12,26 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: kag_retirement
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DB_NAME: kag_retirement
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
     steps:
       - uses: actions/checkout@v4
 
@@ -61,6 +81,26 @@ jobs:
   e2e-tests:
     name: Playwright e2e
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: kag_retirement
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DB_NAME: kag_retirement
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
     steps:
       - uses: actions/checkout@v4
 
@@ -86,8 +126,6 @@ jobs:
 
       - name: Apply migrations
         working-directory: backend
-        # Playwright's webServer runs `runserver` and global-setup shells out to
-        # management commands, all against this same backend/db.sqlite3.
         run: python manage.py migrate --noinput
 
       - name: Install frontend dependencies
