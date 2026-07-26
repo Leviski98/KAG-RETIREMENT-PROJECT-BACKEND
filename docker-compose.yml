@@ -1,17 +1,31 @@
 services:
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_DB: kag_retirement
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   backend:
     build: ./backend
     ports:
       - "8000:8000"
-    volumes:
-      - backend_db:/app/data
+    depends_on:
+      - db
     environment:
       SECRET_KEY: ${SECRET_KEY:-django-insecure-a_4g&itp^_l08oun0pp*q(o2rd)=emk8!f3)vgycw3gx+llocn}
       DEBUG: ${DEBUG:-True}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
-      SQLITE_PATH: /app/data/db.sqlite3
+      DB_NAME: kag_retirement
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: db
+      DB_PORT: 5432
 
   frontend:
     build:
@@ -24,4 +38,4 @@ services:
       - backend
 
 volumes:
-  backend_db:
+  postgres_data:
