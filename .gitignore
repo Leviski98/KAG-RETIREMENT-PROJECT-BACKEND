@@ -18,3 +18,8 @@
 # OS
 .DS_Store
 Thumbs.db
+backend/datadump.json
+
+# Environment variables (secrets)
+.env
+backend/.env
