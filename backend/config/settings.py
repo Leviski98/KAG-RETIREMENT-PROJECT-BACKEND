@@ -111,6 +111,9 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASSWORD', ''),
         'HOST': os.getenv('DB_HOST', '127.0.0.1'),
         'PORT': os.getenv('DB_PORT', '5432'),
+        # Neon/Supabase (and most managed Postgres) require SSL; enforce it
+        # explicitly rather than relying on the driver's default negotiation.
+        'OPTIONS': {'sslmode': os.getenv('DB_SSLMODE', 'prefer')},
     }
 }
 
