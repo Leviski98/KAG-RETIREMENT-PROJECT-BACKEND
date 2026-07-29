@@ -257,3 +257,8 @@ CORS_ALLOW_HEADERS = [
 
 # In production add your frontend origin(s) via the CORS_ORIGINS env var
 # (comma-separated), e.g. CORS_ORIGINS="https://app.kag.org".
+
+# CSRF — required for admin login and any session-based POST once served over the
+# real domain. Comma-separated, must include scheme, e.g.
+# CSRF_TRUSTED_ORIGINS="https://app.kag-retirement.org,https://api.kag-retirement.org".
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()]
