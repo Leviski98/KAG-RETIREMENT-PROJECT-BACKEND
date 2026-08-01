@@ -15,6 +15,7 @@ from .views import (
     SignupView,
     VerifyEmailView,
 )
+from .webhooks import ResendInboundWebhookView
 
 urlpatterns = [
     path('auth/signup', SignupView.as_view(), name='auth-signup'),
@@ -30,4 +31,5 @@ urlpatterns = [
     path('auth/me', MeView.as_view(), name='auth-me'),
     path('auth/users/pending', PendingUsersView.as_view(), name='auth-users-pending'),
     path('auth/users/<int:user_id>/approve', ApproveUserView.as_view(), name='auth-users-approve'),
+    path('webhooks/resend', ResendInboundWebhookView.as_view(), name='webhooks-resend'),
 ]

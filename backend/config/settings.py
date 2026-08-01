@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlparse
 
 from dotenv import load_dotenv
 
@@ -27,6 +28,27 @@ def _env_bool(name: str, default: bool) -> bool:
     if raw is None:
         return default
     return raw.strip().lower() in ('1', 'true', 'yes', 'on')
+
+
+def _database_from_url(url: str) -> dict[str, object]:
+    parsed = urlparse(url)
+    if parsed.scheme not in ('postgres', 'postgresql'):
+        raise ValueError('DATABASE_URL must use the postgres or postgresql scheme.')
+
+    options = {
+        key: values[-1]
+        for key, values in parse_qs(parsed.query).items()
+        if values
+    }
+    return {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': unquote(parsed.path.lstrip('/')),
+        'USER': unquote(parsed.username or ''),
+        'PASSWORD': unquote(parsed.password or ''),
+        'HOST': parsed.hostname or '',
+        'PORT': str(parsed.port or 5432),
+        'OPTIONS': options,
+    }
 
 
 # Quick-start development settings - unsuitable for production
@@ -59,6 +81,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'django_filters',
     'corsheaders',
+    'anymail',
     'accounts',
     'districts',
     'sections',
@@ -103,19 +126,21 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'kag_retirement'),
-        'USER': os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', '127.0.0.1'),
-        'PORT': os.getenv('DB_PORT', '5432'),
-        # Neon/Supabase (and most managed Postgres) require SSL; enforce it
-        # explicitly rather than relying on the driver's default negotiation.
-        'OPTIONS': {'sslmode': os.getenv('DB_SSLMODE', 'prefer')},
+_database_url = os.getenv('DATABASE_URL')
+if _database_url:
+    DATABASES = {'default': _database_from_url(_database_url)}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', os.getenv('PGDATABASE', 'kag_retirement')),
+            'USER': os.getenv('DB_USER', os.getenv('PGUSER', 'postgres')),
+            'PASSWORD': os.getenv('DB_PASSWORD', os.getenv('PGPASSWORD', '')),
+            'HOST': os.getenv('DB_HOST', os.getenv('PGHOST', '127.0.0.1')),
+            'PORT': os.getenv('DB_PORT', os.getenv('PGPORT', '5432')),
+            'OPTIONS': {'sslmode': os.getenv('DB_SSLMODE', 'prefer')},
+        }
     }
-}
 
 
 # Password validation
@@ -203,19 +228,23 @@ SIMPLE_JWT = {
     'AUTH_COOKIE_PATH': '/',
 }
 
-# Email — console backend in dev (prints to the runserver terminal), SMTP in prod
+# Email — console backend in dev (prints to the runserver terminal), Resend in prod.
+# Sending goes through django-anymail's Resend backend (see
+# https://resend.com/docs/send-with-django). Receiving is handled by the
+# ResendInboundWebhookView in accounts/webhooks.py — configure that URL as a
+# webhook in the Resend dashboard for the `email.received` event and put its
+# signing secret in RESEND_WEBHOOK_SECRET.
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'KAG Retirement <noreply@kag.local>')
+RESEND_WEBHOOK_SECRET = os.getenv('RESEND_WEBHOOK_SECRET', '')
 
 if DEBUG:
     EMAIL_BACKEND = 'config.email_backends.PlainTextConsoleEmailBackend'
 else:
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = os.getenv('EMAIL_HOST', '')
-    EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
-    EMAIL_USE_TLS = _env_bool('EMAIL_USE_TLS', True)
-    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
-    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+    EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
+    ANYMAIL = {
+        'RESEND_API_KEY': os.getenv('RESEND_API_KEY', ''),
+    }
 
 # API Documentation (Swagger)
 SPECTACULAR_SETTINGS = {

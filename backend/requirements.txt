@@ -1,5 +1,6 @@
 asgiref==3.11.0
 Django==6.0.1
+django-anymail[resend]==13.0
 django-cors-headers==4.9.0
 django-filter==25.2
 djangorestframework==3.16.1
@@ -9,6 +10,7 @@ reportlab==4.2.5
 psycopg[binary]==3.2.9
 python-dotenv==1.2.1
 sqlparse==0.5.5
+svix==1.61.0
 tzdata==2025.3
 gunicorn==23.0.0
 whitenoise==6.11.0

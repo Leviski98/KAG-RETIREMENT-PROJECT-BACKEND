@@ -1,4 +1,10 @@
+env/
 venv/
+.venv/
+Lib/
+Include/
+Scripts/
+pyvenv.cfg
 __pycache__/
 *.pyc
 db.sqlite3
@@ -6,3 +12,4 @@ debug.log
 .env
 staticfiles/
 .git
+datadump.json
