@@ -20,7 +20,7 @@ from .serializers import (
 from .pdf_generator import ReportPDFGenerator
 
 
-DEFAULT_RETIREMENT_AGE = 65
+DEFAULT_RETIREMENT_AGE = 70
 
 
 def get_retirement_age():

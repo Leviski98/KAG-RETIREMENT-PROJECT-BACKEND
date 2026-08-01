@@ -465,7 +465,7 @@ function PreferencesPanel({ settings, onSave, isSaving }: PanelProps) {
     const next: typeof errors = {};
     const age = Number(form.retirement_age);
     const svc = Number(form.min_service_years);
-    if (!form.retirement_age || isNaN(age) || age < 1) next.retirement_age = 'Enter a valid retirement age (e.g. 65).';
+    if (!form.retirement_age || isNaN(age) || age < 1) next.retirement_age = 'Enter a valid retirement age (e.g. 70).';
     if (!form.min_service_years || isNaN(svc) || svc < 1) next.min_service_years = 'Enter a valid number of service years.';
     setErrors(next);
     return Object.keys(next).length === 0;

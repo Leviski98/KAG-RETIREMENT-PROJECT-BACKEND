@@ -19,7 +19,7 @@ class SystemSettings(models.Model):
     currency = models.CharField(max_length=50, default='KES')
 
     # Preferences — Retirement Rules
-    retirement_age = models.PositiveIntegerField(default=65)
+    retirement_age = models.PositiveIntegerField(default=70)
     min_service_years = models.PositiveIntegerField(default=10)
 
     # Preferences — Display
