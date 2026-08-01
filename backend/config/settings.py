@@ -224,7 +224,7 @@ SIMPLE_JWT = {
     'AUTH_COOKIE': 'kag_access',
     'AUTH_REFRESH_COOKIE': 'kag_refresh',
     'AUTH_COOKIE_SECURE': not DEBUG,
-    'AUTH_COOKIE_SAMESITE': 'Lax',
+    'AUTH_COOKIE_SAMESITE': 'Lax' if DEBUG else 'None',
     'AUTH_COOKIE_PATH': '/',
 }
 
