@@ -302,7 +302,7 @@ function ReportCardItem({
 
         <div className="mt-6 flex gap-3">
           <Button
-            className="h-12 flex-1 rounded-xl bg-gradient-to-r from-[#3377ff] to-[#5aa0f6] text-sm font-extrabold text-white shadow-none hover:from-[#2f6eea] hover:to-[#4e94ea]"
+            className="h-12 flex-1 rounded-xl bg-linear-to-r from-[#3377ff] to-[#5aa0f6] text-sm font-extrabold text-white shadow-none hover:from-[#2f6eea] hover:to-[#4e94ea]"
             onClick={onPreview}
             disabled={isGenerating || isDownloading}
             aria-label={`Preview ${report.title}`}

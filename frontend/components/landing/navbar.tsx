@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function LandingNavbar() {
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-600 to-blue-500">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-linear-to-r from-blue-600 to-blue-500">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/" className="text-2xl font-bold text-white">
           KAG Retirement

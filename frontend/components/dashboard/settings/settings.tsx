@@ -761,7 +761,7 @@ function AboutPanel() {
         description="System information and version details."
       />
 
-      <div className="rounded-xl bg-gradient-to-r from-[#3377ff] to-[#2d60bf] px-6 py-8 text-center text-white">
+      <div className="rounded-xl bg-linear-to-r from-[#3377ff] to-[#2d60bf] px-6 py-8 text-center text-white">
         <div className="mx-auto mb-5 flex size-16 items-center justify-center rounded-xl bg-white/20 text-2xl font-extrabold">
           KAG
         </div>

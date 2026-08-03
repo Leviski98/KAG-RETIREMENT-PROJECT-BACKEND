@@ -177,7 +177,7 @@ export function DashboardOverview() {
   return (
     <div className="space-y-6">
       {/* Hero Banner */}
-      <div className="rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 p-8 text-white">
+      <div className="rounded-lg bg-linear-to-r from-blue-500 to-blue-600 p-8 text-white">
         <h1 className="text-3xl font-bold mb-2">
           Manage Your Church Retirement with Confidence
         </h1>

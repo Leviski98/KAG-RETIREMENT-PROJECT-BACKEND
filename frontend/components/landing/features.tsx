@@ -41,7 +41,7 @@ export default function Features() {
               {feature.imagePosition === "left" ? (
                 <>
                   {/* Image */}
-                  <div className="bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg h-64 lg:h-80 flex items-center justify-center">
+                  <div className="bg-linear-to-br from-blue-100 to-blue-50 rounded-lg h-64 lg:h-80 flex items-center justify-center">
                     <div className="text-6xl">{feature.icon}</div>
                   </div>
                   {/* Content */}
@@ -68,7 +68,7 @@ export default function Features() {
                     </button>
                   </div>
                   {/* Image */}
-                  <div className="bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg h-64 lg:h-80 flex items-center justify-center">
+                  <div className="bg-linear-to-br from-blue-100 to-blue-50 rounded-lg h-64 lg:h-80 flex items-center justify-center">
                     <div className="text-6xl">{feature.icon}</div>
                   </div>
                 </>
