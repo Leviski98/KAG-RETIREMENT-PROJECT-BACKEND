@@ -20,10 +20,11 @@ export function DashboardAuthGuard({ children }: DashboardAuthGuardProps) {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
   const logout = useLogout();
-  // Mutations are stable across renders in practice, but this avoids re-running
-  // the idle-timer effect if the identity ever changes.
   const logoutRef = useRef(logout);
-  logoutRef.current = logout;
+
+  useEffect(() => {
+    logoutRef.current = logout;
+  }, [logout]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
