@@ -41,7 +41,7 @@ export function Sidebar() {
 
   function handleSignOut() {
     logout.mutate(undefined, {
-      onSettled: () => router.push(ROUTES.LOGIN),
+      onSettled: () => router.push(ROUTES.LANDING),
     });
   }
 
