@@ -120,7 +120,7 @@ export function DashboardOverview() {
   return (
     <div className="flex flex-col gap-6">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-500 to-blue-700 p-8 text-white shadow-lg">
+      <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-blue-600 via-blue-500 to-blue-700 p-8 text-white shadow-lg">
         <div className="relative z-10">
           <h1 className="text-3xl font-bold mb-2">
             Manage Your Church Retirement with Confidence

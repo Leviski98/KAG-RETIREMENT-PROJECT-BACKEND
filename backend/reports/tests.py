@@ -91,7 +91,7 @@ class ReportsApiTests(TestCase):
         self.assertEqual(pastor_row['status'], 'Active')
         self.assertIsInstance(pastor_row['age'], int)
         self.assertIsInstance(pastor_row['years_served'], int)
-        self.assertEqual(pastor_row['projected_retirement'], 'Jan 2030')
+        self.assertEqual(pastor_row['projected_retirement'], 'Jan 2035')
         self.assertTrue(pastor_row['remaining_tenure'].endswith(' yrs'))
 
     def test_openapi_schema_includes_report_paths(self):

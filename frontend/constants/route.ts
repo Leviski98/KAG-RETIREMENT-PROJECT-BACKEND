@@ -1,4 +1,5 @@
 export const ROUTES = {
+  LANDING: "/",
   DASHBOARD: "/dashboard",
   CHURCHES: "/dashboard/churches",
   CHURCH_DETAIL: (id: string) => `/dashboard/churches/${id}`,

@@ -465,7 +465,7 @@ function PreferencesPanel({ settings, onSave, isSaving }: PanelProps) {
     const next: typeof errors = {};
     const age = Number(form.retirement_age);
     const svc = Number(form.min_service_years);
-    if (!form.retirement_age || isNaN(age) || age < 1) next.retirement_age = 'Enter a valid retirement age (e.g. 65).';
+    if (!form.retirement_age || isNaN(age) || age < 1) next.retirement_age = 'Enter a valid retirement age (e.g. 70).';
     if (!form.min_service_years || isNaN(svc) || svc < 1) next.min_service_years = 'Enter a valid number of service years.';
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -761,7 +761,7 @@ function AboutPanel() {
         description="System information and version details."
       />
 
-      <div className="rounded-xl bg-gradient-to-r from-[#3377ff] to-[#2d60bf] px-6 py-8 text-center text-white">
+      <div className="rounded-xl bg-linear-to-r from-[#3377ff] to-[#2d60bf] px-6 py-8 text-center text-white">
         <div className="mx-auto mb-5 flex size-16 items-center justify-center rounded-xl bg-white/20 text-2xl font-extrabold">
           KAG
         </div>
