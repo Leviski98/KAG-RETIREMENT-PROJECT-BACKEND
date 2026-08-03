@@ -12,7 +12,7 @@ export default function CTA() {
             Join organizations already using KAG Retirement to streamline their pastor retirement management.
           </p>
           <Link
-            href="/dashboard/churches"
+            href="/signup"
             className="inline-block bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
           >
             Get Started Now
