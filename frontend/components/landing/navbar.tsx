@@ -22,7 +22,7 @@ export default function LandingNavbar() {
             </a>
           </nav>
           <Link
-            href="/dashboard/churches"
+            href="/login"
             className="bg-white text-blue-600 px-6 py-2 rounded-lg hover:bg-blue-50 transition font-semibold"
           >
             Sign In
