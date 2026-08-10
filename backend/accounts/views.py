@@ -492,3 +492,17 @@ class ApproveUserView(APIView):
             user.save(update_fields=['is_active'])
             send_approved_email(user)
         return Response(UserSerializer(user).data)
+
+
+class ActiveUsersView(APIView):
+    permission_classes = [IsAdminUser]
+
+    @extend_schema(tags=['Auth'], responses={200: UserSerializer(many=True)})
+    def get(self, request):
+        users = (
+            User.objects
+            .filter(is_active=True)
+            .select_related('profile')
+            .order_by('first_name', 'email')
+        )
+        return Response(UserSerializer(users, many=True).data)

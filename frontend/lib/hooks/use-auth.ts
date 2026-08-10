@@ -6,6 +6,7 @@ export const authKeys = {
   all: ['auth'] as const,
   me: () => [...authKeys.all, 'me'] as const,
   pendingUsers: () => [...authKeys.all, 'pending-users'] as const,
+  activeUsers: () => [...authKeys.all, 'active-users'] as const,
 };
 
 /**
@@ -103,6 +104,14 @@ export function usePendingUsers(enabled = true) {
   });
 }
 
+export function useActiveUsers(enabled = true) {
+  return useQuery({
+    queryKey: authKeys.activeUsers(),
+    queryFn: authApi.activeUsers,
+    enabled,
+  });
+}
+
 export function useApproveUser() {
   const queryClient = useQueryClient();
 
@@ -110,6 +119,7 @@ export function useApproveUser() {
     mutationFn: (userId: number) => authApi.approveUser(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: authKeys.pendingUsers() });
+      queryClient.invalidateQueries({ queryKey: authKeys.activeUsers() });
     },
   });
 }
