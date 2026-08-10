@@ -43,6 +43,8 @@ export const authApi = {
 
   pendingUsers: (): Promise<AuthUser[]> => apiClient.get<AuthUser[]>('/auth/users/pending'),
 
+  activeUsers: (): Promise<AuthUser[]> => apiClient.get<AuthUser[]>('/auth/users/active'),
+
   approveUser: (userId: number): Promise<AuthUser> =>
     apiClient.post<AuthUser>(`/auth/users/${userId}/approve`),
 };

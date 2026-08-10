@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    ActiveUsersView,
     ApproveUserView,
     LoginView,
     LogoutView,
@@ -30,6 +31,7 @@ urlpatterns = [
     path('auth/logout', LogoutView.as_view(), name='auth-logout'),
     path('auth/me', MeView.as_view(), name='auth-me'),
     path('auth/users/pending', PendingUsersView.as_view(), name='auth-users-pending'),
+    path('auth/users/active', ActiveUsersView.as_view(), name='auth-users-active'),
     path('auth/users/<int:user_id>/approve', ApproveUserView.as_view(), name='auth-users-approve'),
     path('webhooks/resend', ResendInboundWebhookView.as_view(), name='webhooks-resend'),
 ]

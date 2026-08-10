@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOutIcon } from "lucide-react";
+import { ChevronDownIcon, LogOutIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { sidebarItems, type SidebarItem } from "@/configs/sidebar-config";
@@ -25,6 +26,7 @@ export function Sidebar() {
   const { data: settings } = useSettings();
   const { user } = useAuth();
   const logout = useLogout();
+  const [manuallyToggled, setManuallyToggled] = useState<Record<string, boolean>>({});
 
   const displayName = user?.full_name || settings?.account_display_name || "System Administrator";
   const displayEmail = user?.email || settings?.account_email || "";
@@ -38,6 +40,15 @@ export function Sidebar() {
   const visibleItems = sidebarItems.filter(
     (item) => !item.adminOnly || user?.is_admin
   );
+
+  function isGroupOpen(item: SidebarItem) {
+    const autoOpen = pathname === item.href || pathname.startsWith(item.href + "/");
+    return manuallyToggled[item.href] ?? autoOpen;
+  }
+
+  function toggleGroup(item: SidebarItem) {
+    setManuallyToggled((prev) => ({ ...prev, [item.href]: !isGroupOpen(item) }));
+  }
 
   function handleSignOut() {
     logout.mutate(undefined, {
@@ -84,6 +95,63 @@ export function Sidebar() {
         {visibleItems.map((item: SidebarItem) => {
           const isActive =
             pathname === item.href || pathname.startsWith(item.href + "/");
+
+          if (item.children && item.children.length > 0) {
+            const open = isGroupOpen(item);
+
+            return (
+              <div key={item.href}>
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(item)}
+                  aria-expanded={open}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                      : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  )}
+                >
+                  <item.icon className="size-4 shrink-0" />
+                  <span className="flex-1 text-left">{item.label}</span>
+                  <ChevronDownIcon
+                    className={cn(
+                      "size-4 shrink-0 transition-transform",
+                      open && "rotate-180"
+                    )}
+                  />
+                </button>
+
+                {open && (
+                  <div className="mt-1 flex flex-col gap-0.5 pl-4">
+                    {item.children.map((child) => {
+                      const childActive = pathname === child.href;
+                      return (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          className={cn(
+                            "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors",
+                            childActive
+                              ? "bg-sidebar-accent font-medium text-sidebar-foreground"
+                              : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "size-1.5 shrink-0 rounded-full",
+                              childActive ? "bg-sidebar-primary" : "bg-transparent"
+                            )}
+                          />
+                          {child.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
 
           return (
             <Link
