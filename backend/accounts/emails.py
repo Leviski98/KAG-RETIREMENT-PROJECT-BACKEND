@@ -99,5 +99,3 @@ def send_admin_notification_email(user) -> None:
             'approve_link': link,
         },
     )
-
-    )
