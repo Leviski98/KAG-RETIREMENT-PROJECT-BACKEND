@@ -14,6 +14,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .emails import (
+    send_admin_notification_email,
     send_approved_email,
     send_otp_email,
     send_password_reset_email,
@@ -154,6 +155,9 @@ class VerifyEmailView(APIView):
             profile.save(update_fields=['email_verified', 'updated_at'])
             token.used = True
             token.save(update_fields=['used'])
+
+        if not token.user.is_active:
+            send_admin_notification_email(token.user)
 
         return Response({
             'detail': 'Email verified. An administrator will activate your account shortly.',
