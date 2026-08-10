@@ -237,13 +237,15 @@ SIMPLE_JWT = {
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'KAG Retirement <noreply@kag.local>')
 RESEND_WEBHOOK_SECRET = os.getenv('RESEND_WEBHOOK_SECRET', '')
+RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')
 
-if DEBUG:
+# Use the console backend only when there's no Resend key to send real mail with.
+if DEBUG and not RESEND_API_KEY:
     EMAIL_BACKEND = 'config.email_backends.PlainTextConsoleEmailBackend'
 else:
     EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
     ANYMAIL = {
-        'RESEND_API_KEY': os.getenv('RESEND_API_KEY', ''),
+        'RESEND_API_KEY': RESEND_API_KEY,
     }
 
 # API Documentation (Swagger)
