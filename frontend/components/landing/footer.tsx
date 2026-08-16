@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { MapPin, Phone, Mail, Building2 } from "lucide-react";
+import { MapPin, Phone, Mail } from "lucide-react";
 
 export default function LandingFooter() {
   return (
@@ -11,8 +12,14 @@ export default function LandingFooter() {
           {/* Left Section */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="bg-white text-blue-700 p-2 rounded">
-                <Building2 size={24} />
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-white p-1">
+                <Image
+                  src="/images/logo.png"
+                  alt=""
+                  width={44}
+                  height={44}
+                  className="size-full object-contain"
+                />
               </div>
               <h3 className="text-xl font-bold">KAG Retirement</h3>
             </div>

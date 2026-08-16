@@ -6,18 +6,53 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ─── Brand Color Variables (Direct HEX) ────────────────────────────────────── */
+/*
+ * The palette is anchored on the KAG crest. The mark itself is #020CAC — hue
+ * 236 at 98% saturation, which is right for a printed crest but fatiguing
+ * across a data-dense admin UI, so the interactive ramp below reuses the hue
+ * at 80% saturation. Contrast figures are against white; anything used for
+ * body-size text must clear 4.5:1 (WCAG AA).
+ *
+ * The previous palette failed that bar on four of six colours (primary was
+ * 4.02:1 and is used for links), which is what this rewrite fixes.
+ */
 :root {
-  /* Primary Blue */
-  --brand-primary: #3377FF;
-  --brand-primary-darker: #2659BF;
-  --brand-primary-lighter: #99BBFF;
-  --brand-primary-subtle: #D6E4FF;
+  /* Identity — the crest only. Never use as an interactive colour. */
+  --brand-ink: #020CAC;
 
-  /* State Colors */
-  --brand-success: #06C270;
-  --brand-error: #FF3B3B;
-  --brand-warning: #FFCC00;
-  --brand-info: #0063F7;
+  /* Primary ramp — hue 236, 80% saturation */
+  --brand-50: #EFF0FD;
+  --brand-100: #DDDFFB;
+  --brand-200: #BABEF7;
+  --brand-300: #888FF2;
+  --brand-400: #4752EB;  /*  5.72:1 */
+  --brand-500: #1826DC;  /*  8.94:1 */
+  --brand-600: #141EB3;  /* 11.25:1 */
+  --brand-700: #10188E;  /* 13.61:1 */
+  --brand-800: #0D1473;  /* 15.39:1 */
+  --brand-900: #0A105C;  /* 16.91:1 */
+  --brand-950: #070B40;  /* 18.57:1 */
+
+  /* Primary aliases */
+  --brand-primary: var(--brand-600);
+  --brand-primary-darker: var(--brand-700);
+  --brand-primary-lighter: var(--brand-300);
+  --brand-primary-subtle: var(--brand-100);
+
+  /*
+   * State colours come in pairs. `-fill` is the vivid version for bars,
+   * badges and icons where contrast is carried by size or a background;
+   * `-text` is darkened until it clears 4.5:1 for body-size text on white.
+   * Using one value for both jobs is what broke accessibility before.
+   */
+  --brand-success: #0A844B;        /* 4.8:1 — text-safe default */
+  --brand-success-fill: #05D172;
+  --brand-error: #C52020;          /* 5.8:1 */
+  --brand-error-fill: #C11515;
+  --brand-warning: #8F6E0A;        /* 4.8:1 */
+  --brand-warning-fill: #E2AA03;
+  --brand-info: #115CD5;           /* 6.0:1 */
+  --brand-info-fill: #0553D1;
 
   /* Dark Colors (Text & UI) */
   --brand-dark-1: #3A3A3C;
@@ -30,6 +65,12 @@
   --brand-light-2: #EBEBF0;
   --brand-light-3: #F2F2F5;
   --brand-light-4: #FAFAFC;
+
+  /* Sidebar surfaces — derived from the brand hue rather than the arbitrary
+     #1a1a2e they replace, so the dark chrome reads as intentional. */
+  --brand-sidebar: #171930;
+  --brand-sidebar-accent: #212445;
+  --brand-sidebar-border: #2D305D;
 
   /* Spacing Scale (8px base) */
   --space-1: 8px;
@@ -87,14 +128,32 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 
   /* Brand Colors (Tailwind utilities: bg-brand-primary, text-brand-error, etc.) */
+  --color-brand-ink: var(--brand-ink);
   --color-brand-primary: var(--brand-primary);
   --color-brand-primary-darker: var(--brand-primary-darker);
   --color-brand-primary-lighter: var(--brand-primary-lighter);
   --color-brand-primary-subtle: var(--brand-primary-subtle);
   --color-brand-success: var(--brand-success);
+  --color-brand-success-fill: var(--brand-success-fill);
   --color-brand-error: var(--brand-error);
+  --color-brand-error-fill: var(--brand-error-fill);
   --color-brand-warning: var(--brand-warning);
+  --color-brand-warning-fill: var(--brand-warning-fill);
   --color-brand-info: var(--brand-info);
+  --color-brand-info-fill: var(--brand-info-fill);
+
+  /* Numeric ramp (bg-brand-600, text-brand-100, ...) */
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-800: var(--brand-800);
+  --color-brand-900: var(--brand-900);
+  --color-brand-950: var(--brand-950);
   --color-brand-dark-1: var(--brand-dark-1);
   --color-brand-dark-2: var(--brand-dark-2);
   --color-brand-dark-3: var(--brand-dark-3);
@@ -124,20 +183,22 @@
   --border: var(--brand-dark-4);
   --input: var(--brand-dark-4);
   --ring: var(--brand-primary);
-  --chart-1: var(--brand-primary);
-  --chart-2: var(--brand-success);
-  --chart-3: var(--brand-warning);
-  --chart-4: var(--brand-info);
-  --chart-5: var(--brand-primary-lighter);
+  /* Charts sit on light card surfaces at large sizes, so they use the vivid
+     `-fill` variants rather than the text-safe ones. */
+  --chart-1: var(--brand-500);
+  --chart-2: var(--brand-success-fill);
+  --chart-3: var(--brand-warning-fill);
+  --chart-4: var(--brand-info-fill);
+  --chart-5: var(--brand-300);
   --radius: 0.625rem;
-  --sidebar: #1a1a2e;
+  --sidebar: var(--brand-sidebar);
   --sidebar-foreground: oklch(0.93 0.01 264);
-  --sidebar-primary: var(--brand-primary);
+  --sidebar-primary: var(--brand-500);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: #252541;
+  --sidebar-accent: var(--brand-sidebar-accent);
   --sidebar-accent-foreground: oklch(0.93 0.01 264);
-  --sidebar-border: #32324a;
-  --sidebar-ring: var(--brand-primary);
+  --sidebar-border: var(--brand-sidebar-border);
+  --sidebar-ring: var(--brand-400);
 }
 
 .dark {
@@ -159,16 +220,18 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: var(--brand-primary);
-  --chart-1: var(--brand-primary);
-  --chart-2: var(--brand-success);
-  --chart-3: var(--brand-warning);
-  --chart-4: var(--brand-info);
-  --chart-5: var(--brand-primary-lighter);
-  --sidebar: #1a1a2e;
+  /* Dark surfaces need the vivid fills; the text-safe variants are tuned for
+     white backgrounds and go muddy here. */
+  --chart-1: var(--brand-400);
+  --chart-2: var(--brand-success-fill);
+  --chart-3: var(--brand-warning-fill);
+  --chart-4: var(--brand-info-fill);
+  --chart-5: var(--brand-200);
+  --sidebar: var(--brand-sidebar);
   --sidebar-foreground: oklch(0.93 0.01 264);
-  --sidebar-primary: var(--brand-primary);
+  --sidebar-primary: var(--brand-500);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: #252541;
+  --sidebar-accent: var(--brand-sidebar-accent);
   --sidebar-accent-foreground: oklch(0.93 0.01 264);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: var(--brand-primary);
