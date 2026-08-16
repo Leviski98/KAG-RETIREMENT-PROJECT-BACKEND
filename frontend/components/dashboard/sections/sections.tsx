@@ -372,7 +372,7 @@ export function SectionsManager() {
               <TableRow>
                 <TableCell colSpan={6} className="py-0">
                   <EmptyState
-                    title="No Section found"
+                    title="No sections found"
                     action={
                       <Button onClick={() => setIsAddDialogOpen(true)}>
                         <PlusIcon data-icon="inline-start" />

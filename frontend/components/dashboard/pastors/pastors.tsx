@@ -1218,7 +1218,7 @@ export function PastorsManager() {
               <TableRow>
                 <TableCell colSpan={10} className="py-0">
                   <EmptyState
-                    title="No Pastor found"
+                    title="No pastors found"
                     action={
                       <Button onClick={() => setIsAddDialogOpen(true)}>
                         <PlusIcon data-icon="inline-start" />

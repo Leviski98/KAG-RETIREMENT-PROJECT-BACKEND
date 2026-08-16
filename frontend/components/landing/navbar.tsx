@@ -17,7 +17,7 @@ export default function LandingNavbar() {
             <a href="#features" className="text-white hover:text-blue-100 transition">
               Features
             </a>
-            <a href="#" className="text-white hover:text-blue-100 transition">
+            <a href="#contact" className="text-white hover:text-blue-100 transition">
               Contact
             </a>
           </nav>

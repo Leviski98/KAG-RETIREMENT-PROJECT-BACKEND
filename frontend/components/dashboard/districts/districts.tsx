@@ -320,7 +320,7 @@ export function DistrictsManager() {
               <TableRow>
                 <TableCell colSpan={5} className="py-0">
                   <EmptyState
-                    title="No District found"
+                    title="No districts found"
                     action={
                       <Button onClick={() => setIsAddDialogOpen(true)}>
                         <PlusIcon data-icon="inline-start" />

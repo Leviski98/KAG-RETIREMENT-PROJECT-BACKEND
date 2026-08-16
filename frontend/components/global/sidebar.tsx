@@ -28,8 +28,12 @@ export function Sidebar() {
   const logout = useLogout();
   const [manuallyToggled, setManuallyToggled] = useState<Record<string, boolean>>({});
 
-  const displayName = user?.full_name || settings?.account_display_name || "System Administrator";
   const displayEmail = user?.email || settings?.account_email || "";
+  // The API's full_name falls back to the email when a user has no name set,
+  // so an unguarded chain renders the same string in both slots.
+  const resolvedName = user?.full_name?.trim() || settings?.account_display_name?.trim() || "";
+  const displayName =
+    resolvedName && resolvedName !== displayEmail ? resolvedName : "System Administrator";
   const initials = displayName
     .split(" ")
     .map((w) => w[0])
@@ -85,8 +89,10 @@ export function Sidebar() {
             </svg>
           )}
         </div>
-        <span className="text-sm font-semibold tracking-tight text-sidebar-foreground">
-          {settings?.org_abbreviation ? `${settings.org_abbreviation} Retire` : "KAG Retire"}
+        <span className="truncate text-sm font-semibold tracking-tight text-sidebar-foreground">
+          {settings?.org_abbreviation
+            ? `${settings.org_abbreviation} Retirement`
+            : "KAG Retirement"}
         </span>
       </div>
 

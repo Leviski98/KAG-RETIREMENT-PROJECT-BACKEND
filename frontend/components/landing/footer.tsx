@@ -1,10 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { MapPin, Phone, Mail, Building2 } from "lucide-react";
 
 export default function LandingFooter() {
   return (
-    <footer className="bg-linear-to-r from-blue-800 to-blue-900 text-white">
+    <footer id="contact" className="bg-linear-to-r from-blue-800 to-blue-900 text-white">
       <div className="container mx-auto px-4 py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
           {/* Left Section */}
@@ -25,9 +26,9 @@ export default function LandingFooter() {
             <h4 className="font-bold mb-6 text-white">Quick Links</h4>
             <ul className="space-y-3 text-sm text-blue-100">
               <li>
-                <a href="#" className="hover:text-white transition">
+                <Link href="/" className="hover:text-white transition">
                   Home
-                </a>
+                </Link>
               </li>
               <li>
                 <a href="#features" className="hover:text-white transition">
@@ -40,7 +41,7 @@ export default function LandingFooter() {
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition">
+                <a href="#contact" className="hover:text-white transition">
                   Contact
                 </a>
               </li>

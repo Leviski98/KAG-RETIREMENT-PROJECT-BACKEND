@@ -13,7 +13,14 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { TrendingUp, Users, Building2, UserCheck, Loader2 } from "lucide-react";
+import {
+  TrendingUp,
+  Users,
+  Building2,
+  UserCheck,
+  Loader2,
+  type LucideIcon,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   usePastorStats,
@@ -25,7 +32,15 @@ import {
   type PastorStatusCount,
 } from "@/hooks/api";
 
-const ACTIVITY_COLORS = ["blue", "green", "yellow", "purple", "indigo"] as const;
+// Full class names — Tailwind's JIT only emits classes it can find as literals,
+// so these can never be built by interpolation at render time.
+const ACTIVITY_COLORS = [
+  "bg-blue-500",
+  "bg-green-500",
+  "bg-yellow-500",
+  "bg-purple-500",
+  "bg-indigo-500",
+] as const;
 
 const RANK_COLORS = ["#4B5563", "#63B3ED", "#48BB78", "#ECC94B", "#38A169"];
 
@@ -34,6 +49,16 @@ const statusColors: Record<string, string> = {
   retired: "#3B82F6",
   suspended: "#F59E0B",
   deceased: "#9CA3AF",
+};
+
+type MetricCard = {
+  label: string;
+  value: number;
+  change?: number;
+  changeText?: string;
+  icon: LucideIcon;
+  color: string;
+  iconColor: string;
 };
 
 function getInitials(name: string): string {
@@ -95,17 +120,22 @@ export function DashboardOverview() {
   );
 
   // Ensure all statuses are included, even if they have 0 count
-  const pastorStatusData = statusOrder.map(status => ({
-    name: status,
+  const pastorStatusData = statusOrder.map((status) => ({
+    name: status.charAt(0).toUpperCase() + status.slice(1),
     value: statusMap.get(status) || 0,
   }));
 
-  // Build metrics data with real values
-  const metricsData = [
+  // statusOrder always yields four rows, so length is never a signal for
+  // "no data" — the counts are.
+  const totalStatusCount = pastorStatusData.reduce((sum, s) => sum + s.value, 0);
+
+  // Build metrics data with real values. `change` is only set where the API
+  // actually reports a delta; pastors have no such endpoint yet.
+  const metricsData: MetricCard[] = [
     {
       label: "Total Districts",
       value: districtStats?.total_districts || 0,
-      change: `+${districtStats?.recent_districts || 0}`,
+      change: districtStats?.recent_districts || 0,
       changeText: "from last month",
       icon: Building2,
       color: "bg-blue-50",
@@ -114,7 +144,7 @@ export function DashboardOverview() {
     {
       label: "Total Sections",
       value: sectionStats?.total_sections || 0,
-      change: `+${sectionStats?.recent_sections || 0}`,
+      change: sectionStats?.recent_sections || 0,
       changeText: "from last month",
       icon: Building2,
       color: "bg-green-50",
@@ -123,8 +153,6 @@ export function DashboardOverview() {
     {
       label: "Active Pastors",
       value: pastorStats?.active_pastors || 0,
-      change: "+4%",
-      changeText: "from last month",
       icon: Users,
       color: "bg-purple-50",
       iconColor: "text-purple-600",
@@ -132,8 +160,6 @@ export function DashboardOverview() {
     {
       label: "Retired Pastors",
       value: pastorStats?.retired_pastors || 0,
-      change: "+5%",
-      changeText: "this quarter",
       icon: UserCheck,
       color: "bg-orange-50",
       iconColor: "text-orange-600",
@@ -159,7 +185,7 @@ export function DashboardOverview() {
         action: `${pastorName} was assigned to ${churchName} as ${roleName}`,
         time: formatTime(assignment.created_at),
         avatar: getInitials(pastorName),
-        color: `bg-${ACTIVITY_COLORS[assignment.id % ACTIVITY_COLORS.length]}-500`,
+        color: ACTIVITY_COLORS[assignment.id % ACTIVITY_COLORS.length],
       };
     });
 
@@ -205,12 +231,14 @@ export function DashboardOverview() {
                       ? metric.value.toLocaleString()
                       : metric.value}
                   </p>
-                  <p className="text-xs text-gray-500 mt-2">
-                    <span className="text-green-600 font-semibold">
-                      {metric.change}
-                    </span>{" "}
-                    {metric.changeText}
-                  </p>
+                  {metric.change ? (
+                    <p className="text-xs text-gray-500 mt-2">
+                      <span className="text-green-600 font-semibold">
+                        +{metric.change}
+                      </span>{" "}
+                      {metric.changeText}
+                    </p>
+                  ) : null}
                 </div>
                 <Icon className={`${metric.iconColor} w-8 h-8 opacity-60`} />
               </div>
@@ -272,7 +300,7 @@ export function DashboardOverview() {
           <h3 className="text-lg font-semibold mb-4 text-gray-900">
             Pastor Status Distribution
           </h3>
-          {pastorStatusData.length > 0 ? (
+          {totalStatusCount > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
               <BarChart
                 data={pastorStatusData}

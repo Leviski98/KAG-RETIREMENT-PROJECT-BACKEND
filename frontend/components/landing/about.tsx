@@ -1,24 +1,26 @@
+import { Network, Users, ClipboardList } from "lucide-react";
+
 export default function About() {
   const features = [
     {
       title: "Hierarchical Organization Management",
       description: "Organize your church structures with districts, sections, and local churches in a clear hierarchy.",
-      icon: "🏛️",
+      icon: Network,
     },
     {
       title: "Pastor Management",
       description: "Track pastor information, assignments, and retirement status across your organization.",
-      icon: "👨‍💼",
+      icon: Users,
     },
     {
       title: "Retirement Coordination",
       description: "Coordinate retirement benefits and planning for pastors with comprehensive tracking.",
-      icon: "📋",
+      icon: ClipboardList,
     },
   ];
 
   return (
-    <section className="bg-gray-50 py-20">
+    <section id="about" className="scroll-mt-16 bg-gray-50 py-20">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold mb-6 text-center">
@@ -33,11 +35,11 @@ export default function About() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
+          {features.map(({ title, description, icon: Icon }, index) => (
             <div key={index} className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
-              <div className="text-4xl mb-4">{feature.icon}</div>
-              <h3 className="text-lg font-semibold mb-3">{feature.title}</h3>
-              <p className="text-gray-600 text-sm leading-relaxed">{feature.description}</p>
+              <Icon className="size-9 mb-4 text-blue-600" strokeWidth={1.5} />
+              <h3 className="text-lg font-semibold mb-3">{title}</h3>
+              <p className="text-gray-600 text-sm leading-relaxed">{description}</p>
             </div>
           ))}
         </div>

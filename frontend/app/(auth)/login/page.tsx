@@ -11,6 +11,7 @@ import { ApiRequestError } from "@/lib/api/client";
 import { ROUTES } from "@/constants/route";
 import { OTP_SESSION_KEY } from "@/constants/auth";
 import { FormField } from "@/components/patterns/form-field";
+import { PasswordInput } from "@/components/patterns/password-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -78,8 +79,7 @@ export default function LoginPage() {
             />
           </FormField>
           <FormField label="Password" required error={errors.password}>
-            <Input
-              type="password"
+            <PasswordInput
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               placeholder="Your password"
