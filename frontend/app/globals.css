@@ -72,6 +72,18 @@
   --brand-sidebar-accent: #212445;
   --brand-sidebar-border: #2D305D;
 
+  /*
+   * Print-fidelity palette. These deliberately sit OUTSIDE the brand ramp:
+   * they mirror backend/reports/pdf_generator.py so the on-screen report
+   * preview matches the downloaded PDF exactly. Changing one here without
+   * changing the generator breaks that match.
+   */
+  --report-header: #1F4E78;    /* pdf_generator.py — table header fill */
+  --report-heading: #003A70;   /* pdf_generator.py — section heading text */
+  --report-grid: #808080;      /* pdf_generator.py — table gridlines */
+  --report-row: #F5F5F5;
+  --report-row-alt: #F5F5DC;   /* pdf_generator.py — alternating row fill */
+
   /* Spacing Scale (8px base) */
   --space-1: 8px;
   --space-2: 16px;
@@ -154,6 +166,13 @@
   --color-brand-800: var(--brand-800);
   --color-brand-900: var(--brand-900);
   --color-brand-950: var(--brand-950);
+
+  /* Print-fidelity utilities (bg-report-header, border-report-grid, ...) */
+  --color-report-header: var(--report-header);
+  --color-report-heading: var(--report-heading);
+  --color-report-grid: var(--report-grid);
+  --color-report-row: var(--report-row);
+  --color-report-row-alt: var(--report-row-alt);
   --color-brand-dark-1: var(--brand-dark-1);
   --color-brand-dark-2: var(--brand-dark-2);
   --color-brand-dark-3: var(--brand-dark-3);
