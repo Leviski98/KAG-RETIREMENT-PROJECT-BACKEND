@@ -31,6 +31,8 @@ import {
   type PastorRankCount,
   type PastorStatusCount,
 } from "@/hooks/api";
+import { useAuth } from "@/components/providers";
+import { getDisplayName } from "@/lib/utils";
 
 // Full class names — Tailwind's JIT only emits classes it can find as literals,
 // so these can never be built by interpolation at render time. Uses the same
@@ -103,6 +105,8 @@ function formatTime(dateString: string): string {
 
 export function DashboardOverview() {
   const router = useRouter();
+  const { user } = useAuth();
+  const displayName = getDisplayName(user);
   const { data: pastorStats, isLoading: pastorLoading } = usePastorStats();
   const { data: districtStats, isLoading: districtLoading } =
     useDistrictStats();
@@ -222,7 +226,7 @@ export function DashboardOverview() {
           Manage Your Church Retirement with Confidence
         </h1>
         <p className="text-primary-foreground/80">
-          Welcome back, Admin! Here&apos;s your overview of the KAG organization.
+          Welcome back, {displayName}! Here&apos;s your overview of the KAG organization.
         </p>
       </div>
 

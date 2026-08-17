@@ -31,6 +31,8 @@ import { Plus as PlusIcon, Search, Pencil, Trash2, AlertTriangle, CheckCircle2, 
 import { format } from "date-fns";
 import Link from "next/link";
 import { EmptyState } from "@/components/patterns/empty-state";
+import { ConfirmDialog } from "@/components/patterns/confirm-dialog";
+import { MESSAGES } from "@/constants/message";
 import {
   useSections,
   useCreateSection,
@@ -136,7 +138,7 @@ export function SectionsManager() {
       },
       {
         onSuccess: () => {
-          showSuccess("Section added successfully.");
+          showSuccess(MESSAGES.SECTION.ADD_SUCCESS);
           setNewSectionName("");
           setSelectedDistrictForNew(undefined);
           setIsAddDialogOpen(false);
@@ -169,7 +171,7 @@ export function SectionsManager() {
       },
       {
         onSuccess: () => {
-          showSuccess("Section updated successfully.");
+          showSuccess(MESSAGES.SECTION.EDIT_SUCCESS);
           setEditSectionName("");
           setEditSelectedDistrict(undefined);
           setEditingSection(null);
@@ -193,32 +195,27 @@ export function SectionsManager() {
     if (sectionToDelete) {
       deleteMutation.mutate(sectionToDelete.id, {
         onSuccess: () => {
-          showSuccess("Section deleted successfully.");
+          showSuccess(MESSAGES.SECTION.DELETE_SUCCESS);
           setSectionToDelete(null);
           setIsDeleteDialogOpen(false);
         },
         onError: (error: unknown) => {
           console.error("Error deleting section:", error);
-          
+
           // Extract error message from backend response
           let errorMessage = "Failed to delete section";
-          
+
           if (error && typeof error === 'object' && 'response' in error) {
             const response = (error as { response?: { detail?: string; error?: string } }).response;
             errorMessage = response?.detail || response?.error || errorMessage;
           }
-          
+
           toast.error(errorMessage, { duration: 5000 });
           setSectionToDelete(null);
           setIsDeleteDialogOpen(false);
         },
       });
     }
-  };
-
-  const handleCancelDelete = () => {
-    setSectionToDelete(null);
-    setIsDeleteDialogOpen(false);
   };
 
   return (
@@ -541,43 +538,20 @@ export function SectionsManager() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <div className="flex flex-col items-center gap-4 py-4">
-            <div className="flex size-16 items-center justify-center rounded-full bg-brand-warning/10">
-              <AlertTriangle className="size-8 text-brand-warning" />
-            </div>
-
-            <div className="flex flex-col gap-2 text-center">
-              <h2 className="text-lg font-semibold">Delete Section?</h2>
-              <p className="text-sm text-muted-foreground">
-                Are you sure you want to delete{" "}
-                <span className="font-medium text-foreground">
-                  {sectionToDelete?.name}
-                </span>
-                ? This action cannot be undone and will affect all related churches.
-              </p>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={handleCancelDelete}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmDelete}
-              className="flex-1 bg-destructive text-white hover:bg-destructive/90"
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title={MESSAGES.SECTION.DELETE_CONFIRM_TITLE}
+        description={
+          sectionToDelete
+            ? MESSAGES.SECTION.DELETE_CONFIRM_DESCRIPTION(sectionToDelete.name)
+            : ""
+        }
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

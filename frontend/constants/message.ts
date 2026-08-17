@@ -1,4 +1,20 @@
 export const MESSAGES = {
+  DISTRICT: {
+    ADD_SUCCESS: "District added successfully.",
+    EDIT_SUCCESS: "District updated successfully.",
+    DELETE_SUCCESS: "District deleted successfully.",
+    DELETE_CONFIRM_TITLE: "Delete District?",
+    DELETE_CONFIRM_DESCRIPTION: (name: string) =>
+      `Are you sure you want to delete ${name}? This action cannot be undone and will affect all related sections.`,
+  },
+  SECTION: {
+    ADD_SUCCESS: "Section added successfully.",
+    EDIT_SUCCESS: "Section updated successfully.",
+    DELETE_SUCCESS: "Section deleted successfully.",
+    DELETE_CONFIRM_TITLE: "Delete Section?",
+    DELETE_CONFIRM_DESCRIPTION: (name: string) =>
+      `Are you sure you want to delete ${name}? This action cannot be undone and will affect all related churches.`,
+  },
   CHURCH: {
     ADD_SUCCESS: "Church added successfully.",
     EDIT_SUCCESS: "Church updated successfully.",

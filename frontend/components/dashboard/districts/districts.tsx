@@ -20,9 +20,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus as PlusIcon, Search, Pencil, Trash2, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
+import { Plus as PlusIcon, Search, Pencil, Trash2, CheckCircle2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { EmptyState } from "@/components/patterns/empty-state";
+import { ConfirmDialog } from "@/components/patterns/confirm-dialog";
+import { MESSAGES } from "@/constants/message";
 import {
   useDistricts,
   useCreateDistrict,
@@ -103,32 +105,27 @@ export function DistrictsManager() {
     if (districtToDelete) {
       deleteMutation.mutate(districtToDelete.id, {
         onSuccess: () => {
-          showSuccess("District deleted successfully.");
+          showSuccess(MESSAGES.DISTRICT.DELETE_SUCCESS);
           setDistrictToDelete(null);
           setIsDeleteDialogOpen(false);
         },
         onError: (error: unknown) => {
           console.error("Error deleting district:", error);
-          
+
           // Extract error message from backend response
           let errorMessage = "Failed to delete district";
-          
+
           if (error && typeof error === 'object' && 'response' in error) {
             const response = (error as { response?: { detail?: string; error?: string } }).response;
             errorMessage = response?.detail || response?.error || errorMessage;
           }
-          
+
           toast.error(errorMessage, { duration: 5000 });
           setDistrictToDelete(null);
           setIsDeleteDialogOpen(false);
         },
       });
     }
-  };
-
-  const handleCancelDelete = () => {
-    setDistrictToDelete(null);
-    setIsDeleteDialogOpen(false);
   };
 
   const handleAddDistrict = () => {
@@ -144,7 +141,7 @@ export function DistrictsManager() {
       { name: newDistrictName },
       {
         onSuccess: () => {
-          showSuccess("District added successfully.");
+          showSuccess(MESSAGES.DISTRICT.ADD_SUCCESS);
           setNewDistrictName("");
           setIsAddDialogOpen(false);
         },
@@ -173,7 +170,7 @@ export function DistrictsManager() {
       },
       {
         onSuccess: () => {
-          showSuccess("District updated successfully.");
+          showSuccess(MESSAGES.DISTRICT.EDIT_SUCCESS);
           setEditDistrictName("");
           setEditingDistrict(null);
           setIsEditDialogOpen(false);
@@ -425,46 +422,20 @@ export function DistrictsManager() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <div className="flex flex-col items-center gap-4 py-4">
-            <div className="flex size-16 items-center justify-center rounded-full bg-brand-warning/10">
-              <AlertTriangle className="size-8 text-brand-warning" />
-            </div>
-
-            <div className="flex flex-col gap-2 text-center">
-              <h2 className="text-lg font-semibold">Delete District?</h2>
-              <p className="text-sm text-muted-foreground">
-                Are you sure you want to delete{" "}
-                <span className="font-medium text-foreground">
-                  {districtToDelete?.name}
-                </span>
-                ? This action cannot be undone and will affect all related sections.
-              </p>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={handleCancelDelete}
-              className="flex-1"
-              disabled={deleteMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmDelete}
-              className="flex-1 bg-destructive text-white hover:bg-destructive/90"
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending && <Loader2 className="size-4 animate-spin" />}
-              {deleteMutation.isPending ? "Deleting..." : "Delete"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title={MESSAGES.DISTRICT.DELETE_CONFIRM_TITLE}
+        description={
+          districtToDelete
+            ? MESSAGES.DISTRICT.DELETE_CONFIRM_DESCRIPTION(districtToDelete.name)
+            : ""
+        }
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }
