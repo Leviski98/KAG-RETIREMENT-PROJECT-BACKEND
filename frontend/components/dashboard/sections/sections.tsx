@@ -226,11 +226,11 @@ export function SectionsManager() {
       {/* Success Toast */}
       {showSuccessToast && (
         <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-2 duration-300">
-          <div className="flex items-center gap-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-3 shadow-lg">
-            <div className="flex size-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-              <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400" />
+          <div className="flex items-center gap-3 rounded-lg bg-card border border-border px-4 py-3 shadow-lg">
+            <div className="flex size-10 items-center justify-center rounded-full bg-brand-success/10">
+              <CheckCircle2 className="size-5 text-brand-success" />
             </div>
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            <p className="text-sm font-medium text-foreground">
               {successMessage}
             </p>
           </div>
@@ -337,7 +337,7 @@ export function SectionsManager() {
                     </Link>
                   </TableCell>
                   <TableCell className="text-center">
-                    <span className="inline-flex items-center justify-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-sm font-semibold text-emerald-600">
+                    <span className="inline-flex items-center justify-center rounded-full bg-brand-success/10 px-2.5 py-0.5 text-sm font-semibold text-brand-success">
                       {getChurchCount(section.id)}
                     </span>
                   </TableCell>
@@ -398,7 +398,7 @@ export function SectionsManager() {
             {/* Section Name Field */}
             <div className="flex flex-col gap-2">
               <label htmlFor="sectionName" className="text-sm font-medium">
-                Section Name <span className="text-red-500">*</span>
+                Section Name <span className="text-destructive">*</span>
               </label>
               <Input
                 id="sectionName"
@@ -416,7 +416,7 @@ export function SectionsManager() {
             {/* District Field */}
             <div className="flex flex-col gap-2">
               <label htmlFor="district" className="text-sm font-medium">
-                District <span className="text-red-500">*</span>
+                District <span className="text-destructive">*</span>
               </label>
               <Select
                 value={selectedDistrictForNew ? String(selectedDistrictForNew) : ""}
@@ -475,7 +475,7 @@ export function SectionsManager() {
             {/* Section Name Field */}
             <div className="flex flex-col gap-2">
               <label htmlFor="editSectionName" className="text-sm font-medium">
-                Section Name <span className="text-red-500">*</span>
+                Section Name <span className="text-destructive">*</span>
               </label>
               <Input
                 id="editSectionName"
@@ -493,7 +493,7 @@ export function SectionsManager() {
             {/* District Field */}
             <div className="flex flex-col gap-2">
               <label htmlFor="editDistrict" className="text-sm font-medium">
-                District <span className="text-red-500">*</span>
+                District <span className="text-destructive">*</span>
               </label>
               <Select
                 value={editSelectedDistrict ? String(editSelectedDistrict) : ""}
@@ -545,8 +545,8 @@ export function SectionsManager() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <div className="flex flex-col items-center gap-4 py-4">
-            <div className="flex size-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
-              <AlertTriangle className="size-8 text-yellow-600 dark:text-yellow-500" />
+            <div className="flex size-16 items-center justify-center rounded-full bg-brand-warning/10">
+              <AlertTriangle className="size-8 text-brand-warning" />
             </div>
 
             <div className="flex flex-col gap-2 text-center">
@@ -571,7 +571,7 @@ export function SectionsManager() {
             </Button>
             <Button
               onClick={handleConfirmDelete}
-              className="flex-1 bg-red-500 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
+              className="flex-1 bg-destructive text-white hover:bg-destructive/90"
             >
               Delete
             </Button>
