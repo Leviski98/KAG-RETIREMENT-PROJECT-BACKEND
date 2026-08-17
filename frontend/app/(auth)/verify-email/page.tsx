@@ -109,7 +109,7 @@ function VerifyEmailInner() {
       description: "Hold on while we confirm your link.",
     },
     awaiting_approval: {
-      icon: <ClockIcon className="size-8 text-amber-500" />,
+      icon: <ClockIcon className="size-8 text-brand-warning" />,
       title: "Email verified",
       description: message || "An administrator will activate your account shortly.",
     },
