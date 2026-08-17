@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function Hero() {
   return (
-    <section className="relative bg-linear-to-b from-blue-600 to-blue-500 text-white">
+    <section className="relative bg-linear-to-b from-brand-600 to-brand-500 text-white">
       <div className="container mx-auto px-4 py-24 lg:py-32">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-4xl lg:text-5xl font-bold mb-4 leading-tight">
@@ -19,7 +19,7 @@ export default function Hero() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/signup"
-              className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
+              className="bg-white text-primary px-8 py-3 rounded-lg font-semibold hover:bg-accent transition"
             >
               Get Started
             </Link>

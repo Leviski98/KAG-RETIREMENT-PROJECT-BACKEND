@@ -33,22 +33,22 @@ export default function Features() {
         <h2 className="text-3xl lg:text-4xl font-bold text-center mb-4">
           Powerful Features
         </h2>
-        <p className="text-gray-600 text-center mb-16 max-w-2xl mx-auto">
+        <p className="text-muted-foreground text-center mb-16 max-w-2xl mx-auto">
           Streamline your church management with our comprehensive feature set
         </p>
 
         <div className="space-y-16">
           {features.map(({ title, description, icon: Icon, imagePosition }, index) => {
             const art = (
-              <div className="bg-linear-to-br from-blue-100 to-blue-50 rounded-lg h-64 lg:h-80 flex items-center justify-center">
-                <Icon className="size-20 text-blue-600" strokeWidth={1.25} />
+              <div className="bg-linear-to-br from-brand-100 to-brand-50 rounded-lg h-64 lg:h-80 flex items-center justify-center">
+                <Icon className="size-20 text-primary" strokeWidth={1.25} />
               </div>
             );
             const content = (
               <div>
                 <h3 className="text-2xl font-bold mb-4">{title}</h3>
-                <p className="text-gray-600 leading-relaxed mb-6">{description}</p>
-                <button className="text-blue-600 font-semibold hover:text-blue-800 transition">
+                <p className="text-muted-foreground leading-relaxed mb-6">{description}</p>
+                <button className="text-primary font-semibold hover:text-brand-700 transition">
                   Learn more →
                 </button>
               </div>
