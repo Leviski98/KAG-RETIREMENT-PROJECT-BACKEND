@@ -10,6 +10,7 @@ import { useSignup } from "@/lib/hooks/use-auth";
 import { ApiRequestError } from "@/lib/api/client";
 import { ROUTES } from "@/constants/route";
 import { FormField } from "@/components/patterns/form-field";
+import { PasswordInput } from "@/components/patterns/password-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -98,8 +99,7 @@ export default function SignupPage() {
             />
           </FormField>
           <FormField label="Password" required error={errors.password}>
-            <Input
-              type="password"
+            <PasswordInput
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               placeholder="At least 8 characters"

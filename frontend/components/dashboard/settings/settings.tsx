@@ -100,17 +100,17 @@ function SettingsSkeleton() {
   return (
     <div className="flex flex-col gap-10 animate-pulse">
       <div>
-        <div className="h-8 w-48 rounded-lg bg-[#eef2f7]" />
-        <div className="mt-2 h-5 w-80 rounded-lg bg-[#eef2f7]" />
+        <div className="h-8 w-48 rounded-lg bg-muted" />
+        <div className="mt-2 h-5 w-80 rounded-lg bg-muted" />
       </div>
-      <div className="h-[650px] rounded-2xl bg-[#eef2f7]" />
+      <div className="h-[650px] rounded-2xl bg-muted" />
     </div>
   );
 }
 
 function SettingsError() {
   return (
-    <div className="rounded-xl border border-[#ff9bb2] bg-[#fff4f7] p-6 text-[#ff3b6b] text-sm font-semibold">
+    <div className="rounded-xl border border-destructive/25 bg-destructive/5 p-6 text-destructive text-sm font-semibold">
       Failed to load settings. Please refresh the page.
     </div>
   );
@@ -148,10 +148,10 @@ export function SettingsManager() {
   return (
     <div className="flex flex-col gap-10">
       <header>
-        <h1 className="text-[28px] font-extrabold tracking-normal text-[#111827]">
+        <h1 className="text-[28px] font-extrabold tracking-normal text-foreground">
           Settings
         </h1>
-        <p className="mt-1 text-[15px] leading-6 text-[#607391]">
+        <p className="mt-1 text-[15px] leading-6 text-muted-foreground">
           Configure system preferences, manage your organization profile, and
           control notifications.
         </p>
@@ -175,10 +175,10 @@ export function SettingsManager() {
                 aria-selected={isActive}
                 aria-controls={`${tab.id}-panel`}
                 className={cn(
-                  "flex h-11 min-w-fit items-center gap-3 rounded-xl border-l-2 border-transparent px-4 text-sm font-semibold text-[#58708f] transition-colors lg:w-full",
+                  "flex h-11 min-w-fit items-center gap-3 rounded-xl border-l-2 border-transparent px-4 text-sm font-semibold text-muted-foreground transition-colors lg:w-full",
                   isActive
-                    ? "border-[#3377ff] bg-[#eaf1ff] text-[#3377ff]"
-                    : "hover:bg-[#f3f6fa] hover:text-[#3377ff]"
+                    ? "border-primary bg-brand-50 text-primary"
+                    : "hover:bg-muted/50 hover:text-primary"
                 )}
                 onClick={() => setActiveTab(tab.id)}
               >
@@ -189,7 +189,7 @@ export function SettingsManager() {
           })}
         </nav>
 
-        <Card className="min-h-[650px] rounded-2xl border-[#eef2f7] bg-white py-0 shadow-[0_4px_18px_rgba(15,23,42,0.06)]">
+        <Card className="min-h-[650px] rounded-2xl border-border bg-white py-0 shadow-[0_4px_18px_rgba(15,23,42,0.06)]">
           <CardContent
             id={`${activeTab}-panel`}
             role="tabpanel"
@@ -227,12 +227,12 @@ function PanelHeader({
 }) {
   return (
     <div className="mb-7 flex items-start gap-3">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#eaf1ff]">
-        <Icon className="size-5 text-[#3377ff]" />
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50">
+        <Icon className="size-5 text-primary" />
       </div>
       <div>
-        <h2 className="text-xl font-extrabold text-[#333333]">{title}</h2>
-        <p className="text-sm leading-6 text-[#607391]">{description}</p>
+        <h2 className="text-xl font-extrabold text-foreground">{title}</h2>
+        <p className="text-sm leading-6 text-muted-foreground">{description}</p>
       </div>
     </div>
   );
@@ -240,7 +240,7 @@ function PanelHeader({
 
 function SectionTitle({ children }: { children: string }) {
   return (
-    <h3 className="mb-4 text-sm font-extrabold uppercase tracking-normal text-[#3377ff]">
+    <h3 className="mb-4 text-sm font-extrabold uppercase tracking-normal text-primary">
       {children}
     </h3>
   );
@@ -249,10 +249,10 @@ function SectionTitle({ children }: { children: string }) {
 function TextField({ label, value, type = "text", helper, disabled, optional, error, onChange }: FieldProps) {
   return (
     <label className="block">
-      <span className="mb-2 flex items-center gap-2 text-sm font-bold text-[#444444]">
+      <span className="mb-2 flex items-center gap-2 text-sm font-bold text-foreground">
         {label}
         {optional && (
-          <span className="rounded border border-[#dbe4f0] bg-[#f3f6fa] px-1.5 py-0.5 text-[10px] font-bold text-[#9aabc4]">
+          <span className="rounded border border-border bg-muted/50 px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground">
             Optional
           </span>
         )}
@@ -263,14 +263,14 @@ function TextField({ label, value, type = "text", helper, disabled, optional, er
         disabled={disabled}
         onChange={onChange ?? (() => {})}
         className={cn(
-          "h-12 rounded-lg border-[#9fb0c5] bg-[#fbfcff] px-4 text-sm text-[#444444]",
-          error && "border-[#ff3b6b] focus-visible:ring-[#ff3b6b]/20"
+          "h-12 rounded-lg border-input bg-muted/30 px-4 text-sm text-foreground",
+          error && "border-destructive focus-visible:ring-destructive/20"
         )}
       />
       {error ? (
-        <span className="mt-1 block text-xs font-semibold text-[#ff3b6b]">{error}</span>
+        <span className="mt-1 block text-xs font-semibold text-destructive">{error}</span>
       ) : helper ? (
-        <span className="mt-2 block text-xs font-medium text-[#9aabc4]">{helper}</span>
+        <span className="mt-2 block text-xs font-medium text-muted-foreground">{helper}</span>
       ) : null}
     </label>
   );
@@ -279,14 +279,14 @@ function TextField({ label, value, type = "text", helper, disabled, optional, er
 function SelectField({ label, value, icon: Icon, options = [], onChange }: SelectFieldProps) {
   return (
     <label className="block">
-      <span className="mb-2 flex items-center gap-2 text-sm font-bold text-[#444444]">
-        {Icon ? <Icon className="size-4 text-[#8ca0bb]" /> : null}
+      <span className="mb-2 flex items-center gap-2 text-sm font-bold text-foreground">
+        {Icon ? <Icon className="size-4 text-muted-foreground" /> : null}
         {label}
       </span>
       <select
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
-        className="h-12 w-full rounded-lg border border-[#9fb0c5] bg-[#fbfcff] px-4 text-sm text-[#444444] outline-none transition-colors focus:border-[#3377ff] focus:ring-3 focus:ring-[#3377ff]/20"
+        className="h-12 w-full rounded-lg border border-input bg-muted/30 px-4 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-3 focus:ring-ring/20"
       >
         {options.length > 0 ? (
           options.map((opt) => (
@@ -310,11 +310,11 @@ function SaveFooter({
   isSaving: boolean;
 }) {
   return (
-    <div className="mt-8 flex justify-end border-t border-[#dbe4f0] pt-6">
+    <div className="mt-8 flex justify-end border-t border-border pt-6">
       <Button
         onClick={onSave}
         disabled={isSaving}
-        className="h-11 min-w-[150px] rounded-lg bg-[#3377ff] px-6 text-sm font-extrabold text-white hover:bg-[#2f6eea]"
+        className="h-11 min-w-[150px] rounded-lg bg-primary px-6 text-sm font-extrabold text-white hover:bg-brand-700"
       >
         <Save className="size-4" />
         {isSaving ? "Saving..." : label}
@@ -386,7 +386,7 @@ function OrganizationPanel({ settings, onSave, isSaving }: PanelProps) {
         description="Manage your church organization details and branding."
       />
 
-      <div className="mb-7 flex items-center gap-5 rounded-lg border border-[#dbe4f0] bg-[#f7f8fa] p-5">
+      <div className="mb-7 flex items-center gap-5 rounded-lg border border-border bg-muted/50 p-5">
         {form.org_logo ? (
           <Image
             src={form.org_logo}
@@ -397,7 +397,7 @@ function OrganizationPanel({ settings, onSave, isSaving }: PanelProps) {
             className="size-16 rounded-xl object-cover"
           />
         ) : (
-          <div className="flex size-16 items-center justify-center rounded-xl bg-[#3377ff] text-2xl font-extrabold text-white">
+          <div className="flex size-16 items-center justify-center rounded-xl bg-primary text-2xl font-extrabold text-white">
             {form.org_abbreviation || "KAG"}
           </div>
         )}
@@ -413,12 +413,12 @@ function OrganizationPanel({ settings, onSave, isSaving }: PanelProps) {
             type="button"
             variant="outline"
             onClick={() => fileInputRef.current?.click()}
-            className="h-10 rounded-lg border-[#dbe4f0] bg-white px-4 text-sm font-bold text-[#444444]"
+            className="h-10 rounded-lg border-border bg-white px-4 text-sm font-bold text-foreground"
           >
             <Upload className="size-4" />
             Upload Logo
           </Button>
-          <p className="mt-2 text-xs font-medium text-[#9aabc4]">
+          <p className="mt-2 text-xs font-medium text-muted-foreground">
             PNG, SVG or JPG — recommended 200×200 px
           </p>
         </div>
@@ -593,11 +593,11 @@ function NotificationsPanel({ settings, onSave, isSaving }: PanelProps) {
         {NOTIFICATION_KEYS.map(({ key, title, description }) => (
           <div
             key={key}
-            className="flex items-center justify-between gap-5 rounded-lg border border-[#dbe4f0] bg-[#fbfcff] px-4 py-3"
+            className="flex items-center justify-between gap-5 rounded-lg border border-border bg-muted/30 px-4 py-3"
           >
             <div>
-              <h3 className="text-sm font-extrabold text-[#444444]">{title}</h3>
-              <p className="mt-1 text-xs font-medium text-[#607391]">{description}</p>
+              <h3 className="text-sm font-extrabold text-foreground">{title}</h3>
+              <p className="mt-1 text-xs font-medium text-muted-foreground">{description}</p>
             </div>
             <ToggleSwitch checked={form[key]} onToggle={() => toggle(key)} label={title} />
           </div>
@@ -627,7 +627,7 @@ function ToggleSwitch({
       onClick={onToggle}
       className={cn(
         "relative h-6 w-11 shrink-0 rounded-full transition-colors",
-        checked ? "bg-[#3377ff]" : "bg-[#dfe8f1]"
+        checked ? "bg-primary" : "bg-input"
       )}
     >
       <span
@@ -677,16 +677,16 @@ function AccountPanel({ settings, onSave, isSaving }: PanelProps) {
         description="Manage your profile information."
       />
 
-      <div className="mb-7 flex items-center gap-5 rounded-lg border border-[#dbe4f0] bg-[#f7f8fa] p-5">
-        <div className="flex size-16 items-center justify-center rounded-full bg-[#3377ff] text-2xl font-extrabold text-white">
+      <div className="mb-7 flex items-center gap-5 rounded-lg border border-border bg-muted/50 p-5">
+        <div className="flex size-16 items-center justify-center rounded-full bg-primary text-2xl font-extrabold text-white">
           {initials}
         </div>
         <div>
-          <h3 className="text-lg font-extrabold text-[#444444]">
+          <h3 className="text-lg font-extrabold text-foreground">
             {form.account_display_name}
           </h3>
-          <p className="text-sm text-[#607391]">{form.account_email}</p>
-          <Badge className="mt-2 rounded-md bg-[#eaf1ff] text-[#3377ff]">
+          <p className="text-sm text-muted-foreground">{form.account_email}</p>
+          <Badge className="mt-2 rounded-md bg-brand-50 text-primary">
             <Shield className="size-3" />
             {settings.account_role}
           </Badge>
@@ -730,11 +730,11 @@ function DataManagementPanel() {
         description="Export, import, and manage your organization's data."
       />
 
-      <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-[#dbe4f0] bg-[#f7f8fa] py-16 text-center">
-        <Database className="size-10 text-[#9aabc4]" />
+      <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-border bg-muted/50 py-16 text-center">
+        <Database className="size-10 text-muted-foreground" />
         <div>
-          <h3 className="text-base font-extrabold text-[#444444]">Coming Soon</h3>
-          <p className="mt-1 text-sm text-[#607391]">
+          <h3 className="text-base font-extrabold text-foreground">Coming Soon</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
             Data export, import, and storage analytics are under development.
           </p>
         </div>
@@ -761,7 +761,7 @@ function AboutPanel() {
         description="System information and version details."
       />
 
-      <div className="rounded-xl bg-linear-to-r from-[#3377ff] to-[#2d60bf] px-6 py-8 text-center text-white">
+      <div className="rounded-xl bg-linear-to-r from-brand-600 to-brand-700 px-6 py-8 text-center text-white">
         <div className="mx-auto mb-5 flex size-16 items-center justify-center rounded-xl bg-white/20 text-2xl font-extrabold">
           KAG
         </div>
@@ -787,10 +787,10 @@ function AboutPanel() {
           {statItems.map((stat) => (
             <div
               key={stat.label}
-              className="rounded-lg border border-[#dbe4f0] bg-[#f7f8fa] px-4 py-5 text-center"
+              className="rounded-lg border border-border bg-muted/50 px-4 py-5 text-center"
             >
-              <p className="text-2xl font-extrabold text-[#444444]">{stat.value}</p>
-              <p className="mt-1 text-sm font-medium text-[#607391]">
+              <p className="text-2xl font-extrabold text-foreground">{stat.value}</p>
+              <p className="mt-1 text-sm font-medium text-muted-foreground">
                 {stat.label}
               </p>
             </div>
@@ -798,8 +798,8 @@ function AboutPanel() {
         </div>
       </div>
 
-      <div className="mt-8 border-t border-[#dbe4f0] pt-7 text-center text-sm font-medium text-[#9aabc4]">
-        Made with <Heart className="inline size-4 fill-[#ff3b6b] text-[#ff3b6b]" /> for
+      <div className="mt-8 border-t border-border pt-7 text-center text-sm font-medium text-muted-foreground">
+        Made with <Heart className="inline size-4 fill-destructive text-destructive" /> for
         the KAG community
       </div>
     </div>

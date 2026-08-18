@@ -11,8 +11,8 @@ import { useConfirmPasswordReset } from "@/lib/hooks/use-auth";
 import { ApiRequestError } from "@/lib/api/client";
 import { ROUTES } from "@/constants/route";
 import { FormField } from "@/components/patterns/form-field";
+import { PasswordInput } from "@/components/patterns/password-input";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -102,8 +102,7 @@ function ResetPasswordInner() {
       <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
           <FormField label="New password" required error={error}>
-            <Input
-              type="password"
+            <PasswordInput
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="At least 8 characters"

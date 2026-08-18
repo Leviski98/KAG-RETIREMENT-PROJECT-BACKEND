@@ -42,7 +42,7 @@ export function ConfirmDialog({
           <AlertDialogMedia
             className={
               variant === "danger"
-                ? "bg-amber-100 text-amber-600"
+                ? "bg-brand-warning/10 text-brand-warning"
                 : "bg-muted text-muted-foreground"
             }
           >

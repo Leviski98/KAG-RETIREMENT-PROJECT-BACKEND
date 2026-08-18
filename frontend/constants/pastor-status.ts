@@ -19,12 +19,15 @@ export const PASTOR_STATUS_LABELS: Record<string, string> = {
   deceased: 'Deceased',
 };
 
+// Reuses the chart-1..5 categorical set (see components/dashboard/overview.tsx)
+// so a rank badge and a chart legend read as one system. The chart tokens
+// already carry their own light/dark values, so no dark: variants are needed.
 export const PASTOR_TITLE_COLORS: Record<PastorTitle, string> = {
-  Archbishop: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
-  Bishop: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
-  Presbyter: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
-  Reverend: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300",
-  Pastor: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+  Archbishop: "bg-chart-3/15 text-chart-3",
+  Bishop: "bg-chart-1/15 text-chart-1",
+  Presbyter: "bg-chart-5/15 text-chart-5",
+  Reverend: "bg-chart-2/15 text-chart-2",
+  Pastor: "bg-muted text-muted-foreground",
 };
 
 // Map backend rank names to display names

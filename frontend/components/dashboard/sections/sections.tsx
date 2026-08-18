@@ -31,6 +31,8 @@ import { Plus as PlusIcon, Search, Pencil, Trash2, AlertTriangle, CheckCircle2, 
 import { format } from "date-fns";
 import Link from "next/link";
 import { EmptyState } from "@/components/patterns/empty-state";
+import { ConfirmDialog } from "@/components/patterns/confirm-dialog";
+import { MESSAGES } from "@/constants/message";
 import {
   useSections,
   useCreateSection,
@@ -136,7 +138,7 @@ export function SectionsManager() {
       },
       {
         onSuccess: () => {
-          showSuccess("Section added successfully.");
+          showSuccess(MESSAGES.SECTION.ADD_SUCCESS);
           setNewSectionName("");
           setSelectedDistrictForNew(undefined);
           setIsAddDialogOpen(false);
@@ -169,7 +171,7 @@ export function SectionsManager() {
       },
       {
         onSuccess: () => {
-          showSuccess("Section updated successfully.");
+          showSuccess(MESSAGES.SECTION.EDIT_SUCCESS);
           setEditSectionName("");
           setEditSelectedDistrict(undefined);
           setEditingSection(null);
@@ -193,21 +195,21 @@ export function SectionsManager() {
     if (sectionToDelete) {
       deleteMutation.mutate(sectionToDelete.id, {
         onSuccess: () => {
-          showSuccess("Section deleted successfully.");
+          showSuccess(MESSAGES.SECTION.DELETE_SUCCESS);
           setSectionToDelete(null);
           setIsDeleteDialogOpen(false);
         },
         onError: (error: unknown) => {
           console.error("Error deleting section:", error);
-          
+
           // Extract error message from backend response
           let errorMessage = "Failed to delete section";
-          
+
           if (error && typeof error === 'object' && 'response' in error) {
             const response = (error as { response?: { detail?: string; error?: string } }).response;
             errorMessage = response?.detail || response?.error || errorMessage;
           }
-          
+
           toast.error(errorMessage, { duration: 5000 });
           setSectionToDelete(null);
           setIsDeleteDialogOpen(false);
@@ -216,21 +218,16 @@ export function SectionsManager() {
     }
   };
 
-  const handleCancelDelete = () => {
-    setSectionToDelete(null);
-    setIsDeleteDialogOpen(false);
-  };
-
   return (
     <div className="flex flex-col gap-6 p-6">
       {/* Success Toast */}
       {showSuccessToast && (
         <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-2 duration-300">
-          <div className="flex items-center gap-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-3 shadow-lg">
-            <div className="flex size-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-              <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400" />
+          <div className="flex items-center gap-3 rounded-lg bg-card border border-border px-4 py-3 shadow-lg">
+            <div className="flex size-10 items-center justify-center rounded-full bg-brand-success/10">
+              <CheckCircle2 className="size-5 text-brand-success" />
             </div>
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            <p className="text-sm font-medium text-foreground">
               {successMessage}
             </p>
           </div>
@@ -337,7 +334,7 @@ export function SectionsManager() {
                     </Link>
                   </TableCell>
                   <TableCell className="text-center">
-                    <span className="inline-flex items-center justify-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-sm font-semibold text-emerald-600">
+                    <span className="inline-flex items-center justify-center rounded-full bg-brand-success/10 px-2.5 py-0.5 text-sm font-semibold text-brand-success">
                       {getChurchCount(section.id)}
                     </span>
                   </TableCell>
@@ -372,7 +369,7 @@ export function SectionsManager() {
               <TableRow>
                 <TableCell colSpan={6} className="py-0">
                   <EmptyState
-                    title="No Section found"
+                    title="No sections found"
                     action={
                       <Button onClick={() => setIsAddDialogOpen(true)}>
                         <PlusIcon data-icon="inline-start" />
@@ -398,7 +395,7 @@ export function SectionsManager() {
             {/* Section Name Field */}
             <div className="flex flex-col gap-2">
               <label htmlFor="sectionName" className="text-sm font-medium">
-                Section Name <span className="text-red-500">*</span>
+                Section Name <span className="text-destructive">*</span>
               </label>
               <Input
                 id="sectionName"
@@ -416,7 +413,7 @@ export function SectionsManager() {
             {/* District Field */}
             <div className="flex flex-col gap-2">
               <label htmlFor="district" className="text-sm font-medium">
-                District <span className="text-red-500">*</span>
+                District <span className="text-destructive">*</span>
               </label>
               <Select
                 value={selectedDistrictForNew ? String(selectedDistrictForNew) : ""}
@@ -475,7 +472,7 @@ export function SectionsManager() {
             {/* Section Name Field */}
             <div className="flex flex-col gap-2">
               <label htmlFor="editSectionName" className="text-sm font-medium">
-                Section Name <span className="text-red-500">*</span>
+                Section Name <span className="text-destructive">*</span>
               </label>
               <Input
                 id="editSectionName"
@@ -493,7 +490,7 @@ export function SectionsManager() {
             {/* District Field */}
             <div className="flex flex-col gap-2">
               <label htmlFor="editDistrict" className="text-sm font-medium">
-                District <span className="text-red-500">*</span>
+                District <span className="text-destructive">*</span>
               </label>
               <Select
                 value={editSelectedDistrict ? String(editSelectedDistrict) : ""}
@@ -541,43 +538,20 @@ export function SectionsManager() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <div className="flex flex-col items-center gap-4 py-4">
-            <div className="flex size-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
-              <AlertTriangle className="size-8 text-yellow-600 dark:text-yellow-500" />
-            </div>
-
-            <div className="flex flex-col gap-2 text-center">
-              <h2 className="text-lg font-semibold">Delete Section?</h2>
-              <p className="text-sm text-muted-foreground">
-                Are you sure you want to delete{" "}
-                <span className="font-medium text-foreground">
-                  {sectionToDelete?.name}
-                </span>
-                ? This action cannot be undone and will affect all related churches.
-              </p>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={handleCancelDelete}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmDelete}
-              className="flex-1 bg-red-500 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title={MESSAGES.SECTION.DELETE_CONFIRM_TITLE}
+        description={
+          sectionToDelete
+            ? MESSAGES.SECTION.DELETE_CONFIRM_DESCRIPTION(sectionToDelete.name)
+            : ""
+        }
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

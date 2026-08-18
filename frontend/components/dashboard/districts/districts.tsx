@@ -20,9 +20,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus as PlusIcon, Search, Pencil, Trash2, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
+import { Plus as PlusIcon, Search, Pencil, Trash2, CheckCircle2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { EmptyState } from "@/components/patterns/empty-state";
+import { ConfirmDialog } from "@/components/patterns/confirm-dialog";
+import { MESSAGES } from "@/constants/message";
 import {
   useDistricts,
   useCreateDistrict,
@@ -103,32 +105,27 @@ export function DistrictsManager() {
     if (districtToDelete) {
       deleteMutation.mutate(districtToDelete.id, {
         onSuccess: () => {
-          showSuccess("District deleted successfully.");
+          showSuccess(MESSAGES.DISTRICT.DELETE_SUCCESS);
           setDistrictToDelete(null);
           setIsDeleteDialogOpen(false);
         },
         onError: (error: unknown) => {
           console.error("Error deleting district:", error);
-          
+
           // Extract error message from backend response
           let errorMessage = "Failed to delete district";
-          
+
           if (error && typeof error === 'object' && 'response' in error) {
             const response = (error as { response?: { detail?: string; error?: string } }).response;
             errorMessage = response?.detail || response?.error || errorMessage;
           }
-          
+
           toast.error(errorMessage, { duration: 5000 });
           setDistrictToDelete(null);
           setIsDeleteDialogOpen(false);
         },
       });
     }
-  };
-
-  const handleCancelDelete = () => {
-    setDistrictToDelete(null);
-    setIsDeleteDialogOpen(false);
   };
 
   const handleAddDistrict = () => {
@@ -144,7 +141,7 @@ export function DistrictsManager() {
       { name: newDistrictName },
       {
         onSuccess: () => {
-          showSuccess("District added successfully.");
+          showSuccess(MESSAGES.DISTRICT.ADD_SUCCESS);
           setNewDistrictName("");
           setIsAddDialogOpen(false);
         },
@@ -173,7 +170,7 @@ export function DistrictsManager() {
       },
       {
         onSuccess: () => {
-          showSuccess("District updated successfully.");
+          showSuccess(MESSAGES.DISTRICT.EDIT_SUCCESS);
           setEditDistrictName("");
           setEditingDistrict(null);
           setIsEditDialogOpen(false);
@@ -197,11 +194,11 @@ export function DistrictsManager() {
       {/* Success Toast */}
       {showSuccessToast && (
         <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-2 duration-300">
-          <div className="flex items-center gap-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-3 shadow-lg">
-            <div className="flex size-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-              <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400" />
+          <div className="flex items-center gap-3 rounded-lg bg-card border border-border px-4 py-3 shadow-lg">
+            <div className="flex size-10 items-center justify-center rounded-full bg-brand-success/10">
+              <CheckCircle2 className="size-5 text-brand-success" />
             </div>
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            <p className="text-sm font-medium text-foreground">
               {successMessage}
             </p>
           </div>
@@ -279,7 +276,7 @@ export function DistrictsManager() {
                     {district.name}
                   </TableCell>
                   <TableCell className="text-center">
-                    <span className="inline-flex items-center justify-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-sm font-semibold text-emerald-600">
+                    <span className="inline-flex items-center justify-center rounded-full bg-brand-success/10 px-2.5 py-0.5 text-sm font-semibold text-brand-success">
                       {getSectionCount(district.id)}
                     </span>
                   </TableCell>
@@ -320,7 +317,7 @@ export function DistrictsManager() {
               <TableRow>
                 <TableCell colSpan={5} className="py-0">
                   <EmptyState
-                    title="No District found"
+                    title="No districts found"
                     action={
                       <Button onClick={() => setIsAddDialogOpen(true)}>
                         <PlusIcon data-icon="inline-start" />
@@ -345,7 +342,7 @@ export function DistrictsManager() {
           <div className="flex flex-col gap-4 py-4">
             <div className="flex flex-col gap-2">
               <label htmlFor="districtName" className="text-sm font-medium">
-                District Name <span className="text-red-500">*</span>
+                District Name <span className="text-destructive">*</span>
               </label>
               <Input
                 id="districtName"
@@ -390,7 +387,7 @@ export function DistrictsManager() {
           <div className="flex flex-col gap-4 py-4">
             <div className="flex flex-col gap-2">
               <label htmlFor="editDistrictName" className="text-sm font-medium">
-                District Name <span className="text-red-500">*</span>
+                District Name <span className="text-destructive">*</span>
               </label>
               <Input
                 id="editDistrictName"
@@ -425,46 +422,20 @@ export function DistrictsManager() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <div className="flex flex-col items-center gap-4 py-4">
-            <div className="flex size-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
-              <AlertTriangle className="size-8 text-yellow-600 dark:text-yellow-500" />
-            </div>
-
-            <div className="flex flex-col gap-2 text-center">
-              <h2 className="text-lg font-semibold">Delete District?</h2>
-              <p className="text-sm text-muted-foreground">
-                Are you sure you want to delete{" "}
-                <span className="font-medium text-foreground">
-                  {districtToDelete?.name}
-                </span>
-                ? This action cannot be undone and will affect all related sections.
-              </p>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={handleCancelDelete}
-              className="flex-1"
-              disabled={deleteMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmDelete}
-              className="flex-1 bg-red-500 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending && <Loader2 className="size-4 animate-spin" />}
-              {deleteMutation.isPending ? "Deleting..." : "Delete"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title={MESSAGES.DISTRICT.DELETE_CONFIRM_TITLE}
+        description={
+          districtToDelete
+            ? MESSAGES.DISTRICT.DELETE_CONFIRM_DESCRIPTION(districtToDelete.name)
+            : ""
+        }
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

@@ -28,8 +28,12 @@ export function Sidebar() {
   const logout = useLogout();
   const [manuallyToggled, setManuallyToggled] = useState<Record<string, boolean>>({});
 
-  const displayName = user?.full_name || settings?.account_display_name || "System Administrator";
   const displayEmail = user?.email || settings?.account_email || "";
+  // The API's full_name falls back to the email when a user has no name set,
+  // so an unguarded chain renders the same string in both slots.
+  const resolvedName = user?.full_name?.trim() || settings?.account_display_name?.trim() || "";
+  const displayName =
+    resolvedName && resolvedName !== displayEmail ? resolvedName : "System Administrator";
   const initials = displayName
     .split(" ")
     .map((w) => w[0])
@@ -60,7 +64,8 @@ export function Sidebar() {
     <aside className="hidden w-60 shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex lg:flex-col">
       {/* Logo */}
       <div className="flex h-14 items-center gap-2.5 border-b border-sidebar-border px-4">
-        <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+        {/* Light chip so the deep-blue mark stays legible on the dark sidebar. */}
+        <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white">
           {settings?.org_logo ? (
             <Image
               src={settings.org_logo}
@@ -71,22 +76,19 @@ export function Sidebar() {
               className="size-8 rounded-lg object-cover"
             />
           ) : (
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="size-4"
-            >
-              <path d="M18 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Z" />
-              <path d="m9 16 3-8 3 8" />
-            </svg>
+            <Image
+              src="/images/logo.png"
+              alt=""
+              width={32}
+              height={32}
+              className="size-full object-contain p-0.5"
+            />
           )}
         </div>
-        <span className="text-sm font-semibold tracking-tight text-sidebar-foreground">
-          {settings?.org_abbreviation ? `${settings.org_abbreviation} Retire` : "KAG Retire"}
+        <span className="truncate text-sm font-semibold tracking-tight text-sidebar-foreground">
+          {settings?.org_abbreviation
+            ? `${settings.org_abbreviation} Retirement`
+            : "KAG Retirement"}
         </span>
       </div>
 

@@ -52,7 +52,9 @@ test.describe("settings dashboard", () => {
     await expect(
       page.getByRole("heading", { name: "Account Settings" })
     ).toBeVisible();
-    await expect(page.getByText("System Administrator")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "System Administrator" })
+    ).toBeVisible();
     // A "Change Password" control was planned for the Account panel but hasn't
     // been added yet — reinstate this assertion once it's built (the reset
     // flow at /forgot-password is the current workaround).

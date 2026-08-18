@@ -736,18 +736,40 @@ export function PastorsManager() {
         <head>
           <title>Pastors Export</title>
           <style>
+            /*
+             * This opens in its own window (window.open('')), so it can't
+             * load app/globals.css or see the app's CSS custom properties —
+             * they're duplicated here as a local :root, mirroring the brand
+             * tokens' values. Keep this in sync if the palette changes.
+             *
+             * Also aligns .status-retired/.status-suspended with the colours
+             * used everywhere else in this file (stat cards, status dots,
+             * badges): retired as info/blue, suspended as warning/amber.
+             * The previous version used violet for retired and red for
+             * suspended, matching neither.
+             */
+            :root {
+              --ink: #3A3A3C;
+              --ink-muted: #6B758B;
+              --line: #C7C9D9;
+              --surface-1: #F2F2F5;
+              --surface-2: #FAFAFC;
+              --success: #0A844B;
+              --info: #0553D1;
+              --warning: #8F6E0A;
+            }
             body {
               font-family: Arial, sans-serif;
               padding: 20px;
-              color: #000;
+              color: var(--ink);
             }
             h1 {
               font-size: 24px;
               margin-bottom: 10px;
-              color: #1a1a1a;
+              color: var(--ink);
             }
             .subtitle {
-              color: #666;
+              color: var(--ink-muted);
               margin-bottom: 20px;
               font-size: 14px;
             }
@@ -758,22 +780,22 @@ export function PastorsManager() {
               font-size: 12px;
             }
             th, td {
-              border: 1px solid #ddd;
+              border: 1px solid var(--line);
               padding: 8px;
               text-align: left;
             }
             th {
-              background-color: #f8f9fa;
+              background-color: var(--surface-1);
               font-weight: 600;
-              color: #1a1a1a;
+              color: var(--ink);
             }
             tr:nth-child(even) {
-              background-color: #f9f9f9;
+              background-color: var(--surface-2);
             }
-            .status-active { color: #059669; font-weight: 500; }
-            .status-retired { color: #7c3aed; font-weight: 500; }
-            .status-suspended { color: #dc2626; font-weight: 500; }
-            .status-deceased { color: #6b7280; font-weight: 500; }
+            .status-active { color: var(--success); font-weight: 500; }
+            .status-retired { color: var(--info); font-weight: 500; }
+            .status-suspended { color: var(--warning); font-weight: 500; }
+            .status-deceased { color: var(--ink-muted); font-weight: 500; }
             .text-center { text-align: center; }
             @media print {
               body { padding: 10px; }
@@ -883,7 +905,7 @@ export function PastorsManager() {
         {/* Total Pastors */}
         <Card>
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex size-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+            <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10">
               <Users className="size-6 text-brand-primary" />
             </div>
             <div className="flex flex-col">
@@ -898,8 +920,8 @@ export function PastorsManager() {
         {/* Active */}
         <Card>
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex size-12 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-              <UserCheck className="size-6 text-emerald-600 dark:text-emerald-400" />
+            <div className="flex size-12 items-center justify-center rounded-lg bg-brand-success/10">
+              <UserCheck className="size-6 text-brand-success" />
             </div>
             <div className="flex flex-col">
               <span className="text-sm text-muted-foreground">Active</span>
@@ -911,8 +933,8 @@ export function PastorsManager() {
         {/* Retired */}
         <Card>
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex size-12 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/30">
-              <Clock className="size-6 text-violet-600 dark:text-violet-400" />
+            <div className="flex size-12 items-center justify-center rounded-lg bg-chart-4/15">
+              <Clock className="size-6 text-chart-4" />
             </div>
             <div className="flex flex-col">
               <span className="text-sm text-muted-foreground">Retired</span>
@@ -924,8 +946,8 @@ export function PastorsManager() {
         {/* Suspended */}
         <Card>
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex size-12 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/30">
-              <UserX className="size-6 text-orange-600 dark:text-orange-400" />
+            <div className="flex size-12 items-center justify-center rounded-lg bg-brand-warning/10">
+              <UserX className="size-6 text-brand-warning" />
             </div>
             <div className="flex flex-col">
               <span className="text-sm text-muted-foreground">Suspended</span>
@@ -937,8 +959,8 @@ export function PastorsManager() {
         {/* Deceased */}
         <Card>
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex size-12 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
-              <X className="size-6 text-gray-600 dark:text-gray-400" />
+            <div className="flex size-12 items-center justify-center rounded-lg bg-muted">
+              <X className="size-6 text-muted-foreground" />
             </div>
             <div className="flex flex-col">
               <span className="text-sm text-muted-foreground">Deceased</span>
@@ -1151,25 +1173,25 @@ export function PastorsManager() {
                     <div className="flex items-center gap-2">
                       {pastor.status === "active" && (
                         <>
-                          <div className="size-2 rounded-full bg-emerald-500" />
+                          <div className="size-2 rounded-full bg-brand-success-fill" />
                           <span className="text-sm">Active</span>
                         </>
                       )}
                       {pastor.status === "retired" && (
                         <>
-                          <div className="size-2 rounded-full bg-violet-500" />
+                          <div className="size-2 rounded-full bg-chart-4" />
                           <span className="text-sm">Retired</span>
                         </>
                       )}
                       {pastor.status === "suspended" && (
                         <>
-                          <div className="size-2 rounded-full bg-amber-500" />
+                          <div className="size-2 rounded-full bg-brand-warning-fill" />
                           <span className="text-sm">Suspended</span>
                         </>
                       )}
                       {pastor.status === "deceased" && (
                         <>
-                          <div className="size-2 rounded-full bg-slate-400" />
+                          <div className="size-2 rounded-full bg-muted-foreground" />
                           <span className="text-sm">Deceased</span>
                         </>
                       )}
@@ -1218,7 +1240,7 @@ export function PastorsManager() {
               <TableRow>
                 <TableCell colSpan={10} className="py-0">
                   <EmptyState
-                    title="No Pastor found"
+                    title="No pastors found"
                     action={
                       <Button onClick={() => setIsAddDialogOpen(true)}>
                         <PlusIcon data-icon="inline-start" />
@@ -1250,7 +1272,7 @@ export function PastorsManager() {
               {/* Full Name */}
               <div className="flex flex-col gap-2">
                 <Label htmlFor="fullName">
-                  Full Name <span className="text-red-500">*</span>
+                  Full Name <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="fullName"
@@ -1266,7 +1288,7 @@ export function PastorsManager() {
 
               {/* Gender */}
               <div className="flex flex-col gap-2">
-                <Label>Gender <span className="text-red-500">*</span></Label>
+                <Label>Gender <span className="text-destructive">*</span></Label>
                 <RadioGroup
                   value={formData.gender}
                   onValueChange={(value: string) =>
@@ -1290,7 +1312,7 @@ export function PastorsManager() {
 
               {/* Date of Birth */}
               <div className="flex flex-col gap-2">
-                <Label htmlFor="dateOfBirth">Date of Birth <span className="text-red-500">*</span></Label>
+                <Label htmlFor="dateOfBirth">Date of Birth <span className="text-destructive">*</span></Label>
                 <Input
                   id="dateOfBirth"
                   type="date"
@@ -1303,7 +1325,7 @@ export function PastorsManager() {
 
               {/* National ID */}
               <div className="flex flex-col gap-2">
-                <Label htmlFor="nationalId">National ID <span className="text-red-500">*</span></Label>
+                <Label htmlFor="nationalId">National ID <span className="text-destructive">*</span></Label>
                 <Input
                   id="nationalId"
                   type="text"
@@ -1323,7 +1345,7 @@ export function PastorsManager() {
               {/* Phone Number */}
               <div className="flex flex-col gap-2">
                 <Label htmlFor="phoneNumber">
-                  Phone Number <span className="text-red-500">*</span>
+                  Phone Number <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="phoneNumber"
@@ -1365,7 +1387,7 @@ export function PastorsManager() {
 
               {/* Pastor Rank */}
               <div className="flex flex-col gap-2">
-                <Label htmlFor="pastorRank">Pastor Rank <span className="text-red-500">*</span></Label>
+                <Label htmlFor="pastorRank">Pastor Rank <span className="text-destructive">*</span></Label>
                 <Select
                   value={formData.pastorRank}
                   onValueChange={(value) =>
@@ -1388,7 +1410,7 @@ export function PastorsManager() {
               {/* Start of Service */}
               <div className="flex flex-col gap-2">
                 <Label htmlFor="startOfService">
-                  Start of Service <span className="text-red-500">*</span>
+                  Start of Service <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="startOfService"
@@ -1404,7 +1426,7 @@ export function PastorsManager() {
               {['retired', 'suspended', 'deceased'].includes(formData.status) && (
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="endOfService">
-                    End of Service <span className="text-red-500">*</span>
+                    End of Service <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="endOfService"
@@ -1422,7 +1444,7 @@ export function PastorsManager() {
 
               {/* Status */}
               <div className="flex flex-col gap-2">
-                <Label htmlFor="status">Status <span className="text-red-500">*</span></Label>
+                <Label htmlFor="status">Status <span className="text-destructive">*</span></Label>
                 <Select
                   value={formData.status}
                   onValueChange={(value) => {
@@ -1650,7 +1672,7 @@ export function PastorsManager() {
               {['retired', 'suspended', 'deceased'].includes(editFormData.status) && (
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="editEndOfService">
-                    End of Service <span className="text-red-500">*</span>
+                    End of Service <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="editEndOfService"
@@ -1723,8 +1745,8 @@ export function PastorsManager() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <div className="flex flex-col items-center gap-4 py-4">
-            <div className="flex size-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
-              <AlertTriangle className="size-8 text-yellow-600 dark:text-yellow-500" />
+            <div className="flex size-16 items-center justify-center rounded-full bg-brand-warning/10">
+              <AlertTriangle className="size-8 text-brand-warning" />
             </div>
 
             <div className="flex flex-col gap-2 text-center">
@@ -1751,7 +1773,7 @@ export function PastorsManager() {
             </Button>
             <Button
               onClick={handleConfirmDelete}
-              className="flex-1 bg-red-500 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
+              className="flex-1 bg-destructive text-white hover:bg-destructive/90"
             >
               Delete
             </Button>
@@ -1786,12 +1808,12 @@ export function PastorsManager() {
                       variant="secondary"
                       className={
                         selectedPastor.status === "active"
-                          ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400"
+                          ? "bg-brand-success/10 text-brand-success hover:bg-brand-success/10"
                           : selectedPastor.status === "retired"
-                          ? "bg-violet-100 text-violet-700 hover:bg-violet-100 dark:bg-violet-900/30 dark:text-violet-400"
+                          ? "bg-chart-4/15 text-chart-4 hover:bg-chart-4/15"
                           : selectedPastor.status === "suspended"
-                          ? "bg-amber-100 text-amber-700 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400"
-                          : "bg-slate-100 text-slate-700 hover:bg-slate-100 dark:bg-slate-900/30 dark:text-slate-400"
+                          ? "bg-brand-warning/10 text-brand-warning hover:bg-brand-warning/10"
+                          : "bg-muted text-muted-foreground hover:bg-muted"
                       }
                     >
                       ● {selectedPastor.status.charAt(0).toUpperCase() + selectedPastor.status.slice(1)}
