@@ -4,18 +4,21 @@ import type { PastorTitle } from "@/types/church";
 export const PASTOR_STATUS = {
   ACTIVE: 'active',
   RETIRED: 'retired',
+  SUSPENDED: 'suspended',
   DECEASED: 'deceased',
 } as const;
 
 export const PASTOR_STATUS_OPTIONS = [
   { value: 'active', label: 'Active' },
   { value: 'retired', label: 'Retired' },
+  { value: 'suspended', label: 'Suspended' },
   { value: 'deceased', label: 'Deceased' },
 ];
 
 export const PASTOR_STATUS_LABELS: Record<string, string> = {
   active: 'Active',
   retired: 'Retired',
+  suspended: 'Suspended',
   deceased: 'Deceased',
 };
 

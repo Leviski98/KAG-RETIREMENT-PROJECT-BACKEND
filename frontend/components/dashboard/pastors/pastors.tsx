@@ -62,7 +62,11 @@ import { usePastors, useCreatePastor, useUpdatePastor, useDeletePastor } from "@
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import { Pastor, PastorRank, PastorStatus } from "@/types/pastor";
 import { toast } from "sonner";
-import { PASTOR_TITLE_COLORS } from "@/constants/pastor-status";
+import {
+  PASTOR_TITLE_COLORS,
+  PASTOR_RANK_MAP,
+  PASTOR_STATUS_LABELS,
+} from "@/constants/pastor-status";
 import { EmptyState } from "@/components/patterns/empty-state";
 
 export function PastorsManager() {
@@ -1395,7 +1399,12 @@ export function PastorsManager() {
                   }
                 >
                   <SelectTrigger id="pastorRank">
-                    <SelectValue placeholder="Select rank" />
+                    {/* value ("ArchBishop") differs from its label ("Archbishop"),
+                        and this Select doesn't resolve that on its own — without
+                        explicit children the trigger shows the raw value. */}
+                    <SelectValue placeholder="Select rank">
+                      {PASTOR_RANK_MAP[formData.pastorRank] ?? formData.pastorRank}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ArchBishop">Archbishop</SelectItem>
@@ -1458,7 +1467,9 @@ export function PastorsManager() {
                   }}
                 >
                   <SelectTrigger id="status">
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder="Select status">
+                      {PASTOR_STATUS_LABELS[formData.status] ?? formData.status}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
@@ -1641,7 +1652,9 @@ export function PastorsManager() {
                   }
                 >
                   <SelectTrigger id="editPastorRank">
-                    <SelectValue placeholder="Select rank" />
+                    <SelectValue placeholder="Select rank">
+                      {PASTOR_RANK_MAP[editFormData.pastorRank] ?? editFormData.pastorRank}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ArchBishop">Archbishop</SelectItem>
@@ -1704,7 +1717,9 @@ export function PastorsManager() {
                   }}
                 >
                   <SelectTrigger id="editStatus">
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder="Select status">
+                      {PASTOR_STATUS_LABELS[editFormData.status] ?? editFormData.status}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>

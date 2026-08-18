@@ -386,7 +386,13 @@ export function PastorAssignments() {
             onValueChange={(v) => setChurchFilter(v ?? "all")}
           >
             <SelectTrigger>
-              <SelectValue placeholder="All Churches" />
+              {/* This Select doesn't resolve a selected value to its item's
+                  label on its own, so the label is computed and passed
+                  explicitly — otherwise the trigger shows the raw value
+                  ("all") instead of "All Churches". */}
+              <SelectValue placeholder="All Churches">
+                {churchFilter === "all" ? "All Churches" : churchFilter}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Churches</SelectItem>
@@ -404,7 +410,9 @@ export function PastorAssignments() {
             onValueChange={(v) => setRoleFilter(v ?? "all")}
           >
             <SelectTrigger>
-              <SelectValue placeholder="All Roles" />
+              <SelectValue placeholder="All Roles">
+                {roleFilter === "all" ? "All Roles" : roleFilter}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Roles</SelectItem>
