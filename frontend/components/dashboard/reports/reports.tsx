@@ -13,6 +13,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import Image from "next/image";
 import { useMemo, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import {
   useDownloadDistrictSummaryPDF,
   useDownloadPastorDemographicsPDF,
 } from "@/lib/hooks/use-reports";
+import { useSettings } from "@/lib/hooks/use-settings";
 import type {
   DistrictSummaryReport,
   PastorDemographicsReport,
@@ -438,11 +440,25 @@ function PrintableReportShell({
   generatedAt: string;
   children: ReactNode;
 }) {
+  // Mirrors backend/reports/pdf_generator.py's letterhead — same crest, same
+  // org name (falls back to the bundled logo/name exactly like the sidebar
+  // does), so the on-screen preview matches the PDF you download.
+  const { data: settings } = useSettings();
+  const orgName = settings?.org_name || "Kenya Assemblies of God";
+
   return (
     <section className="rounded-2xl border border-border bg-white p-4 shadow-[0_4px_18px_rgba(15,23,42,0.07)] sm:p-8">
       <div className="border-b border-border pb-6 text-center">
-        <p className="text-lg font-extrabold uppercase tracking-normal text-foreground">
-          KAG Retirement Management System
+        <Image
+          src={settings?.org_logo || "/images/logo.png"}
+          alt=""
+          width={48}
+          height={48}
+          unoptimized={!!settings?.org_logo}
+          className="mx-auto mb-2 size-12 object-contain"
+        />
+        <p className="text-sm font-extrabold uppercase tracking-normal text-report-heading">
+          {orgName}
         </p>
         <h2 className="mt-2 text-lg font-extrabold uppercase tracking-normal text-foreground">
           {reportTitle}
