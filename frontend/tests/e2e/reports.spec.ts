@@ -10,8 +10,9 @@ test.describe("reports dashboard", () => {
     await expect(
       page.getByText("Preview and download live district summaries and pastor demographic reports.")
     ).toBeVisible();
-    // Time-range filter is currently a static "All Time" button (no menu wired
-    // up yet). Refine this once the filter dropdown is built.
+    // Time-range filter defaults to "All Time"; picking "This Year"/"Last
+    // Year" re-queries both report endpoints with a `range` param that
+    // filters by pastor-assignment date server-side.
     await expect(page.getByRole("button", { name: "All Time" })).toBeVisible();
 
     await expect(

@@ -5,6 +5,13 @@ import { BellIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { MobileSidebar } from "@/components/global/sidebar";
 import { useDisplayIdentity } from "@/lib/hooks/use-display-identity";
 
@@ -65,13 +72,23 @@ export function Navbar() {
 
       {/* Right side */}
       <div className="flex items-center gap-2">
-        {/* Notifications — the badge count was a hardcoded "3" with no
-            notification feed behind it; nothing in the app tracks a real
-            count yet, so showing none is more honest than inventing one. */}
-        <Button variant="ghost" size="icon-sm">
-          <BellIcon className="size-4" />
-          <span className="sr-only">Notifications</span>
-        </Button>
+        {/* Notifications — there's no notification feed behind this yet
+            (nothing in the app emits events to show here), so the menu is
+            an honest empty state rather than a hardcoded badge/count. */}
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+            <BellIcon className="size-4" />
+            <span className="sr-only">Notifications</span>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64">
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+            </DropdownMenuGroup>
+            <p className="px-1.5 py-3 text-center text-sm text-muted-foreground">
+              You&apos;re all caught up — no new notifications.
+            </p>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* User avatar */}
         <Avatar size="default">

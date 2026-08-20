@@ -56,3 +56,5 @@ export type PastorDemographicsReport = {
 };
 
 export type ReportType = "district-summary" | "pastor-demographics";
+
+export type ReportRange = "all" | "this_year" | "last_year";

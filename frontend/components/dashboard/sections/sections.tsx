@@ -143,8 +143,16 @@ export function SectionsManager() {
           setSelectedDistrictForNew(undefined);
           setIsAddDialogOpen(false);
         },
-        onError: (error) => {
+        onError: (error: unknown) => {
           console.error("Error creating section:", error);
+
+          // ApiRequestError.message already carries the extracted DRF error
+          // text (see extractErrorMessage in lib/api/client.ts) — it handles
+          // both `{detail}`/`{error}` shapes and serializer validation
+          // errors like `{name: ["..."]}`, so there's no need to re-parse
+          // `.response` here.
+          const errorMessage = error instanceof Error ? error.message : "Failed to create section";
+          toast.error(errorMessage, { duration: 5000 });
         },
       }
     );
@@ -177,8 +185,11 @@ export function SectionsManager() {
           setEditingSection(null);
           setIsEditDialogOpen(false);
         },
-        onError: (error) => {
+        onError: (error: unknown) => {
           console.error("Error updating section:", error);
+
+          const errorMessage = error instanceof Error ? error.message : "Failed to update section";
+          toast.error(errorMessage, { duration: 5000 });
         },
       }
     );
@@ -202,14 +213,7 @@ export function SectionsManager() {
         onError: (error: unknown) => {
           console.error("Error deleting section:", error);
 
-          // Extract error message from backend response
-          let errorMessage = "Failed to delete section";
-
-          if (error && typeof error === 'object' && 'response' in error) {
-            const response = (error as { response?: { detail?: string; error?: string } }).response;
-            errorMessage = response?.detail || response?.error || errorMessage;
-          }
-
+          const errorMessage = error instanceof Error ? error.message : "Failed to delete section";
           toast.error(errorMessage, { duration: 5000 });
           setSectionToDelete(null);
           setIsDeleteDialogOpen(false);

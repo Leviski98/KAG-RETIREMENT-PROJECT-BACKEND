@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/global/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,8 +46,6 @@ import {
   Users,
   UserCheck,
   Clock,
-  List,
-  LayoutGrid,
   Printer,
   ExternalLink,
   AlertTriangle,
@@ -71,6 +70,7 @@ import {
 import { EmptyState } from "@/components/patterns/empty-state";
 
 export function PastorsManager() {
+  const router = useRouter();
   const { data: settings } = useSettings();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRank, setSelectedRank] = useState("all");
@@ -78,8 +78,7 @@ export function PastorsManager() {
   const [selectedDistrict, setSelectedDistrict] = useState("all");
   const [selectedSection, setSelectedSection] = useState("all");
   const [selectedChurch, setSelectedChurch] = useState("all");
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
-  
+
   // Ref to maintain search input focus
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -397,15 +396,12 @@ export function PastorsManager() {
       toast.success("Pastor added successfully");
     } catch (error: unknown) {
       console.error("Error creating pastor:", error);
-      
-      // Check if the error is about the Archbishop constraint
-      let errorMessage = "Failed to create pastor";
-      
-      if (error && typeof error === 'object' && 'response' in error) {
-        const response = (error as { response?: { data?: { non_field_errors?: string[]; detail?: string } } }).response;
-        errorMessage = response?.data?.non_field_errors?.[0] || response?.data?.detail || errorMessage;
-      }
-      
+
+      // ApiRequestError.message already carries the extracted DRF error
+      // text (see extractErrorMessage in lib/api/client.ts), including the
+      // Archbishop uniqueness constraint's `non_field_errors` message — no
+      // need to re-parse `.response` here.
+      const errorMessage = error instanceof Error ? error.message : "Failed to create pastor";
       toast.error(errorMessage, { duration: 5000 });
     }
   };
@@ -561,15 +557,8 @@ export function PastorsManager() {
       toast.success("Pastor updated successfully");
     } catch (error: unknown) {
       console.error("Error updating pastor:", error);
-      
-      // Check if the error is about the Archbishop constraint
-      let errorMessage = "Failed to update pastor";
-      
-      if (error && typeof error === 'object' && 'response' in error) {
-        const response = (error as { response?: { data?: { non_field_errors?: string[]; detail?: string } } }).response;
-        errorMessage = response?.data?.non_field_errors?.[0] || response?.data?.detail || errorMessage;
-      }
-      
+
+      const errorMessage = error instanceof Error ? error.message : "Failed to update pastor";
       toast.error(errorMessage, { duration: 5000 });
     }
   };
@@ -901,6 +890,98 @@ export function PastorsManager() {
     }
   };
 
+  const handleViewAssignments = () => {
+    if (!selectedPastor) return;
+    router.push(`/dashboard/churches?tab=pastor-assignments&pastor=${selectedPastor.id}`);
+  };
+
+  const handlePrintProfile = () => {
+    if (!selectedPastor) return;
+    const pastor = selectedPastor;
+
+    const printWindow = window.open('', '_blank', 'width=800,height=900,resizable=yes,scrollbars=yes');
+    if (!printWindow) {
+      alert('Popup blocked! Please allow popups for this site to print the profile.');
+      return;
+    }
+
+    // Same letterhead + palette as handleExportPDF's print window — kept in
+    // sync deliberately since both are printed from the same app.
+    const orgName = (settings?.org_name || 'Kenya Assemblies of God').toUpperCase();
+    const logoSrc = settings?.org_logo || `${window.location.origin}/images/logo.png`;
+
+    const assignmentsHtml = pastor.church_assignments && pastor.church_assignments.length > 0
+      ? pastor.church_assignments.map((a) => `<li>${a.church_name} — ${a.role_name}</li>`).join('')
+      : '<li>No church assignments.</li>';
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${pastor.full_name} — Profile</title>
+          <style>
+            :root {
+              --ink: #3A3A3C;
+              --ink-muted: #6B758B;
+              --heading: #003A70;
+              --line: #C7C9D9;
+              --surface-1: #F2F2F5;
+            }
+            body { font-family: Arial, sans-serif; padding: 20px; color: var(--ink); }
+            .letterhead { text-align: center; margin-bottom: 4px; }
+            .letterhead img { width: 48px; height: 48px; object-fit: contain; margin-bottom: 8px; }
+            .org-name { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--heading); margin-bottom: 4px; }
+            h1 { font-size: 22px; margin: 0 0 4px; text-align: center; }
+            .subtitle { color: var(--ink-muted); margin-bottom: 20px; font-size: 13px; text-align: center; }
+            dl { display: grid; grid-template-columns: 160px 1fr; gap: 8px 12px; font-size: 13px; }
+            dt { color: var(--ink-muted); }
+            dd { margin: 0; font-weight: 500; }
+            ul { font-size: 13px; padding-left: 18px; }
+            .section-title { font-size: 13px; font-weight: 700; color: var(--heading); text-transform: uppercase; margin: 24px 0 8px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+            @media print { body { padding: 10px; } }
+          </style>
+        </head>
+        <body>
+          <div class="letterhead">
+            <img src="${logoSrc}" alt="" />
+            <div class="org-name">${orgName}</div>
+            <h1>${pastor.full_name}</h1>
+          </div>
+          <div class="subtitle">${pastor.pastor_rank} · ${pastor.pastor_id}</div>
+
+          <div class="section-title">Details</div>
+          <dl>
+            <dt>Status</dt><dd>${pastor.status.charAt(0).toUpperCase() + pastor.status.slice(1)}</dd>
+            <dt>Gender</dt><dd>${pastor.gender}</dd>
+            <dt>Date of Birth</dt><dd>${pastor.date_of_birth ? new Date(pastor.date_of_birth).toLocaleDateString('en-GB') : '—'}</dd>
+            <dt>National ID</dt><dd>${pastor.national_id || '—'}</dd>
+            <dt>Phone</dt><dd>${pastor.phone_number || '—'}</dd>
+            <dt>Start of Service</dt><dd>${pastor.start_of_service ? new Date(pastor.start_of_service).toLocaleDateString('en-GB') : '—'}</dd>
+            <dt>Years Served</dt><dd>${calculateYearsOfService(pastor.start_of_service, pastor.status, pastor.end_of_service)} years</dd>
+            <dt>Retirement Date</dt><dd>${getRetirementDate(pastor) || '—'}</dd>
+          </dl>
+
+          <div class="section-title">Church Assignments</div>
+          <ul>${assignmentsHtml}</ul>
+
+          <script>
+            window.onload = function() { setTimeout(function() { window.print(); }, 100); };
+            window.onafterprint = function() { window.close(); };
+          </script>
+        </body>
+      </html>
+    `;
+
+    try {
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+    } catch (error) {
+      console.error('Error printing profile:', error);
+      alert('An error occurred while printing the profile. Please try again.');
+      printWindow.close();
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 p-6">
       {/* Loading State */}
@@ -1141,27 +1222,6 @@ export function PastorsManager() {
             <Download className="size-4" />
             Export PDF
           </Button>
-
-          <div className="flex items-center rounded-lg border">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => setViewMode("list")}
-              className={viewMode === "list" ? "bg-muted" : ""}
-            >
-              <List className="size-4" />
-              <span className="sr-only">List view</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => setViewMode("grid")}
-              className={viewMode === "grid" ? "bg-muted" : ""}
-            >
-              <LayoutGrid className="size-4" />
-              <span className="sr-only">Grid view</span>
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -2017,11 +2077,11 @@ export function PastorsManager() {
                   <Pencil className="size-4" />
                   Edit Pastor
                 </Button>
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full" onClick={handleViewAssignments}>
                   <ExternalLink className="size-4" />
                   View Assignments
                 </Button>
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full" onClick={handlePrintProfile}>
                   <Printer className="size-4" />
                   Print Profile
                 </Button>

@@ -3,6 +3,7 @@ from datetime import date
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from churches.models import Church, ChurchPastor, ChurchRole
@@ -93,6 +94,52 @@ class ReportsApiTests(TestCase):
         self.assertIsInstance(pastor_row['years_served'], int)
         self.assertEqual(pastor_row['projected_retirement'], 'Jan 2035')
         self.assertTrue(pastor_row['remaining_tenure'].endswith(' yrs'))
+
+    def test_range_filter_excludes_assignments_outside_the_window(self):
+        # The "All Time" report filter has real teeth: a `range=this_year`
+        # request should exclude a pastor whose only assignment happened
+        # last year, and `range=all` (or omitting the param) should include
+        # it again. ChurchPastor.created_at is auto_now_add, so backdating it
+        # requires a queryset .update() after creation.
+        district = District.objects.create(name='Rift Valley District')
+        section = Section.objects.create(name='Eldoret', district=district)
+        church = Church.objects.create(
+            church_name='KAG Eldoret',
+            section=section,
+            location='Eldoret',
+        )
+        role = ChurchRole.objects.create(role_name='Lead Pastor')
+        pastor = Pastor.objects.create(
+            full_name='John Mwangi',
+            gender='Male',
+            pastor_rank='Bishop',
+            national_id='87654321',
+            date_of_birth=date(1970, 3, 20),
+            phone_number='+254700000000',
+            start_of_service=date(2000, 3, 20),
+            status='active',
+        )
+        assignment = ChurchPastor.objects.create(church=church, pastor=pastor, role=role)
+        last_year = timezone.now().replace(year=timezone.now().year - 1)
+        ChurchPastor.objects.filter(pk=assignment.pk).update(created_at=last_year)
+
+        this_year_district = self.client.get(reverse('report-district-summary'), {'range': 'this_year'})
+        self.assertEqual(this_year_district.data['totals']['assigned_pastors'], 0)
+        self.assertEqual(this_year_district.data['districts'][0]['assigned_pastors'], 0)
+
+        all_time_district = self.client.get(reverse('report-district-summary'), {'range': 'all'})
+        self.assertEqual(all_time_district.data['totals']['assigned_pastors'], 1)
+
+        this_year_pastors = self.client.get(reverse('report-pastor-demographics'), {'range': 'this_year'})
+        self.assertEqual(this_year_pastors.data['totals']['total_pastors'], 0)
+        self.assertEqual(this_year_pastors.data['districts'], [])
+
+        last_year_pastors = self.client.get(reverse('report-pastor-demographics'), {'range': 'last_year'})
+        self.assertEqual(last_year_pastors.data['totals']['total_pastors'], 1)
+        self.assertEqual(last_year_pastors.data['districts'][0]['district_name'], district.name)
+
+        default_pastors = self.client.get(reverse('report-pastor-demographics'))
+        self.assertEqual(default_pastors.data['totals']['total_pastors'], 1)
 
     def test_openapi_schema_includes_report_paths(self):
         response = self.client.get(reverse('schema'))
