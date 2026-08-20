@@ -5,6 +5,7 @@ import { BellIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { MobileSidebar } from "@/components/global/sidebar";
 
 const BREADCRUMB_MAP: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -35,26 +36,30 @@ export function Navbar() {
   }
 
   return (
-    <header className="flex h-14 items-center justify-between border-b px-6">
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-sm">
-        {breadcrumbs.map((crumb, i) => (
-          <span key={i} className="flex items-center gap-1.5">
-            {i > 0 && (
-              <span className="text-muted-foreground">/</span>
-            )}
-            <span
-              className={
-                crumb.isLast
-                  ? "font-medium text-foreground"
-                  : "text-primary"
-              }
-            >
-              {crumb.label}
+    <header className="flex h-14 items-center justify-between gap-2 border-b px-4 sm:px-6">
+      <div className="flex min-w-0 items-center gap-2">
+        <MobileSidebar />
+
+        {/* Breadcrumb */}
+        <nav className="flex min-w-0 items-center gap-1.5 overflow-x-auto text-sm">
+          {breadcrumbs.map((crumb, i) => (
+            <span key={i} className="flex items-center gap-1.5">
+              {i > 0 && (
+                <span className="text-muted-foreground">/</span>
+              )}
+              <span
+                className={
+                  crumb.isLast
+                    ? "font-medium text-foreground"
+                    : "text-primary"
+                }
+              >
+                {crumb.label}
+              </span>
             </span>
-          </span>
-        ))}
-      </nav>
+          ))}
+        </nav>
+      </div>
 
       {/* Right side */}
       <div className="flex items-center gap-2">
