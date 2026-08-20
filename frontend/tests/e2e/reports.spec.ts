@@ -32,8 +32,13 @@ test.describe("reports dashboard", () => {
       .getByRole("button", { name: "Preview District Summary Report" })
       .click();
     // The preview toggles an inline live view of the report on the same page.
+    // The letterhead's org name now comes from SystemSettings.org_name
+    // (rendered uppercase via CSS, not in the DOM text) rather than the old
+    // hardcoded "KAG Retirement Management System" string. A fresh CI
+    // database has no settings row yet — SystemSettingsView.get_or_create's
+    // it on first fetch, seeding the model's default org_name.
     await expect(
-      page.getByText("KAG Retirement Management System")
+      page.getByText("Kenya Assemblies of God")
     ).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "District" })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "Sections" })).toBeVisible();
