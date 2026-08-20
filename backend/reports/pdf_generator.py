@@ -2,11 +2,13 @@
 PDF generation service for reports using ReportLab.
 """
 from io import BytesIO
+from pathlib import Path
+
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 from reportlab.lib.enums import TA_CENTER
 
 # Landscape letter: 11" × 8.5" with 0.5" margins each side → 10" usable width
@@ -14,21 +16,45 @@ _PAGE = landscape(letter)
 _MARGIN = 0.5 * inch
 _W = _PAGE[0] - 2 * _MARGIN  # 10.0 inches usable
 
+# Same crest used across the frontend (navbar, sidebar, auth pages) — kept as
+# its own file here since ReportLab needs a real path, not a Next.js import.
+_LOGO_PATH = Path(__file__).resolve().parent / 'assets' / 'kag-logo.png'
+_LOGO_SIZE = 0.55 * inch
+
 
 class ReportPDFGenerator:
     """Generate PDF reports with consistent styling."""
 
-    def __init__(self, title: str, generated_at: str):
+    def __init__(self, title: str, generated_at: str, org_name: str = 'Kenya Assemblies of God'):
         self.title = title
         self.generated_at = generated_at
+        self.org_name = org_name
         self.styles = getSampleStyleSheet()
         self._add_styles()
 
     def _add_styles(self):
+        # Every style below sets `leading` explicitly at ~1.2x its fontSize.
+        # ParagraphStyle otherwise inherits the base 'Normal' style's
+        # leading (12pt) regardless of fontSize — harmless for small text,
+        # but ReportTitle at 20pt with 12pt leading rendered its glyphs
+        # tall enough to visually overlap the subtitle line below it. Only
+        # visible once the PDF was actually rendered and looked at, not from
+        # reading the ReportLab calls.
+        self.styles.add(ParagraphStyle(
+            name='ReportOrgName',
+            parent=self.styles['Normal'],
+            fontSize=10,
+            leading=12,
+            textColor=colors.HexColor('#003a70'),
+            spaceAfter=2,
+            alignment=TA_CENTER,
+            fontName='Helvetica-Bold',
+        ))
         self.styles.add(ParagraphStyle(
             name='ReportTitle',
             parent=self.styles['Normal'],
             fontSize=20,
+            leading=24,
             textColor=colors.HexColor('#1f4e78'),
             spaceAfter=4,
             alignment=TA_CENTER,
@@ -38,6 +64,7 @@ class ReportPDFGenerator:
             name='ReportSubtitle',
             parent=self.styles['Normal'],
             fontSize=9,
+            leading=11,
             textColor=colors.HexColor('#607391'),
             spaceAfter=8,
             alignment=TA_CENTER,
@@ -47,6 +74,7 @@ class ReportPDFGenerator:
             name='SectionHeading',
             parent=self.styles['Normal'],
             fontSize=11,
+            leading=13,
             textColor=colors.HexColor('#003a70'),
             spaceBefore=8,
             spaceAfter=4,
@@ -56,6 +84,7 @@ class ReportPDFGenerator:
             name='SubSection',
             parent=self.styles['Normal'],
             fontSize=9,
+            leading=11,
             textColor=colors.HexColor('#333333'),
             spaceBefore=6,
             spaceAfter=3,
@@ -87,11 +116,18 @@ class ReportPDFGenerator:
         )
 
     def _page_header(self, title: str) -> list:
-        return [
+        elements = []
+        if _LOGO_PATH.exists():
+            logo = Image(str(_LOGO_PATH), width=_LOGO_SIZE, height=_LOGO_SIZE)
+            logo.hAlign = 'CENTER'
+            elements += [logo, Spacer(1, 0.06 * inch)]
+        elements += [
+            Paragraph(self.org_name.upper(), self.styles['ReportOrgName']),
             Paragraph(title, self.styles['ReportTitle']),
             Paragraph(f'Generated on {self.generated_at}', self.styles['ReportSubtitle']),
             Spacer(1, 0.2 * inch),
         ]
+        return elements
 
     # ── Shared table styles ────────────────────────────────────────────────
 

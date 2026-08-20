@@ -100,3 +100,30 @@ class ReportsApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('/api/reports/district-summary/', response.data['paths'])
         self.assertIn('/api/reports/pastor-demographics/', response.data['paths'])
+
+    # Nothing previously exercised the PDF endpoints at all — not even a
+    # smoke test. That's how a letterhead layout bug (ReportTitle's 20pt
+    # text overlapping the line below it, from an unset `leading`) shipped
+    # unnoticed: nobody had ever looked at a rendered page. These don't
+    # catch layout issues either — that needs actual visual rendering,
+    # which a unit test can't do cheaply — but they do catch the more
+    # likely regression now that PDF generation depends on a bundled
+    # image file: a missing/moved asset, or an exception in the ReportLab
+    # build, would fail loudly here instead of silently in production.
+    def test_district_summary_pdf_download(self):
+        response = self.client.get(reverse('report-district-summary-pdf'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        content = b''.join(response.streaming_content)
+        self.assertTrue(content.startswith(b'%PDF'))
+        self.assertGreater(len(content), 10_000)  # bare text-only PDF is ~2KB; the embedded logo alone is >100KB
+
+    def test_pastor_demographics_pdf_download(self):
+        response = self.client.get(reverse('report-pastor-demographics-pdf'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        content = b''.join(response.streaming_content)
+        self.assertTrue(content.startswith(b'%PDF'))
+        self.assertGreater(len(content), 10_000)

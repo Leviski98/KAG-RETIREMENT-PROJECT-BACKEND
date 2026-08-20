@@ -32,6 +32,15 @@ def get_retirement_age():
         return DEFAULT_RETIREMENT_AGE
 
 
+def get_org_name():
+    try:
+        from app_settings.models import SystemSettings
+        obj = SystemSettings.objects.only('org_name').get(pk=1)
+        return obj.org_name
+    except Exception:
+        return 'Kenya Assemblies of God'
+
+
 def calculate_age(birth_date):
     if not birth_date:
         return None
@@ -301,7 +310,7 @@ class DistrictSummaryReportPDFView(APIView):
         }
 
         # Generate PDF
-        pdf_generator = ReportPDFGenerator(report_data['title'], report_data['generated_at'])
+        pdf_generator = ReportPDFGenerator(report_data['title'], report_data['generated_at'], get_org_name())
         pdf_buffer = pdf_generator.create_district_summary_pdf(report_data)
 
         # Return as file download
@@ -429,7 +438,7 @@ class PastorDemographicsReportPDFView(APIView):
         }
 
         # Generate PDF
-        pdf_generator = ReportPDFGenerator(report_data['title'], report_data['generated_at'])
+        pdf_generator = ReportPDFGenerator(report_data['title'], report_data['generated_at'], get_org_name())
         pdf_buffer = pdf_generator.create_pastor_demographics_pdf(report_data)
 
         # Return as file download

@@ -59,6 +59,7 @@ import { useDistricts } from "@/lib/hooks/use-districts";
 import { useSections } from "@/lib/hooks/use-sections";
 import { useChurches } from "@/lib/hooks/use-church-module";
 import { usePastors, useCreatePastor, useUpdatePastor, useDeletePastor } from "@/lib/hooks/use-pastors";
+import { useSettings } from "@/lib/hooks/use-settings";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import { Pastor, PastorRank, PastorStatus } from "@/types/pastor";
 import { toast } from "sonner";
@@ -70,6 +71,7 @@ import {
 import { EmptyState } from "@/components/patterns/empty-state";
 
 export function PastorsManager() {
+  const { data: settings } = useSettings();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRank, setSelectedRank] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -734,6 +736,12 @@ export function PastorsManager() {
     }
     const filterSummary = filters.length > 0 ? `<br/>Filters: ${filters.join(', ')}` : '<br/>No filters applied';
 
+    // This window has no access to app/globals.css, so the org's actual
+    // logo/name (same fallback the sidebar uses) has to be resolved here
+    // rather than assumed.
+    const orgName = (settings?.org_name || 'Kenya Assemblies of God').toUpperCase();
+    const logoSrc = settings?.org_logo || `${window.location.origin}/images/logo.png`;
+
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -755,6 +763,7 @@ export function PastorsManager() {
             :root {
               --ink: #3A3A3C;
               --ink-muted: #6B758B;
+              --heading: #003A70;
               --line: #C7C9D9;
               --surface-1: #F2F2F5;
               --surface-2: #FAFAFC;
@@ -767,15 +776,34 @@ export function PastorsManager() {
               padding: 20px;
               color: var(--ink);
             }
+            .letterhead {
+              text-align: center;
+              margin-bottom: 4px;
+            }
+            .letterhead img {
+              width: 48px;
+              height: 48px;
+              object-fit: contain;
+              margin-bottom: 8px;
+            }
+            .org-name {
+              font-size: 12px;
+              font-weight: 700;
+              text-transform: uppercase;
+              color: var(--heading);
+              margin-bottom: 4px;
+            }
             h1 {
               font-size: 24px;
-              margin-bottom: 10px;
+              margin: 0 0 10px;
               color: var(--ink);
+              text-align: center;
             }
             .subtitle {
               color: var(--ink-muted);
               margin-bottom: 20px;
               font-size: 14px;
+              text-align: center;
             }
             table {
               width: 100%;
@@ -807,7 +835,11 @@ export function PastorsManager() {
           </style>
         </head>
         <body>
-          <h1>Pastors Manager</h1>
+          <div class="letterhead">
+            <img src="${logoSrc}" alt="" />
+            <div class="org-name">${orgName}</div>
+            <h1>Pastors Manager</h1>
+          </div>
           <div class="subtitle">
             ${dataToExport.length} records | Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
             ${filterSummary}
