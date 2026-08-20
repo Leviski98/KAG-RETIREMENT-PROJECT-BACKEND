@@ -581,7 +581,13 @@ export function AllChurches({
           {/* Section filter */}
           <Select value={sectionFilter} onValueChange={(v: string | null) => setSectionFilter(v ?? "all")}>
             <SelectTrigger>
-              <SelectValue placeholder="All Sections" />
+              {/* This Select doesn't resolve a selected value to its item's
+                  label on its own (unlike shadcn's), so the label is computed
+                  and passed explicitly — otherwise the trigger shows the raw
+                  value ("all") instead of "All Sections". */}
+              <SelectValue placeholder="All Sections">
+                {sectionFilter === "all" ? "All Sections" : sectionFilter}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Sections</SelectItem>
@@ -596,7 +602,9 @@ export function AllChurches({
           {/* Sort */}
           <Select value={sortBy} onValueChange={(v: string | null) => setSortBy((v ?? "name") as SortField)}>
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue>
+                {SORT_OPTIONS.find((opt) => opt.value === sortBy)?.label}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {SORT_OPTIONS.map((opt) => (
