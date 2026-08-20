@@ -2,11 +2,13 @@
 
 import * as React from "react";
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   Trash2Icon,
   PlusIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  XIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -254,7 +256,8 @@ function Pagination({
 
 // ─── Pastor Assignments (main export) ─────────────────────────────────────────
 
-export function PastorAssignments() {
+export function PastorAssignments({ pastorId }: { pastorId?: string }) {
+  const router = useRouter();
   const assignmentsQuery = usePastorAssignments();
   const churchesQuery = useChurches();
   const pastorsQuery = usePastors();
@@ -304,6 +307,9 @@ export function PastorAssignments() {
 
   const filteredAssignments = useMemo(() => {
     let result = [...assignments];
+    if (pastorId) {
+      result = result.filter((a) => a.pastorId === pastorId);
+    }
     if (churchFilter !== "all") {
       result = result.filter((a) => a.churchName === churchFilter);
     }
@@ -311,7 +317,11 @@ export function PastorAssignments() {
       result = result.filter((a) => a.role === roleFilter);
     }
     return result;
-  }, [assignments, churchFilter, roleFilter]);
+  }, [assignments, pastorId, churchFilter, roleFilter]);
+
+  const pastorName = pastorId
+    ? assignments.find((a) => a.pastorId === pastorId)?.pastorName
+    : undefined;
 
   const totalPages = Math.ceil(filteredAssignments.length / ITEMS_PER_PAGE);
   const paginatedAssignments = filteredAssignments.slice(
@@ -377,6 +387,24 @@ export function PastorAssignments() {
 
   return (
     <div className="flex flex-col gap-4">
+      {pastorId && (
+        <div className="flex items-center justify-between rounded-lg border border-brand-200 bg-brand-50 px-4 py-2.5 text-sm">
+          <span>
+            Showing assignments for{" "}
+            <span className="font-semibold">{pastorName ?? "this pastor"}</span>
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => router.push("/dashboard/churches?tab=pastor-assignments")}
+          >
+            <XIcon className="size-3.5" />
+            Clear filter
+          </Button>
+        </div>
+      )}
+
       {/* Toolbar: Filters + Count + Add */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">

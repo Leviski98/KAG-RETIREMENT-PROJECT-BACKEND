@@ -2,6 +2,7 @@ import { apiClient, API_BASE_URL } from "@/lib/api/client";
 import type {
   DistrictSummaryReport,
   PastorDemographicsReport,
+  ReportRange,
 } from "@/types/report";
 
 const downloadPDF = async (url: string, filename: string) => {
@@ -25,15 +26,25 @@ const downloadPDF = async (url: string, filename: string) => {
 };
 
 export const reportApi = {
-  getDistrictSummary: () =>
-    apiClient.get<DistrictSummaryReport>("/reports/district-summary/"),
+  getDistrictSummary: (range: ReportRange = "all") =>
+    apiClient.get<DistrictSummaryReport>(
+      `/reports/district-summary/?range=${range}`
+    ),
 
-  getPastorDemographics: () =>
-    apiClient.get<PastorDemographicsReport>("/reports/pastor-demographics/"),
+  getPastorDemographics: (range: ReportRange = "all") =>
+    apiClient.get<PastorDemographicsReport>(
+      `/reports/pastor-demographics/?range=${range}`
+    ),
 
-  downloadDistrictSummaryPDF: () =>
-    downloadPDF("/reports/district-summary/pdf/", "District_Summary_Report.pdf"),
+  downloadDistrictSummaryPDF: (range: ReportRange = "all") =>
+    downloadPDF(
+      `/reports/district-summary/pdf/?range=${range}`,
+      "District_Summary_Report.pdf"
+    ),
 
-  downloadPastorDemographicsPDF: () =>
-    downloadPDF("/reports/pastor-demographics/pdf/", "Pastor_Demographics_Report.pdf"),
+  downloadPastorDemographicsPDF: (range: ReportRange = "all") =>
+    downloadPDF(
+      `/reports/pastor-demographics/pdf/?range=${range}`,
+      "Pastor_Demographics_Report.pdf"
+    ),
 };

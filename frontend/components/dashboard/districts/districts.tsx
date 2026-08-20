@@ -112,13 +112,12 @@ export function DistrictsManager() {
         onError: (error: unknown) => {
           console.error("Error deleting district:", error);
 
-          // Extract error message from backend response
-          let errorMessage = "Failed to delete district";
-
-          if (error && typeof error === 'object' && 'response' in error) {
-            const response = (error as { response?: { detail?: string; error?: string } }).response;
-            errorMessage = response?.detail || response?.error || errorMessage;
-          }
+          // ApiRequestError.message already carries the extracted DRF error
+          // text (see extractErrorMessage in lib/api/client.ts) — it handles
+          // both `{detail}`/`{error}` shapes and serializer validation
+          // errors like `{name: ["..."]}`, so there's no need to re-parse
+          // `.response` here.
+          const errorMessage = error instanceof Error ? error.message : "Failed to delete district";
 
           toast.error(errorMessage, { duration: 5000 });
           setDistrictToDelete(null);
@@ -145,9 +144,11 @@ export function DistrictsManager() {
           setNewDistrictName("");
           setIsAddDialogOpen(false);
         },
-        onError: (error) => {
+        onError: (error: unknown) => {
           console.error("Error creating district:", error);
-          // You can add error toast here
+
+          const errorMessage = error instanceof Error ? error.message : "Failed to create district";
+          toast.error(errorMessage, { duration: 5000 });
         },
       }
     );
@@ -175,9 +176,11 @@ export function DistrictsManager() {
           setEditingDistrict(null);
           setIsEditDialogOpen(false);
         },
-        onError: (error) => {
+        onError: (error: unknown) => {
           console.error("Error updating district:", error);
-          // You can add error toast here
+
+          const errorMessage = error instanceof Error ? error.message : "Failed to update district";
+          toast.error(errorMessage, { duration: 5000 });
         },
       }
     );

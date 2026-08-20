@@ -1,7 +1,7 @@
 from collections import defaultdict
 from datetime import date
 
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import FileResponse
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
@@ -21,6 +21,31 @@ from .pdf_generator import ReportPDFGenerator
 
 
 DEFAULT_RETIREMENT_AGE = 70
+
+REPORT_RANGES = {'all', 'this_year', 'last_year'}
+
+
+def get_range_bounds(range_param):
+    """
+    Translate a report `range` query param into (start, end) datetime bounds
+    on ChurchPastor.created_at, or None for 'all' (no filtering).
+
+    Assignment date is the only time dimension these reports have — districts,
+    sections, and churches aren't date-scoped entities — so "time range" means
+    "pastor assignments made in this period", not a snapshot as of a past date.
+    """
+    if range_param not in REPORT_RANGES or range_param == 'all':
+        return None
+
+    now = timezone.now()
+    if range_param == 'this_year':
+        start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        return start, now
+
+    # last_year
+    start = now.replace(year=now.year - 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    end = now.replace(year=now.year - 1, month=12, day=31, hour=23, minute=59, second=59, microsecond=999999)
+    return start, end
 
 
 def get_retirement_age():
@@ -102,10 +127,20 @@ class DistrictSummaryReportView(APIView):
         responses=DistrictSummaryReportSerializer,
     )
     def get(self, request):
+        bounds = get_range_bounds(request.query_params.get('range', 'all'))
+        assignment_filter = (
+            Q(sections__churches__church_pastors__created_at__range=bounds)
+            if bounds else Q()
+        )
+
         districts = District.objects.annotate(
             section_count=Count('sections', distinct=True),
             church_count=Count('sections__churches', distinct=True),
-            assigned_pastor_count=Count('sections__churches__church_pastors', distinct=True),
+            assigned_pastor_count=Count(
+                'sections__churches__church_pastors',
+                filter=assignment_filter,
+                distinct=True,
+            ),
         ).order_by('name')
 
         district_rows = [
@@ -122,7 +157,10 @@ class DistrictSummaryReportView(APIView):
         total_districts = len(district_rows)
         total_sections = Section.objects.count()
         total_churches = Church.objects.count()
-        assigned_pastors = ChurchPastor.objects.values('pastor').distinct().count()
+        assigned_pastors_qs = ChurchPastor.objects.all()
+        if bounds:
+            assigned_pastors_qs = assigned_pastors_qs.filter(created_at__range=bounds)
+        assigned_pastors = assigned_pastors_qs.values('pastor').distinct().count()
 
         return Response({
             'title': 'District Summary Report',
@@ -157,8 +195,15 @@ class PastorDemographicsReportView(APIView):
     )
     def get(self, request):
         retirement_age = get_retirement_age()
+        bounds = get_range_bounds(request.query_params.get('range', 'all'))
 
-        pastors = list(Pastor.objects.all())
+        pastor_qs = Pastor.objects.all()
+        if bounds:
+            pastor_qs = pastor_qs.filter(
+                church_assignments__created_at__range=bounds
+            ).distinct()
+
+        pastors = list(pastor_qs)
         total_pastors = len(pastors)
         active_pastors = sum(1 for pastor in pastors if pastor.status == 'active')
         retired_pastors = sum(1 for pastor in pastors if pastor.status == 'retired')
@@ -172,15 +217,15 @@ class PastorDemographicsReportView(APIView):
 
         by_gender = [
             {'label': row['gender'] or 'Unknown', 'count': row['count']}
-            for row in Pastor.objects.values('gender').annotate(count=Count('id')).order_by('gender')
+            for row in pastor_qs.values('gender').annotate(count=Count('id')).order_by('gender')
         ]
         by_rank = [
             {'label': row['pastor_rank'] or 'Unknown', 'count': row['count']}
-            for row in Pastor.objects.values('pastor_rank').annotate(count=Count('id')).order_by('pastor_rank')
+            for row in pastor_qs.values('pastor_rank').annotate(count=Count('id')).order_by('pastor_rank')
         ]
         by_status = [
             {'label': row['status'] or 'Unknown', 'count': row['count']}
-            for row in Pastor.objects.values('status').annotate(count=Count('id')).order_by('status')
+            for row in pastor_qs.values('status').annotate(count=Count('id')).order_by('status')
         ]
 
         grouped_assignments = defaultdict(lambda: defaultdict(dict))
@@ -192,6 +237,8 @@ class PastorDemographicsReportView(APIView):
             'church__section__name',
             'pastor__full_name',
         )
+        if bounds:
+            assignments = assignments.filter(created_at__range=bounds)
 
         for assignment in assignments:
             pastor = assignment.pastor
@@ -275,10 +322,20 @@ class DistrictSummaryReportPDFView(APIView):
     )
     def get(self, request):
         # Get the same data as the JSON endpoint
+        bounds = get_range_bounds(request.query_params.get('range', 'all'))
+        assignment_filter = (
+            Q(sections__churches__church_pastors__created_at__range=bounds)
+            if bounds else Q()
+        )
+
         districts = District.objects.annotate(
             section_count=Count('sections', distinct=True),
             church_count=Count('sections__churches', distinct=True),
-            assigned_pastor_count=Count('sections__churches__church_pastors', distinct=True),
+            assigned_pastor_count=Count(
+                'sections__churches__church_pastors',
+                filter=assignment_filter,
+                distinct=True,
+            ),
         ).order_by('name')
 
         district_rows = [
@@ -295,7 +352,10 @@ class DistrictSummaryReportPDFView(APIView):
         total_districts = len(district_rows)
         total_sections = Section.objects.count()
         total_churches = Church.objects.count()
-        assigned_pastors = ChurchPastor.objects.values('pastor').distinct().count()
+        assigned_pastors_qs = ChurchPastor.objects.all()
+        if bounds:
+            assigned_pastors_qs = assigned_pastors_qs.filter(created_at__range=bounds)
+        assigned_pastors = assigned_pastors_qs.values('pastor').distinct().count()
 
         report_data = {
             'title': 'District Summary Report',
@@ -337,9 +397,16 @@ class PastorDemographicsReportPDFView(APIView):
     )
     def get(self, request):
         retirement_age = get_retirement_age()
+        bounds = get_range_bounds(request.query_params.get('range', 'all'))
 
         # Get the same data as the JSON endpoint
-        pastors = list(Pastor.objects.all())
+        pastor_qs = Pastor.objects.all()
+        if bounds:
+            pastor_qs = pastor_qs.filter(
+                church_assignments__created_at__range=bounds
+            ).distinct()
+
+        pastors = list(pastor_qs)
         total_pastors = len(pastors)
         active_pastors = sum(1 for pastor in pastors if pastor.status == 'active')
         retired_pastors = sum(1 for pastor in pastors if pastor.status == 'retired')
@@ -353,15 +420,15 @@ class PastorDemographicsReportPDFView(APIView):
 
         by_gender = [
             {'label': row['gender'] or 'Unknown', 'count': row['count']}
-            for row in Pastor.objects.values('gender').annotate(count=Count('id')).order_by('gender')
+            for row in pastor_qs.values('gender').annotate(count=Count('id')).order_by('gender')
         ]
         by_rank = [
             {'label': row['pastor_rank'] or 'Unknown', 'count': row['count']}
-            for row in Pastor.objects.values('pastor_rank').annotate(count=Count('id')).order_by('pastor_rank')
+            for row in pastor_qs.values('pastor_rank').annotate(count=Count('id')).order_by('pastor_rank')
         ]
         by_status = [
             {'label': row['status'] or 'Unknown', 'count': row['count']}
-            for row in Pastor.objects.values('status').annotate(count=Count('id')).order_by('status')
+            for row in pastor_qs.values('status').annotate(count=Count('id')).order_by('status')
         ]
 
         # Build assignment grouping
@@ -374,6 +441,8 @@ class PastorDemographicsReportPDFView(APIView):
             'church__section__name',
             'pastor__full_name',
         )
+        if bounds:
+            assignments = assignments.filter(created_at__range=bounds)
 
         for assignment in assignments:
             pastor = assignment.pastor

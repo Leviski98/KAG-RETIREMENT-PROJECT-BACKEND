@@ -33,12 +33,25 @@ import {
   useDownloadPastorDemographicsPDF,
 } from "@/lib/hooks/use-reports";
 import { useSettings } from "@/lib/hooks/use-settings";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type {
   DistrictSummaryReport,
   PastorDemographicsReport,
   ReportMetric,
+  ReportRange,
   ReportType,
 } from "@/types/report";
+
+const RANGE_LABELS: Record<ReportRange, string> = {
+  all: "All Time",
+  this_year: "This Year",
+  last_year: "Last Year",
+};
 
 type ReportCard = {
   type: ReportType;
@@ -105,10 +118,11 @@ const recentReports: RecentReport[] = [
 
 export function ReportsManager() {
   const [activeReport, setActiveReport] = useState<ReportType | null>(null);
+  const [range, setRange] = useState<ReportRange>("all");
 
   // Always enabled so metric cards populate on page load
-  const districtSummary = useDistrictSummaryReport(true);
-  const pastorDemographics = usePastorDemographicsReport(true);
+  const districtSummary = useDistrictSummaryReport(true, range);
+  const pastorDemographics = usePastorDemographicsReport(true, range);
 
   const downloadDistrictPDF = useDownloadDistrictSummaryPDF();
   const downloadPastorPDF = useDownloadPastorDemographicsPDF();
@@ -155,13 +169,26 @@ export function ReportsManager() {
           </p>
         </div>
 
-        <Button
-          variant="outline"
-          className="h-11 w-full justify-between rounded-xl border-border bg-brand-50 px-5 text-sm font-semibold text-foreground shadow-none sm:w-[116px]"
-        >
-          All Time
-          <ChevronDown className="size-4 text-muted-foreground" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="outline"
+                className="h-11 w-full justify-between rounded-xl border-border bg-brand-50 px-5 text-sm font-semibold text-foreground shadow-none sm:w-[140px]"
+              />
+            }
+          >
+            {RANGE_LABELS[range]}
+            <ChevronDown className="size-4 text-muted-foreground" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {(Object.keys(RANGE_LABELS) as ReportRange[]).map((value) => (
+              <DropdownMenuItem key={value} onClick={() => setRange(value)}>
+                {RANGE_LABELS[value]}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Report cards */}
@@ -182,8 +209,8 @@ export function ReportsManager() {
               onPreview={() => handlePreview(report.type)}
               onDownload={
                 report.type === "district-summary"
-                  ? () => downloadDistrictPDF.mutate()
-                  : () => downloadPastorPDF.mutate()
+                  ? () => downloadDistrictPDF.mutate(range)
+                  : () => downloadPastorPDF.mutate(range)
               }
             />
           );

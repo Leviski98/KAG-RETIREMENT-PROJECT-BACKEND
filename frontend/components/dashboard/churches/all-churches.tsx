@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   BuildingIcon,
   MapPinIcon,
@@ -393,6 +394,7 @@ export function AllChurches({
   externalAddOpen, 
   onAddOpenChange 
 }: AllChurchesProps = {}) {
+  const router = useRouter();
   const churchesQuery = useChurches();
   const sectionsQuery = useSections();
   const createChurch = useCreateChurch();
@@ -469,8 +471,7 @@ export function AllChurches({
   // ── Handlers ────────────────────────────────────────────────────────────────
 
   const handleView = (church: Church) => {
-    // For now, could navigate to detail page
-    toast.info(`Viewing ${church.name}`);
+    router.push(`/dashboard/churches/${church.id}`);
   };
 
   const handleEdit = (church: Church) => {
@@ -525,18 +526,11 @@ export function AllChurches({
       await deleteChurch.mutateAsync(selectedChurch.id);
       toast.success(MESSAGES.CHURCH.DELETE_SUCCESS);
     } catch (error: unknown) {
-      // Extract error message from backend response
-      let errorMessage = "Failed to delete church";
-      
-      if (error && typeof error === 'object') {
-        if ('response' in error) {
-          const response = (error as { response?: { detail?: string; error?: string } }).response;
-          errorMessage = response?.detail || response?.error || errorMessage;
-        } else if ('message' in error && typeof (error as { message?: string }).message === 'string') {
-          errorMessage = (error as { message: string }).message;
-        }
-      }
-      
+      // ApiRequestError.message already carries the extracted DRF error
+      // text (see extractErrorMessage in lib/api/client.ts) — it handles
+      // both `{detail}`/`{error}` shapes and serializer validation errors,
+      // so there's no need to re-parse `.response` here.
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete church";
       toast.error(errorMessage, { duration: 5000 });
     } finally {
       setDeleteOpen(false);
