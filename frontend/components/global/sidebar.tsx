@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { sidebarItems, type SidebarItem } from "@/configs/sidebar-config";
 import { useSettings } from "@/lib/hooks/use-settings";
 import { useAuth } from "@/components/providers";
+import { useDisplayIdentity } from "@/lib/hooks/use-display-identity";
 import { useLogout } from "@/lib/hooks/use-auth";
 import { ROUTES } from "@/constants/route";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -31,21 +32,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const router = useRouter();
   const { data: settings } = useSettings();
   const { user } = useAuth();
+  const { name: displayName, email: displayEmail, initials } = useDisplayIdentity();
   const logout = useLogout();
   const [manuallyToggled, setManuallyToggled] = useState<Record<string, boolean>>({});
-
-  const displayEmail = user?.email || settings?.account_email || "";
-  // The API's full_name falls back to the email when a user has no name set,
-  // so an unguarded chain renders the same string in both slots.
-  const resolvedName = user?.full_name?.trim() || settings?.account_display_name?.trim() || "";
-  const displayName =
-    resolvedName && resolvedName !== displayEmail ? resolvedName : "System Administrator";
-  const initials = displayName
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 
   const visibleItems = sidebarItems.filter(
     (item) => !item.adminOnly || user?.is_admin

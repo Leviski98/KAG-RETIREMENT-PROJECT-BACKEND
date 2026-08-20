@@ -6,6 +6,7 @@ import { BellIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MobileSidebar } from "@/components/global/sidebar";
+import { useDisplayIdentity } from "@/lib/hooks/use-display-identity";
 
 const BREADCRUMB_MAP: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -20,6 +21,7 @@ const BREADCRUMB_MAP: Record<string, string> = {
 
 export function Navbar() {
   const pathname = usePathname();
+  const { initials } = useDisplayIdentity();
 
   // Build breadcrumb segments
   const segments = pathname.split("/").filter(Boolean);
@@ -63,18 +65,18 @@ export function Navbar() {
 
       {/* Right side */}
       <div className="flex items-center gap-2">
-        {/* Notifications */}
-        <Button variant="ghost" size="icon-sm" className="relative">
+        {/* Notifications — the badge count was a hardcoded "3" with no
+            notification feed behind it; nothing in the app tracks a real
+            count yet, so showing none is more honest than inventing one. */}
+        <Button variant="ghost" size="icon-sm">
           <BellIcon className="size-4" />
-          <span className="absolute -top-0.5 -right-0.5 flex size-3.5 items-center justify-center rounded-full bg-primary text-[9px] font-medium text-primary-foreground">
-            3
-          </span>
+          <span className="sr-only">Notifications</span>
         </Button>
 
         {/* User avatar */}
         <Avatar size="default">
           <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-            AK
+            {initials}
           </AvatarFallback>
         </Avatar>
       </div>
