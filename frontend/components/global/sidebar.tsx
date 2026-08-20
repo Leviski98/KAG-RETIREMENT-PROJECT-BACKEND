@@ -4,42 +4,37 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronDownIcon, LogOutIcon } from "lucide-react";
+import { ChevronDownIcon, LogOutIcon, MenuIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { sidebarItems, type SidebarItem } from "@/configs/sidebar-config";
 import { useSettings } from "@/lib/hooks/use-settings";
 import { useAuth } from "@/components/providers";
+import { useDisplayIdentity } from "@/lib/hooks/use-display-identity";
 import { useLogout } from "@/lib/hooks/use-auth";
 import { ROUTES } from "@/constants/route";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export function Sidebar() {
+/**
+ * Shared between the desktop rail and the mobile drawer, so both stay in
+ * sync automatically instead of two copies of the nav drifting apart.
+ * `onNavigate` is only passed by the mobile drawer, to close it after a tap.
+ */
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: settings } = useSettings();
   const { user } = useAuth();
+  const { name: displayName, email: displayEmail, initials } = useDisplayIdentity();
   const logout = useLogout();
   const [manuallyToggled, setManuallyToggled] = useState<Record<string, boolean>>({});
-
-  const displayEmail = user?.email || settings?.account_email || "";
-  // The API's full_name falls back to the email when a user has no name set,
-  // so an unguarded chain renders the same string in both slots.
-  const resolvedName = user?.full_name?.trim() || settings?.account_display_name?.trim() || "";
-  const displayName =
-    resolvedName && resolvedName !== displayEmail ? resolvedName : "System Administrator";
-  const initials = displayName
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 
   const visibleItems = sidebarItems.filter(
     (item) => !item.adminOnly || user?.is_admin
@@ -56,14 +51,17 @@ export function Sidebar() {
 
   function handleSignOut() {
     logout.mutate(undefined, {
-      onSettled: () => router.push(ROUTES.LANDING),
+      onSettled: () => {
+        onNavigate?.();
+        router.push(ROUTES.LANDING);
+      },
     });
   }
 
   return (
-    <aside className="hidden w-60 shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex lg:flex-col">
+    <div className="flex h-full flex-col">
       {/* Logo */}
-      <div className="flex h-14 items-center gap-2.5 border-b border-sidebar-border px-4">
+      <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-sidebar-border px-4">
         {/* Light chip so the deep-blue mark stays legible on the dark sidebar. */}
         <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white">
           {settings?.org_logo ? (
@@ -93,7 +91,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
         {visibleItems.map((item: SidebarItem) => {
           const isActive =
             pathname === item.href || pathname.startsWith(item.href + "/");
@@ -132,6 +130,7 @@ export function Sidebar() {
                         <Link
                           key={child.href}
                           href={child.href}
+                          onClick={onNavigate}
                           className={cn(
                             "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors",
                             childActive
@@ -159,6 +158,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 isActive
@@ -174,7 +174,7 @@ export function Sidebar() {
       </nav>
 
       {/* User footer */}
-      <div className="border-t border-sidebar-border px-3 py-3">
+      <div className="shrink-0 border-t border-sidebar-border px-3 py-3">
         <div className="flex items-center gap-3">
           <Avatar size="default">
             <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs">
@@ -207,6 +207,44 @@ export function Sidebar() {
           </Tooltip>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Desktop rail — unchanged behaviour, hidden below the lg breakpoint. */
+export function Sidebar() {
+  return (
+    <aside className="hidden w-60 shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex lg:flex-col">
+      <SidebarContent />
     </aside>
+  );
+}
+
+/**
+ * Mobile drawer — the sidebar's only entry point below the lg breakpoint,
+ * where the rail above is hidden. Without this, there was no way to
+ * navigate off the current page on a phone at all.
+ */
+export function MobileSidebar() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger
+        render={
+          <Button variant="ghost" size="icon-sm" className="lg:hidden" />
+        }
+      >
+        <MenuIcon className="size-5" />
+        <span className="sr-only">Open navigation</span>
+      </SheetTrigger>
+      <SheetContent
+        side="left"
+        showCloseButton={false}
+        className="w-72 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground sm:max-w-72"
+      >
+        <SidebarContent onNavigate={() => setOpen(false)} />
+      </SheetContent>
+    </Sheet>
   );
 }
