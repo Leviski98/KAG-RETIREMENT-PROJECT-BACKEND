@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { KpiCard } from "@/components/patterns/kpi-card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -1019,72 +1020,11 @@ export function PastorsManager() {
 
       {/* Stats Cards */}
       <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 transition-opacity duration-200 ${isFetching && !isLoading ? 'opacity-70' : 'opacity-100'}`}>
-        {/* Total Pastors */}
-        <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10">
-              <Users className="size-6 text-brand-primary" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm text-muted-foreground">
-                Total Pastors
-              </span>
-              <span className="text-2xl font-bold">{stats.total}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Active */}
-        <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex size-12 items-center justify-center rounded-lg bg-brand-success/10">
-              <UserCheck className="size-6 text-brand-success" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm text-muted-foreground">Active</span>
-              <span className="text-2xl font-bold">{stats.active}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Retired */}
-        <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex size-12 items-center justify-center rounded-lg bg-chart-4/15">
-              <Clock className="size-6 text-chart-4" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm text-muted-foreground">Retired</span>
-              <span className="text-2xl font-bold">{stats.retired}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Suspended */}
-        <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex size-12 items-center justify-center rounded-lg bg-brand-warning/10">
-              <UserX className="size-6 text-brand-warning" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm text-muted-foreground">Suspended</span>
-              <span className="text-2xl font-bold">{stats.suspended}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Deceased */}
-        <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex size-12 items-center justify-center rounded-lg bg-muted">
-              <X className="size-6 text-muted-foreground" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm text-muted-foreground">Deceased</span>
-              <span className="text-2xl font-bold">{stats.deceased}</span>
-            </div>
-          </CardContent>
-        </Card>
+        <KpiCard icon={Users} label="Total Pastors" value={stats.total} color="primary" hero />
+        <KpiCard icon={UserCheck} label="Active" value={stats.active} color="success" />
+        <KpiCard icon={Clock} label="Retired" value={stats.retired} color="info" />
+        <KpiCard icon={UserX} label="Suspended" value={stats.suspended} color="warning" />
+        <KpiCard icon={X} label="Deceased" value={stats.deceased} color="neutral" />
       </div>
 
       {/* Search and Filter Bar */}

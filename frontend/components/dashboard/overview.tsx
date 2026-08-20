@@ -1,6 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
+import { KpiCard, type KpiCardColor } from "@/components/patterns/kpi-card";
 import {
   BarChart,
   Bar,
@@ -17,7 +18,9 @@ import {
   TrendingUp,
   Users,
   Building2,
+  Map as MapIcon,
   UserCheck,
+  Clock,
   Loader2,
   type LucideIcon,
 } from "lucide-react";
@@ -70,11 +73,9 @@ const statusColors: Record<string, string> = {
 type MetricCard = {
   label: string;
   value: number;
-  change?: number;
-  changeText?: string;
   icon: LucideIcon;
-  color: string;
-  iconColor: string;
+  color: KpiCardColor;
+  hero?: boolean;
 };
 
 function getInitials(name: string): string {
@@ -147,40 +148,31 @@ export function DashboardOverview() {
   // "no data" — the counts are.
   const totalStatusCount = pastorStatusData.reduce((sum, s) => sum + s.value, 0);
 
-  // Build metrics data with real values. `change` is only set where the API
-  // actually reports a delta; pastors have no such endpoint yet.
   const metricsData: MetricCard[] = [
     {
       label: "Total Districts",
       value: districtStats?.total_districts || 0,
-      change: districtStats?.recent_districts || 0,
-      changeText: "from last month",
       icon: Building2,
-      color: "bg-chart-1/10",
-      iconColor: "text-chart-1",
+      color: "primary",
+      hero: true,
     },
     {
       label: "Total Sections",
       value: sectionStats?.total_sections || 0,
-      change: sectionStats?.recent_sections || 0,
-      changeText: "from last month",
-      icon: Building2,
-      color: "bg-chart-2/10",
-      iconColor: "text-chart-2",
+      icon: MapIcon,
+      color: "primary",
     },
     {
       label: "Active Pastors",
       value: pastorStats?.active_pastors || 0,
-      icon: Users,
-      color: "bg-chart-5/10",
-      iconColor: "text-chart-5",
+      icon: UserCheck,
+      color: "success",
     },
     {
       label: "Retired Pastors",
       value: pastorStats?.retired_pastors || 0,
-      icon: UserCheck,
-      color: "bg-chart-3/10",
-      iconColor: "text-chart-3",
+      icon: Clock,
+      color: "info",
     },
   ];
 
@@ -231,38 +223,17 @@ export function DashboardOverview() {
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {metricsData.map((metric) => {
-          const Icon = metric.icon;
-          return (
-            <Card
-              key={metric.label}
-              className={`p-6 ${metric.color} border-0 hover:shadow-lg transition-shadow`}
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {metric.label}
-                  </p>
-                  <p className="text-3xl font-bold text-foreground mt-2">
-                    {typeof metric.value === "number"
-                      ? metric.value.toLocaleString()
-                      : metric.value}
-                  </p>
-                  {metric.change ? (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      <span className="text-brand-success font-semibold">
-                        +{metric.change}
-                      </span>{" "}
-                      {metric.changeText}
-                    </p>
-                  ) : null}
-                </div>
-                <Icon className={`${metric.iconColor} w-8 h-8 opacity-60`} />
-              </div>
-            </Card>
-          );
-        })}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {metricsData.map((metric) => (
+          <KpiCard
+            key={metric.label}
+            icon={metric.icon}
+            label={metric.label}
+            value={metric.value}
+            color={metric.color}
+            hero={metric.hero}
+          />
+        ))}
       </div>
 
       {/* Charts Row */}
