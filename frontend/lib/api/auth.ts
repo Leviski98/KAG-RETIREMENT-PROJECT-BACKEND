@@ -3,6 +3,7 @@ import type {
   AuthUser,
   LoginResult,
   MessageResult,
+  UserRole,
   VerifyEmailResult,
 } from '@/types/auth';
 
@@ -10,6 +11,12 @@ export interface SignupInput {
   full_name: string;
   email: string;
   password: string;
+}
+
+export interface ApproveUserInput {
+  userId: number;
+  role: UserRole;
+  districtIds?: number[];
 }
 
 export const authApi = {
@@ -45,6 +52,12 @@ export const authApi = {
 
   activeUsers: (): Promise<AuthUser[]> => apiClient.get<AuthUser[]>('/auth/users/active'),
 
-  approveUser: (userId: number): Promise<AuthUser> =>
-    apiClient.post<AuthUser>(`/auth/users/${userId}/approve`),
+  approveUser: ({ userId, role, districtIds }: ApproveUserInput): Promise<AuthUser> =>
+    apiClient.post<AuthUser>(`/auth/users/${userId}/approve`, {
+      role,
+      district_ids: districtIds ?? [],
+    }),
+
+  rejectUser: (userId: number): Promise<void> =>
+    apiClient.post<void>(`/auth/users/${userId}/reject`),
 };

@@ -199,7 +199,7 @@ REST_FRAMEWORK = {
         'accounts.authentication.JWTCookieAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        'accounts.permissions.IsAdminOrReadOnly',
     ],
     'DEFAULT_PAGINATION_CLASS': 'config.pagination.DynamicPageNumberPagination',
     'PAGE_SIZE': 10,  # Fallback used when SystemSettings row does not exist yet

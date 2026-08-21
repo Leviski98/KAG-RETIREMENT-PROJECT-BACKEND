@@ -17,13 +17,34 @@ class UserProfile(models.Model):
 
     `email_verified` tracks step 5 of the auth flow (ownership confirmed via the
     one-time link). Admin approval is tracked by the built-in `User.is_active`.
+
+    `role` is the system-access role assigned by an admin at approval time:
+    - Administrator: full system access and management.
+    - Archbishop: view-only access across all data.
+    - Bishop: view-only access, scoped to the districts assigned via `districts`.
     """
+    ROLE_ADMIN = 'admin'
+    ROLE_ARCHBISHOP = 'archbishop'
+    ROLE_BISHOP = 'bishop'
+    ROLE_CHOICES = [
+        (ROLE_ADMIN, 'Administrator'),
+        (ROLE_ARCHBISHOP, 'Archbishop'),
+        (ROLE_BISHOP, 'Bishop'),
+    ]
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='profile',
     )
     email_verified = models.BooleanField(default=False)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, blank=True, default='')
+    districts = models.ManyToManyField(
+        'districts.District',
+        blank=True,
+        related_name='bishop_profiles',
+        help_text='Districts this user (a Bishop) may view. Ignored for other roles.',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

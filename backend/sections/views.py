@@ -9,6 +9,7 @@ from django.utils import timezone
 from datetime import timedelta
 from districts.models import District
 from drf_spectacular.utils import extend_schema, extend_schema_view
+from accounts.permissions import bishop_district_ids
 
 
 @extend_schema_view(
@@ -76,9 +77,14 @@ class SectionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """
         Optionally restricts the returned sections based on query parameters.
-        Optimizes queries with select_related for district.
+        Optimizes queries with select_related for district. Bishops only see
+        sections belonging to their assigned districts.
         """
-        return super().get_queryset()
+        queryset = super().get_queryset()
+        district_ids = bishop_district_ids(self.request.user)
+        if district_ids is not None:
+            queryset = queryset.filter(district_id__in=district_ids)
+        return queryset
     
     @extend_schema(tags=['Sections'])
     @action(detail=False, methods=['get'])

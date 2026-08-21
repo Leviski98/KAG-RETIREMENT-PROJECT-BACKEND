@@ -12,6 +12,7 @@ from .views import (
     PasswordResetRequestView,
     PendingUsersView,
     RefreshView,
+    RejectUserView,
     ResendVerificationEmailView,
     SignupView,
     VerifyEmailView,
@@ -33,5 +34,6 @@ urlpatterns = [
     path('auth/users/pending', PendingUsersView.as_view(), name='auth-users-pending'),
     path('auth/users/active', ActiveUsersView.as_view(), name='auth-users-active'),
     path('auth/users/<int:user_id>/approve', ApproveUserView.as_view(), name='auth-users-approve'),
+    path('auth/users/<int:user_id>/reject', RejectUserView.as_view(), name='auth-users-reject'),
     path('webhooks/resend', ResendInboundWebhookView.as_view(), name='webhooks-resend'),
 ]

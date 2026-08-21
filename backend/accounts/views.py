@@ -22,6 +22,7 @@ from .emails import (
 )
 from .models import EmailVerificationToken, OTPCode, PasswordResetToken, UserProfile
 from .serializers import (
+    ApproveUserSerializer,
     LoginSerializer,
     OTPResendSerializer,
     OTPVerifySerializer,
@@ -480,6 +481,7 @@ class PendingUsersView(APIView):
             User.objects
             .filter(is_active=False, profile__email_verified=True)
             .select_related('profile')
+            .prefetch_related('profile__districts')
             .order_by('date_joined')
         )
         return Response(UserSerializer(users, many=True).data)
@@ -488,14 +490,39 @@ class PendingUsersView(APIView):
 class ApproveUserView(APIView):
     permission_classes = [IsAdminUser]
 
-    @extend_schema(tags=['Auth'], request=None, responses={200: UserSerializer})
+    @extend_schema(tags=['Auth'], request=ApproveUserSerializer, responses={200: UserSerializer})
     def post(self, request, user_id: int):
-        user = get_object_or_404(User, id=user_id)
-        if not user.is_active:
+        user = get_object_or_404(User.objects.select_related('profile'), id=user_id)
+        serializer = ApproveUserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        role = serializer.validated_data['role']
+        district_ids = serializer.validated_data.get('district_ids', [])
+
+        was_active = user.is_active
+
+        with transaction.atomic():
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+            profile.role = role
+            profile.save(update_fields=['role', 'updated_at'])
+            profile.districts.set(district_ids if role == UserProfile.ROLE_BISHOP else [])
+
+            user.is_staff = role == UserProfile.ROLE_ADMIN
             user.is_active = True
-            user.save(update_fields=['is_active'])
-            send_approved_email(user)
+            user.save(update_fields=['is_active', 'is_staff'])
+
+        if not was_active:
+            send_approved_email(user, role_display=profile.get_role_display())
         return Response(UserSerializer(user).data)
+
+
+class RejectUserView(APIView):
+    permission_classes = [IsAdminUser]
+
+    @extend_schema(tags=['Auth'], request=None, responses={204: OpenApiResponse(description='User rejected and removed.')})
+    def post(self, request, user_id: int):
+        user = get_object_or_404(User, id=user_id, is_active=False)
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ActiveUsersView(APIView):
@@ -507,6 +534,7 @@ class ActiveUsersView(APIView):
             User.objects
             .filter(is_active=True)
             .select_related('profile')
+            .prefetch_related('profile__districts')
             .order_by('first_name', 'email')
         )
         return Response(UserSerializer(users, many=True).data)

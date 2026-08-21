@@ -63,7 +63,7 @@ def send_otp_email(user, code: str) -> None:
     )
 
 
-def send_approved_email(user) -> None:
+def send_approved_email(user, role_display: str = '') -> None:
     link = f'{settings.FRONTEND_URL}/login'
     _send_template_email(
         template_slug='final-welcome-email',
@@ -72,7 +72,7 @@ def send_approved_email(user) -> None:
         fallback_text=f'Your account has been approved. Log in: {link}',
         variables={
             'user_name': _display_name(user),
-            'assigned_role': 'Administrator' if user.is_staff else 'Member',
+            'assigned_role': role_display or ('Administrator' if user.is_staff else 'Member'),
             'login': link,
         },
     )

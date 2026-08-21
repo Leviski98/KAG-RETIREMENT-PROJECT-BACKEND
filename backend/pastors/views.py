@@ -7,6 +7,7 @@ from datetime import date
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from .models import Pastor
 from .serializers import PastorSerializer
+from accounts.permissions import bishop_district_ids
 
 
 @extend_schema_view(
@@ -80,7 +81,14 @@ class PastorViewSet(viewsets.ModelViewSet):
         district = self.request.query_params.get('district', None)
         if district is not None:
             queryset = queryset.filter(church_assignments__church__section__district_id=district).distinct()
-        
+
+        # Bishops only see pastors assigned to a church within their districts
+        district_ids = bishop_district_ids(self.request.user)
+        if district_ids is not None:
+            queryset = queryset.filter(
+                church_assignments__church__section__district_id__in=district_ids
+            ).distinct()
+
         return queryset
     
     @extend_schema(tags=['Pastors'])

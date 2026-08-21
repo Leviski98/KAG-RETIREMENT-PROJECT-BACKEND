@@ -1,5 +1,6 @@
 "use client";
 
+import { Eye } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/components/providers";
@@ -73,7 +74,7 @@ export default function UsersPage() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Requested</TableHead>
+                  <TableHead>Date requested</TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -88,10 +89,12 @@ export default function UsersPage() {
                     <TableCell className="text-right">
                       <Button
                         size="sm"
+                        variant="outline"
                         onClick={() => handleApprove(u.id, u.email)}
                         disabled={approve.isPending}
                       >
-                        Approve
+                        <Eye />
+                        Review
                       </Button>
                     </TableCell>
                   </TableRow>

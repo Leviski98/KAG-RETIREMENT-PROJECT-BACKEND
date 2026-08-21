@@ -3,6 +3,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from .models import Church, ChurchRole, ChurchPastor
 from .serializers import ChurchSerializer, ChurchRoleSerializer, ChurchPastorSerializer
+from accounts.permissions import bishop_district_ids
 
 
 @extend_schema_view(
@@ -21,6 +22,14 @@ class ChurchViewSet(viewsets.ModelViewSet):
     search_fields = ['church_name', 'location']
     ordering_fields = ['church_name', 'created_at']
     filterset_fields = ['section', 'church_name']
+
+    def get_queryset(self):
+        """Bishops only see churches within their assigned districts."""
+        queryset = Church.objects.all()
+        district_ids = bishop_district_ids(self.request.user)
+        if district_ids is not None:
+            queryset = queryset.filter(section__district_id__in=district_ids)
+        return queryset
     
     def destroy(self, request, *args, **kwargs):
         """

@@ -1,3 +1,10 @@
+export type UserRole = "admin" | "archbishop" | "bishop" | "";
+
+export interface AuthUserDistrict {
+  id: number;
+  name: string;
+}
+
 export interface AuthUser {
   id: number;
   email: string;
@@ -6,6 +13,9 @@ export interface AuthUser {
   email_verified: boolean;
   is_active: boolean;
   date_joined: string;
+  role: UserRole;
+  role_display: string;
+  districts: AuthUserDistrict[];
 }
 
 export interface LoginResult {

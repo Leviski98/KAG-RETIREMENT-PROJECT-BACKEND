@@ -12,6 +12,7 @@ from churches.models import Church, ChurchPastor
 from districts.models import District
 from pastors.models import Pastor
 from sections.models import Section
+from accounts.permissions import bishop_district_ids
 
 from .serializers import (
     DistrictSummaryReportSerializer,
@@ -93,11 +94,21 @@ class DistrictSummaryReportView(APIView):
         responses=DistrictSummaryReportSerializer,
     )
     def get(self, request):
+        district_ids = bishop_district_ids(request.user)
+
         districts = District.objects.annotate(
             section_count=Count('sections', distinct=True),
             church_count=Count('sections__churches', distinct=True),
             assigned_pastor_count=Count('sections__churches__church_pastors', distinct=True),
         ).order_by('name')
+        sections = Section.objects.all()
+        churches = Church.objects.all()
+        assignments = ChurchPastor.objects.all()
+        if district_ids is not None:
+            districts = districts.filter(id__in=district_ids)
+            sections = sections.filter(district_id__in=district_ids)
+            churches = churches.filter(section__district_id__in=district_ids)
+            assignments = assignments.filter(church__section__district_id__in=district_ids)
 
         district_rows = [
             {
@@ -111,9 +122,9 @@ class DistrictSummaryReportView(APIView):
         ]
 
         total_districts = len(district_rows)
-        total_sections = Section.objects.count()
-        total_churches = Church.objects.count()
-        assigned_pastors = ChurchPastor.objects.values('pastor').distinct().count()
+        total_sections = sections.count()
+        total_churches = churches.count()
+        assigned_pastors = assignments.values('pastor').distinct().count()
 
         return Response({
             'title': 'District Summary Report',
@@ -148,8 +159,17 @@ class PastorDemographicsReportView(APIView):
     )
     def get(self, request):
         retirement_age = get_retirement_age()
+        district_ids = bishop_district_ids(request.user)
 
-        pastors = list(Pastor.objects.all())
+        pastor_qs = Pastor.objects.all()
+        assignment_qs = ChurchPastor.objects.all()
+        if district_ids is not None:
+            pastor_qs = pastor_qs.filter(
+                church_assignments__church__section__district_id__in=district_ids
+            ).distinct()
+            assignment_qs = assignment_qs.filter(church__section__district_id__in=district_ids)
+
+        pastors = list(pastor_qs)
         total_pastors = len(pastors)
         active_pastors = sum(1 for pastor in pastors if pastor.status == 'active')
         retired_pastors = sum(1 for pastor in pastors if pastor.status == 'retired')
@@ -163,19 +183,19 @@ class PastorDemographicsReportView(APIView):
 
         by_gender = [
             {'label': row['gender'] or 'Unknown', 'count': row['count']}
-            for row in Pastor.objects.values('gender').annotate(count=Count('id')).order_by('gender')
+            for row in pastor_qs.values('gender').annotate(count=Count('id', distinct=True)).order_by('gender')
         ]
         by_rank = [
             {'label': row['pastor_rank'] or 'Unknown', 'count': row['count']}
-            for row in Pastor.objects.values('pastor_rank').annotate(count=Count('id')).order_by('pastor_rank')
+            for row in pastor_qs.values('pastor_rank').annotate(count=Count('id', distinct=True)).order_by('pastor_rank')
         ]
         by_status = [
             {'label': row['status'] or 'Unknown', 'count': row['count']}
-            for row in Pastor.objects.values('status').annotate(count=Count('id')).order_by('status')
+            for row in pastor_qs.values('status').annotate(count=Count('id', distinct=True)).order_by('status')
         ]
 
         grouped_assignments = defaultdict(lambda: defaultdict(dict))
-        assignments = ChurchPastor.objects.select_related(
+        assignments = assignment_qs.select_related(
             'pastor',
             'church__section__district',
         ).order_by(
@@ -266,11 +286,21 @@ class DistrictSummaryReportPDFView(APIView):
     )
     def get(self, request):
         # Get the same data as the JSON endpoint
+        district_ids = bishop_district_ids(request.user)
+
         districts = District.objects.annotate(
             section_count=Count('sections', distinct=True),
             church_count=Count('sections__churches', distinct=True),
             assigned_pastor_count=Count('sections__churches__church_pastors', distinct=True),
         ).order_by('name')
+        sections = Section.objects.all()
+        churches = Church.objects.all()
+        assignments = ChurchPastor.objects.all()
+        if district_ids is not None:
+            districts = districts.filter(id__in=district_ids)
+            sections = sections.filter(district_id__in=district_ids)
+            churches = churches.filter(section__district_id__in=district_ids)
+            assignments = assignments.filter(church__section__district_id__in=district_ids)
 
         district_rows = [
             {
@@ -284,9 +314,9 @@ class DistrictSummaryReportPDFView(APIView):
         ]
 
         total_districts = len(district_rows)
-        total_sections = Section.objects.count()
-        total_churches = Church.objects.count()
-        assigned_pastors = ChurchPastor.objects.values('pastor').distinct().count()
+        total_sections = sections.count()
+        total_churches = churches.count()
+        assigned_pastors = assignments.values('pastor').distinct().count()
 
         report_data = {
             'title': 'District Summary Report',
@@ -328,9 +358,18 @@ class PastorDemographicsReportPDFView(APIView):
     )
     def get(self, request):
         retirement_age = get_retirement_age()
+        district_ids = bishop_district_ids(request.user)
 
         # Get the same data as the JSON endpoint
-        pastors = list(Pastor.objects.all())
+        pastor_qs = Pastor.objects.all()
+        assignment_qs = ChurchPastor.objects.all()
+        if district_ids is not None:
+            pastor_qs = pastor_qs.filter(
+                church_assignments__church__section__district_id__in=district_ids
+            ).distinct()
+            assignment_qs = assignment_qs.filter(church__section__district_id__in=district_ids)
+
+        pastors = list(pastor_qs)
         total_pastors = len(pastors)
         active_pastors = sum(1 for pastor in pastors if pastor.status == 'active')
         retired_pastors = sum(1 for pastor in pastors if pastor.status == 'retired')
@@ -344,20 +383,20 @@ class PastorDemographicsReportPDFView(APIView):
 
         by_gender = [
             {'label': row['gender'] or 'Unknown', 'count': row['count']}
-            for row in Pastor.objects.values('gender').annotate(count=Count('id')).order_by('gender')
+            for row in pastor_qs.values('gender').annotate(count=Count('id', distinct=True)).order_by('gender')
         ]
         by_rank = [
             {'label': row['pastor_rank'] or 'Unknown', 'count': row['count']}
-            for row in Pastor.objects.values('pastor_rank').annotate(count=Count('id')).order_by('pastor_rank')
+            for row in pastor_qs.values('pastor_rank').annotate(count=Count('id', distinct=True)).order_by('pastor_rank')
         ]
         by_status = [
             {'label': row['status'] or 'Unknown', 'count': row['count']}
-            for row in Pastor.objects.values('status').annotate(count=Count('id')).order_by('status')
+            for row in pastor_qs.values('status').annotate(count=Count('id', distinct=True)).order_by('status')
         ]
 
         # Build assignment grouping
         grouped_assignments = defaultdict(lambda: defaultdict(dict))
-        assignments = ChurchPastor.objects.select_related(
+        assignments = assignment_qs.select_related(
             'pastor',
             'church__section__district',
         ).order_by(

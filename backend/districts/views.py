@@ -10,6 +10,7 @@ from django.conf import settings
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from .models import District
 from .serializers import DistrictSerializer
+from accounts.permissions import bishop_district_ids
 
 
 @extend_schema_view(
@@ -45,6 +46,14 @@ class DistrictViewSet(viewsets.ModelViewSet):
     ordering_fields = ['name', 'created_at', 'updated_at']
     filterset_fields = ['name']
     ordering = ['name']  # Default ordering
+
+    def get_queryset(self):
+        """Bishops only see the districts assigned to them."""
+        queryset = District.objects.all()
+        district_ids = bishop_district_ids(self.request.user)
+        if district_ids is not None:
+            queryset = queryset.filter(id__in=district_ids)
+        return queryset
     
     def destroy(self, request, *args, **kwargs):
         """

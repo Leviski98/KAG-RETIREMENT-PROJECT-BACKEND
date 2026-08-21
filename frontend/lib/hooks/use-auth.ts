@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { authApi, type SignupInput } from '@/lib/api/auth';
+import { authApi, type ApproveUserInput, type SignupInput } from '@/lib/api/auth';
 import type { AuthUser } from '@/types/auth';
 
 export const authKeys = {
@@ -116,10 +116,21 @@ export function useApproveUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (userId: number) => authApi.approveUser(userId),
+    mutationFn: (input: ApproveUserInput) => authApi.approveUser(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: authKeys.pendingUsers() });
       queryClient.invalidateQueries({ queryKey: authKeys.activeUsers() });
+    },
+  });
+}
+
+export function useRejectUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: number) => authApi.rejectUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: authKeys.pendingUsers() });
     },
   });
 }
