@@ -36,7 +36,8 @@ class PasswordResetRequestTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(PasswordResetToken.objects.filter(user=self.user).count(), 1)
         self.assertEqual(len(mail.outbox), 1)
-        self.assertIn('reset-password?token=', mail.outbox[0].body)
+        self.assertIn('reset-password?token=', mail.outbox[0].esp_extra['template']['variables']['reset_link'])
+
 
     def test_email_lookup_is_case_insensitive(self):
         response = self.client.post(self.url, {'email': 'MEMBER@KAG.TEST'}, format='json')
