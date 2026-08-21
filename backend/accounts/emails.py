@@ -23,7 +23,7 @@ def _send_template_email(*, template_slug: str, to: str, subject: str,
                           fallback_text: str, variables: dict) -> None:
     message = EmailMessage(
         subject=subject,
-        body=fallback_text,
+        body="",
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[to],
     )
